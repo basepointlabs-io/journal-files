@@ -1,0 +1,54 @@
+{
+  "source": "Observed in real journals (anonymized), cross-checked with Autodesk articles where possible",
+  "collected": "2026-11-06",
+  "rules": [
+    {
+      "id": "observed-cloud-sync-crypto-assembly-missing",
+      "category": "cloud",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "Could not load file or assembly 'System.Security.Cryptography.Algorithms"
+        ]
+      },
+      "context": "Synchronize with Central on a cloud (Autodesk Docs / ACC) model, Revit 2025.4.2. Fails in the Save step right after 'Calling: BeginWriteData', followed by TaskDialog_Operation_Could_Not_Be_Completed. Every retry fails the same way; another Revit session on the same computer synchronized a different model normally.",
+      "versions": "Seen in 2025.4.2",
+      "title": {
+        "uk": "Синхронізація з хмарною моделлю не вдається: Revit не може завантажити компонент шифрування",
+        "en": "Cloud sync fails: Revit cannot load a cryptography component"
+      },
+      "cause": {
+        "uk": "Під час відправки змін у хмару (Autodesk Docs / ACC) Revit не зміг завантажити системний компонент .NET «System.Security.Cryptography.Algorithms», який потрібен для захищеного з'єднання. Тому кожна спроба Synchronize with Central закінчується повідомленням «Operation could not be completed», і ваші зміни не потрапляють у центральну модель. Точна причина ще не підтверджена Autodesk. Найімовірніше, це конфлікт компонентів у цьому запущеному процесі Revit (наприклад, через add-in) або налаштування безпеки Windows (FIPS).",
+        "en": "While sending changes to the cloud (Autodesk Docs / ACC), Revit could not load the .NET component 'System.Security.Cryptography.Algorithms' needed for the secure connection. Every Synchronize with Central attempt ends with 'Operation could not be completed' and your changes do not reach the central model. The exact root cause is not confirmed by Autodesk; the most likely explanations are a component conflict inside this running Revit process (for example caused by an add-in) or a Windows security policy (FIPS)."
+      },
+      "fix": {
+        "uk": [
+          "Не закривайте модель без збереження: спершу збережіть локальну копію (Save), щоб не втратити несинхронізовані зміни.",
+          "Повністю закрийте Revit і запустіть знову, відкрийте модель і повторіть Synchronize with Central. Якщо в іншому вікні Revit синхронізація працює, проблема, найімовірніше, лише в цьому процесі.",
+          "Якщо помилка повторюється, запустіть Revit без сторонніх add-in'ів (наприклад, Dalux) і спробуйте синхронізувати ще раз.",
+          "Попросіть IT перевірити, чи не ввімкнена політика Windows «System cryptography: Use FIPS compliant algorithms»: Autodesk описує, що вона блокує роботу з хмарними моделями.",
+          "Якщо нічого не допомагає, встановіть останнє оновлення Revit 2025 і відновіть (Repair) встановлення Revit та .NET 8 Desktop Runtime."
+        ],
+        "en": [
+          "Do not close the model without saving: first save a local copy (Save) so unsynchronized changes are not lost.",
+          "Fully close Revit, start it again, open the model and retry Synchronize with Central. If sync works in another Revit window, the problem is most likely limited to this process.",
+          "If it keeps failing, start Revit without third-party add-ins (for example Dalux) and try to sync again.",
+          "Ask IT to check whether the Windows policy 'System cryptography: Use FIPS compliant algorithms' is enabled; Autodesk documents that it blocks cloud model access.",
+          "If nothing helps, install the latest Revit 2025 update and repair the Revit installation and the .NET 8 Desktop Runtime."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: Unable to open model from BIM 360 due to FIPS setting",
+          "url": "https://autodesk.com/support/technical/article/Unable-to-open-model-from-BIM-360-due-to-FIPS-setting"
+        },
+        {
+          "title": "Autodesk: \"Sync with central failed... This operation could not be completed\"",
+          "url": "https://autodesk.com/support/technical/article/Sync-with-central-failed-This-operation-could-not-be-completed-infrequently-received-when-syncing-from-Revit"
+        }
+      ],
+      "confidence": "community",
+      "related": ["operation-could-not-be-completed"]
+    }
+  ]
+}

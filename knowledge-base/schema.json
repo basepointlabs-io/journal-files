@@ -25,7 +25,9 @@
               "any": { "type": "array", "items": { "type": "string" } },
               "regex": { "type": "array", "items": { "type": "string" },
                          "description": "Portable (Python + JavaScript) syntax; no inline flags like (?i)" },
-              "ignore_case": { "type": "boolean", "description": "Apply case-insensitive matching to this rule's patterns" }
+              "ignore_case": { "type": "boolean", "description": "Apply case-insensitive matching to this rule's patterns" },
+              "exclude": { "type": "array", "items": { "type": "string" },
+                           "description": "Substrings that cancel a hit on the same line (routine lines that look like the signature)" }
             }
           },
           "related": {

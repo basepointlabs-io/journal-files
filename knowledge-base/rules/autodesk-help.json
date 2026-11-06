@@ -118,8 +118,7 @@
       "severity": "high",
       "match": {
         "any": [
-          "System exception in generateViewSpecificGRep",
-          "generateViewSpecificGRep"
+          "System exception in generateViewSpecificGRep"
         ]
       },
       "context": "Listed by Autodesk among journal entries to look for after a fatal error.",
@@ -399,7 +398,7 @@
     {
       "id": "recent-dynamic-added-not-to-dynamics",
       "category": "crash",
-      "severity": "high",
+      "severity": "low",
       "match": {
         "any": [
           "DBG_INFO: Recent Dynamic Added but not to Dynamics",
@@ -932,6 +931,10 @@
         ],
         "regex": [
           "[Mm]issing [Ee]lem"
+        ],
+        "exclude": [
+          "Detect if missing elements for",
+          "fixPotentialMissingElements"
         ]
       },
       "context": "Opening a model; the model may or may not open.",
@@ -2064,7 +2067,8 @@
         "any": [
           "Operation Could Not Be Completed",
           "operation could not be completed",
-          "The Operation Could Not Be Completed"
+          "The Operation Could Not Be Completed",
+          "TaskDialog_Operation_Could_Not_Be_Completed"
         ],
         "regex": [
           "[Oo]peration [Cc]ould [Nn]ot [Bb]e [Cc]ompleted"

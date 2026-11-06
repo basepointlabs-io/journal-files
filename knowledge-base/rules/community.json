@@ -8,8 +8,7 @@
       "severity": "high",
       "match": {
         "any": [
-          "System exception in generateViewSpecificGRep",
-          "generateViewSpecificGRep"
+          "System exception in generateViewSpecificGRep"
         ],
         "regex": [
           "System\\s+exception\\s+in\\s+generateViewSpecificGRep"
@@ -708,7 +707,11 @@
         "regex": [
           "missing\\s+elem"
         ],
-        "ignore_case": true
+        "ignore_case": true,
+        "exclude": [
+          "Detect if missing elements for",
+          "fixPotentialMissingElements"
+        ]
       },
       "context": "Opening a model; elements are missing or the model will not open.",
       "title": {
