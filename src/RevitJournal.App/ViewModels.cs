@@ -122,6 +122,21 @@ public sealed class DayGroup(DateOnly date) : Observable
     }
 }
 
+/// <summary>One running Revit on the start screen, refreshed by the tray agent every few seconds.</summary>
+public sealed class LiveCardView(Core.Live.LiveStatus s, DateTime now)
+{
+    public string Title => s.Responding == false ? $"Revit {s.Version} is not responding" : $"Revit {s.Version} is running";
+    public string StatusKey => s.Responding == false || s.Sync.Contains("FAILED", StringComparison.Ordinal) ? "crash"
+        : s.Busy is not null ? "running" : "ok";
+    public string Details => string.Join("   ·   ", new[]
+    {
+        s.Model,
+        s.Busy ?? (s.LastActivity is { } t ? $"last activity {Fmt.Ago(now - t)}" : null),
+        s.Sync,
+        s.FreeRamMb is { } free ? $"free RAM {Fmt.Mb(free)}" + (s.TotalRamMb is { } total ? $" of {Fmt.Mb(total)}" : "") : null,
+    }.Where(x => !string.IsNullOrEmpty(x)));
+}
+
 /// <summary>A big button on the start screen.</summary>
 public sealed class SymptomCard(Symptom symptom)
 {

@@ -218,6 +218,24 @@
         <TextBlock Text="What's wrong with Revit?" FontSize="28" FontWeight="SemiBold" />
         <TextBlock x:Name="HomeSubtitle" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,6,0,0" />
 
+        <!-- Running Revit sessions, live from the tray agent -->
+        <ItemsControl x:Name="LiveCards" Margin="0,18,0,0">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type local:LiveCardView}">
+              <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                <DockPanel>
+                  <Ellipse DockPanel.Dock="Left" Width="10" Height="10" Margin="0,0,12,0" VerticalAlignment="Center"
+                           Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Details}" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0" />
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
         <Border x:Name="HintBanner" Visibility="Collapsed" Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1"
                 CornerRadius="8" Padding="16,12" Margin="0,22,0,0">
           <DockPanel>

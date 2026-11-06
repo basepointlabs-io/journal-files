@@ -37,17 +37,22 @@ public sealed class RuleMatcher
             string line = lines[i];
             if (JournalTimestamp.TryParse(line, out var t))
                 ts = t;
-
-            foreach (var c in _rules)
-            {
-                if (!IsHit(c, line))
-                    continue;
-                if (!hits.TryGetValue(c.Rule.Id, out var list))
-                    hits[c.Rule.Id] = list = [];
-                list.Add(new LineRef(i + 1, ts, line.Trim()));
-            }
+            MatchLine(line, i + 1, ts, hits);
         }
         return hits;
+    }
+
+    /// <summary>Adds the rules that match one line (1-based <paramref name="lineNumber"/>) to <paramref name="hits"/>.</summary>
+    public void MatchLine(string line, int lineNumber, DateTime? time, Dictionary<string, List<LineRef>> hits)
+    {
+        foreach (var c in _rules)
+        {
+            if (!IsHit(c, line))
+                continue;
+            if (!hits.TryGetValue(c.Rule.Id, out var list))
+                hits[c.Rule.Id] = list = [];
+            list.Add(new LineRef(lineNumber, time, line.Trim()));
+        }
     }
 
     private static bool IsHit(Compiled c, string line)

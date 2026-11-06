@@ -54,6 +54,73 @@ public partial class MainWindow : Window
         _liveTimer.Start();
     }
 
+    public Analyzer Analyzer => _analyzer;
+
+    // ---- live monitoring (tray agent) --------------------------------------------------------------------
+
+    private TrayAgent? _agent;
+    private bool _exiting;
+
+    public void AttachAgent(TrayAgent agent)
+    {
+        _agent = agent;
+        agent.OpenRequested += BringToFront;
+        agent.AlertClicked += async alert => await OpenAlertAsync(alert);
+        agent.StatusChanged += status => LiveCards.ItemsSource = status.Select(s => new LiveCardView(s, DateTime.Now)).ToList();
+        agent.ExitRequested += () => _exiting = true;
+        // Keep the hint and the history in step with what just happened (a crash, a failed sync).
+        agent.AlertsRaised += async alerts =>
+        {
+            if (!_analyzed.Task.IsCompleted)
+                return;
+            if (alerts.Any(a => !_items.Any(i => string.Equals(i.File.Path, a.JournalPath, StringComparison.OrdinalIgnoreCase))))
+                await ReloadAsync();
+            else
+                await RefreshChangedAsync();
+            UpdateHints();
+        };
+
+        // Closing the window keeps the agent watching Revit; Exit in the tray menu really quits.
+        Closing += (_, e) =>
+        {
+            if (_exiting)
+                return;
+            e.Cancel = true;
+            Hide();
+            var settings = Settings.Load();
+            if (!settings.TrayHintShown)
+            {
+                agent.ShowInfo("Still watching Revit", "Revit Journal Analyzer keeps running here and will warn you if Revit crashes, stops responding or cannot sync.");
+                settings.TrayHintShown = true;
+                settings.Save();
+            }
+        };
+    }
+
+    public void BringToFront()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private async Task OpenAlertAsync(Core.Live.LiveAlert alert)
+    {
+        BringToFront();
+        await _analyzed.Task;
+        // The alert may be about a journal that started after the list was built.
+        if (!_items.Any(i => string.Equals(i.File.Path, alert.JournalPath, StringComparison.OrdinalIgnoreCase)))
+            await ReloadAsync();
+        else
+            await RefreshChangedAsync();
+        if (VersionPicker.ItemsSource is IEnumerable<VersionOption> options
+            && options.FirstOrDefault(o => o.Version is { } v && alert.JournalPath.Contains($"Autodesk Revit {v}", StringComparison.OrdinalIgnoreCase)) is { } option)
+            VersionPicker.SelectedItem = option;
+        if (_advisor.Symptoms.FirstOrDefault(s => s.Id == alert.SymptomId) is { } symptom)
+            await ShowDiagnosisAsync(symptom);
+    }
+
     // ---- pages -------------------------------------------------------------------------------------------
 
     private void ShowPage(FrameworkElement page)

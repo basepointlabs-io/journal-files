@@ -5,12 +5,21 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
 {
     public string FilePath { get; } = filePath;
 
-    /// <summary>The raw lines; empty after <see cref="ReleaseLines"/>.</summary>
+    private int? _releasedLineCount;
+
+    /// <summary>The raw lines (grows while a live journal is followed); empty after <see cref="ReleaseLines"/>.</summary>
     public IReadOnlyList<string> Lines { get; private set; } = lines;
-    public int LineCount { get; } = lines.Count;
+    public int LineCount => _releasedLineCount ?? Lines.Count;
+
+    /// <summary>Text-rule matches collected while parsing (live journals); null when the analyzer should match itself.</summary>
+    public Dictionary<string, List<LineRef>>? RuleHits { get; internal set; }
 
     /// <summary>Journals are tens of MB; drop the text once analysis has extracted what the report needs.</summary>
-    public void ReleaseLines() => Lines = [];
+    public void ReleaseLines()
+    {
+        _releasedLineCount = Lines.Count;
+        Lines = [];
+    }
 
     public string? Release { get; set; }
     public string? Build { get; set; }

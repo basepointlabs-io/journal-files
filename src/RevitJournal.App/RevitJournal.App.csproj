@@ -4,6 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- Only for the tray icon (NotifyIcon); WPF has none. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>RevitJournalAnalyzer</AssemblyName>
     <RootNamespace>RevitJournal.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -13,6 +15,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RevitJournal.Core\RevitJournal.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Keep WinForms/System.Drawing out of the global usings so WPF names (Application, Button, Clipboard...) stay unambiguous. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
   </ItemGroup>
 
 </Project>

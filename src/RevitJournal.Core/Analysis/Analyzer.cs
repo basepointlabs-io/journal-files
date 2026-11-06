@@ -15,6 +15,9 @@ public sealed class Analyzer(RuleSet rules)
 
     public RuleSet Rules { get; } = rules;
 
+    /// <summary>The compiled text rules, shared with live parsers so they match lines as they arrive.</summary>
+    public RuleMatcher Matcher => _matcher;
+
     /// <summary>Thread-safe; the journal text is released afterwards to keep memory low.</summary>
     public AnalysisResult AnalyzeFile(string path)
     {
@@ -33,7 +36,7 @@ public sealed class Analyzer(RuleSet rules)
 
         var byId = new Dictionary<string, Finding>(StringComparer.Ordinal);
 
-        foreach (var (id, lines) in _matcher.Match(session))
+        foreach (var (id, lines) in session.RuleHits ?? _matcher.Match(session))
         {
             var finding = GetOrAdd(byId, id);
             finding?.AddEvidence(lines);
