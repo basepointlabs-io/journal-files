@@ -234,10 +234,10 @@
       </StackPanel>
     </Grid>
 
-    <!-- ===== Body ===== -->
+    <!-- ===== Body: the sessions on the left (like the Configurator's operations), the card on the right ===== -->
     <Grid Grid.Row="1" Margin="8,0,8,8">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="320" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
@@ -253,48 +253,42 @@
           </TextBlock>
         </StackPanel>
 
-        <StackPanel>
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,2,0" ToolTip="Open a journal file from anywhere">
-              <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="16" Margin="0,0,8,0" />
-                <TextBlock Text="Open…" VerticalAlignment="Center" TextWrapping="NoWrap" />
-              </StackPanel>
-            </Button>
-            <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="2,0,0,0" ToolTip="Read all journals again">
-              <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Margin="0,0,8,0" />
-                <TextBlock Text="Refresh" VerticalAlignment="Center" TextWrapping="NoWrap" />
-              </StackPanel>
-            </Button>
-          </Grid>
-
-          <Button Style="{StaticResource PrimaryButton}" Click="OnHome" Margin="0,4,0,0" HorizontalAlignment="Stretch">
+        <Grid DockPanel.Dock="Top">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,2,0" ToolTip="Open a journal file from anywhere">
             <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="QuestionCircle24" FontSize="16" Margin="0,0,8,0" Foreground="White" />
-              <TextBlock Text="What's wrong with Revit?" VerticalAlignment="Center" Foreground="White" TextWrapping="NoWrap" />
+              <ui:SymbolIcon Symbol="FolderOpen24" FontSize="16" Margin="0,0,8,0" />
+              <TextBlock Text="Open…" VerticalAlignment="Center" TextWrapping="NoWrap" />
             </StackPanel>
           </Button>
-
-          <RadioButton x:Name="HistoryNav" GroupName="Nav" Style="{StaticResource NavRow}" Margin="0,8,0,0" Click="OnHistory">
-            <StackPanel>
-              <TextBlock Text="History" FontSize="15" FontWeight="SemiBold" />
-              <TextBlock x:Name="HistorySubtitle" Text="All Revit sessions on this computer" Foreground="{StaticResource Muted}" FontSize="12" />
+          <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="2,0,0,0" ToolTip="Read all journals again">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Margin="0,0,8,0" />
+              <TextBlock Text="Refresh" VerticalAlignment="Center" TextWrapping="NoWrap" />
             </StackPanel>
-          </RadioButton>
+          </Button>
+        </Grid>
 
-          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="16,16,0,4" Visibility="Collapsed" />
+        <Button DockPanel.Dock="Top" Style="{StaticResource PrimaryButton}" Click="OnHome" Margin="0,4,0,0" HorizontalAlignment="Stretch">
+          <StackPanel Orientation="Horizontal">
+            <ui:SymbolIcon Symbol="QuestionCircle24" FontSize="16" Margin="0,0,8,0" Foreground="White" />
+            <TextBlock Text="What's wrong with Revit?" VerticalAlignment="Center" Foreground="White" TextWrapping="NoWrap" />
+          </StackPanel>
+        </Button>
+
+        <!-- Running Revit sessions, live from the tray agent -->
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="12,12,0,2" Visibility="Collapsed" />
           <ItemsControl x:Name="LiveCards">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type local:LiveCardView}">
                 <Button Click="OnLiveCardClick" Tag="{Binding}" Cursor="Hand" HorizontalContentAlignment="Stretch">
                   <Button.Template>
                     <ControlTemplate TargetType="Button">
-                      <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="16,8">
+                      <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="12,6">
                         <ContentPresenter />
                       </Border>
                       <ControlTemplate.Triggers>
@@ -316,7 +310,66 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <TextBlock Text="SESSIONS" Style="{StaticResource SectionTitle}" Margin="12,12,0,2" />
         </StackPanel>
+
+        <!-- Every session, grouped by day; selecting one opens its report in the card -->
+        <ListBox x:Name="Sessions" BorderThickness="0" Background="Transparent" SelectionChanged="OnSelectionChanged"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" Padding="0"
+                 ItemContainerStyle="{StaticResource ListRow}"
+                 VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.ScrollUnit="Pixel">
+          <ListBox.GroupStyle>
+            <GroupStyle>
+              <GroupStyle.ContainerStyle>
+                <Style TargetType="GroupItem">
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <!-- DataContext is the CollectionViewGroup; its Name is the shared DayGroup instance. -->
+                      <ControlTemplate TargetType="GroupItem">
+                        <Expander Style="{StaticResource PlainExpander}" Padding="8,6"
+                                  IsExpanded="{Binding Name.IsExpanded, Mode=TwoWay}">
+                          <Expander.Header>
+                            <DockPanel LastChildFill="True">
+                              <TextBlock DockPanel.Dock="Left" Text="{Binding Name.Icon}" FontSize="12" FontWeight="SemiBold" Width="14"
+                                         TextAlignment="Center" VerticalAlignment="Center" TextWrapping="NoWrap"
+                                         Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
+                              <StackPanel Margin="6,0,0,0">
+                                <TextBlock Text="{Binding Name.Label}" FontWeight="SemiBold" FontSize="14" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Name.Summary}" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
+                              </StackPanel>
+                            </DockPanel>
+                          </Expander.Header>
+                          <ItemsPresenter />
+                        </Expander>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </GroupStyle.ContainerStyle>
+            </GroupStyle>
+          </ListBox.GroupStyle>
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="{x:Type local:JournalItem}">
+              <Grid Margin="12,6,8,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="14" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,6,0,0"
+                         Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
+                <StackPanel Grid.Column="1">
+                  <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding When}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" />
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                  </DockPanel>
+                  <TextBlock Text="{Binding StatusText}" FontSize="12" TextWrapping="NoWrap"
+                             Foreground="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
       </DockPanel>
 
       <!-- Main column: the white card, and a row on the ground under it -->
@@ -343,6 +396,21 @@
                   </DockPanel>
                 </Border>
 
+                <!-- Shown when Revit ended abnormally several times in the last week (metric-repeated-crashes). -->
+                <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="#FFF1F0" BorderBrush="#FFCECB" BorderThickness="1"
+                        CornerRadius="2" Padding="16,10" Margin="0,8,0,0">
+                  <StackPanel>
+                    <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="#CF222E" />
+                    <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding StringFormat='• {0}'}" Margin="0,1" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+
                 <ItemsControl x:Name="SymptomCards" Margin="0,20,0,0">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -362,10 +430,8 @@
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Margin="0,8,0,0" FontSize="13">
-                  <Run Text="Something else?" Foreground="{StaticResource Muted}" />
-                  <Hyperlink Click="OnHistory" Foreground="{StaticResource LinkInk}"><Run Text="Browse all Revit sessions on this computer" /></Hyperlink>
-                </TextBlock>
+                <TextBlock Margin="0,8,0,0" FontSize="13" Foreground="{StaticResource Muted}"
+                           Text="Something else? Pick any session on the left to see its full report." />
               </StackPanel>
             </ScrollViewer>
 
@@ -374,105 +440,19 @@
               <ContentControl x:Name="Answer" />
             </ScrollViewer>
 
-            <!-- HISTORY: every session, grouped by day -->
-            <Grid x:Name="HistoryPage" Visibility="Collapsed">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="380" MinWidth="280" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-
-              <DockPanel>
-                <!-- Shown when Revit ended abnormally several times in the last week (metric-repeated-crashes). -->
-                <Border x:Name="HistoryBanner" DockPanel.Dock="Top" Visibility="Collapsed" Background="#FFF1F0"
-                        BorderBrush="#FFCECB" BorderThickness="0,0,0,1" Padding="16,10">
-                  <StackPanel>
-                    <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" Foreground="#CF222E" />
-                    <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                          <TextBlock Text="{Binding StringFormat='• {0}'}" FontSize="12" Margin="0,1" />
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </StackPanel>
-                </Border>
-                <ListBox x:Name="Sessions" BorderThickness="0" Background="Transparent" SelectionChanged="OnSelectionChanged"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" Padding="4"
-                         ItemContainerStyle="{StaticResource ListRow}"
-                         VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.ScrollUnit="Pixel">
-                  <ListBox.GroupStyle>
-                    <GroupStyle>
-                      <GroupStyle.ContainerStyle>
-                        <Style TargetType="GroupItem">
-                          <Setter Property="Template">
-                            <Setter.Value>
-                              <!-- DataContext is the CollectionViewGroup; its Name is the shared DayGroup instance. -->
-                              <ControlTemplate TargetType="GroupItem">
-                                <Expander Style="{StaticResource PlainExpander}" Padding="8,8"
-                                          IsExpanded="{Binding Name.IsExpanded, Mode=TwoWay}">
-                                  <Expander.Header>
-                                    <DockPanel LastChildFill="True">
-                                      <TextBlock DockPanel.Dock="Left" Text="{Binding Name.Icon}" FontSize="13" FontWeight="SemiBold" Width="16"
-                                                 TextAlignment="Center" VerticalAlignment="Center" TextWrapping="NoWrap"
-                                                 Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
-                                      <StackPanel Margin="6,0,0,0">
-                                        <TextBlock Text="{Binding Name.Label}" FontWeight="SemiBold" FontSize="14" />
-                                        <TextBlock Text="{Binding Name.Summary}" FontSize="12"
-                                                   Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
-                                      </StackPanel>
-                                    </DockPanel>
-                                  </Expander.Header>
-                                  <ItemsPresenter />
-                                </Expander>
-                              </ControlTemplate>
-                            </Setter.Value>
-                          </Setter>
-                        </Style>
-                      </GroupStyle.ContainerStyle>
-                    </GroupStyle>
-                  </ListBox.GroupStyle>
-                  <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type local:JournalItem}">
-                      <Grid Margin="14,8,12,8">
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="14" />
-                          <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,6,0,0"
-                                 Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
-                        <StackPanel Grid.Column="1">
-                          <DockPanel>
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding When}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" />
-                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                          </DockPanel>
-                          <TextBlock Text="{Binding StatusText}" FontSize="12"
-                                     Foreground="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
-                          <TextBlock Text="{Binding Headline}" FontSize="12" Foreground="{StaticResource Muted}"
-                                     TextTrimming="CharacterEllipsis" MaxHeight="34" />
-                        </StackPanel>
-                      </Grid>
-                    </DataTemplate>
-                  </ListBox.ItemTemplate>
-                </ListBox>
-              </DockPanel>
-
-              <GridSplitter Grid.Column="1" Width="1" HorizontalAlignment="Stretch" Background="{StaticResource Line}" />
-
-              <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
-                <Grid>
-                  <ContentControl x:Name="Report" />
-                  <TextBlock x:Name="EmptyState" Margin="24" Foreground="{StaticResource Muted}" FontSize="14"
-                             Text="Open a day on the left and select a session, or drag a journal file (journal.NNNN.txt) onto this window." />
-                </Grid>
-              </ScrollViewer>
-            </Grid>
+            <!-- REPORT for the session selected on the left -->
+            <ScrollViewer x:Name="ReportPage" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+              <Grid>
+                <ContentControl x:Name="Report" />
+                <TextBlock x:Name="EmptyState" Margin="24" Foreground="{StaticResource Muted}" FontSize="14" Visibility="Collapsed" />
+              </Grid>
+            </ScrollViewer>
           </Grid>
         </Border>
 
-        <!-- Row on the ground under the card: status on the left, report actions on the right (History only) -->
+        <!-- Row on the ground under the card: status on the left, report actions on the right (report only) -->
         <DockPanel Grid.Row="1" Margin="0,8,0,0" Height="44">
-          <StackPanel x:Name="HistoryActions" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
+          <StackPanel x:Name="ReportActions" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
             <Button Style="{StaticResource GroundButton}" Click="OnShowInFolder" Width="150" Margin="0,0,4,0">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Folder24" FontSize="16" Margin="0,0,8,0" />

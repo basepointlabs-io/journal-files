@@ -131,12 +131,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void ShowPage(FrameworkElement page)
     {
-        foreach (var p in new FrameworkElement[] { HomePage, AnswerPage, HistoryPage })
+        foreach (var p in new FrameworkElement[] { HomePage, AnswerPage, ReportPage })
             p.Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
         if (page != AnswerPage)
             _shownSymptom = null;
-        HistoryNav.IsChecked = page == HistoryPage;
-        HistoryActions.Visibility = page == HistoryPage ? Visibility.Visible : Visibility.Collapsed;
+        ReportActions.Visibility = page == ReportPage ? Visibility.Visible : Visibility.Collapsed;
+        // Leaving the report clears the selection, so clicking the same session again opens it again.
+        if (page != ReportPage)
+            Sessions.SelectedItem = null;
     }
 
     // ---- window buttons (drawn as squares in the title bar, as in the FlexiData Configurator) ------------
@@ -159,8 +161,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
 
     private void OnHome(object sender, RoutedEventArgs e) => ShowPage(HomePage);
-
-    private void OnHistory(object sender, RoutedEventArgs e) => ShowPage(HistoryPage);
 
     private async void OnSymptomClick(object sender, RoutedEventArgs e)
     {
@@ -203,7 +203,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             return;
         if (item.Day is { } day)
             day.IsExpanded = true;
-        ShowPage(HistoryPage);
+        ShowPage(ReportPage);
         Sessions.SelectedItem = item;
         Sessions.ScrollIntoView(item);
     }
@@ -293,7 +293,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 });
             int problems = _items.Count(i => i.StatusKey is "crash" or "warning");
             StatusLine.Text = $"{_items.Count} journals · {problems} with problems or abnormal endings";
-            HistorySubtitle.Text = $"{_items.Count} sessions on this computer";
             UpdateHints();
             _analyzed.TrySetResult();
         }
@@ -396,15 +395,20 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
         if (item.Day is { } day)
             day.IsExpanded = true;
-        ShowPage(HistoryPage);
+        ShowPage(ReportPage);
         Sessions.SelectedItem = item;
         Sessions.ScrollIntoView(item);
         if (item.Result is null)
             await AnalyzeAsync(item);
     }
 
-    private void OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
-        ShowReport(Sessions.SelectedItem as JournalItem);
+    private void OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (Sessions.SelectedItem is not JournalItem item)
+            return;
+        ShowReport(item);
+        ShowPage(ReportPage);
+    }
 
     private async void OnRefresh(object sender, RoutedEventArgs e)
     {
