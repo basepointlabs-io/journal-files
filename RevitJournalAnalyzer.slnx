@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RevitJournal.Core/RevitJournal.Core.csproj" />
+    <Project Path="src/RevitJournal.Cli/RevitJournal.Cli.csproj" />
+    <Project Path="src/RevitJournal.App/RevitJournal.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RevitJournal.Tests/RevitJournal.Tests.csproj" />
+  </Folder>
+</Solution>

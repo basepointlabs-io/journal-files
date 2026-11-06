@@ -1,39 +1,62 @@
 # Revit Journal Analyzer
 
-Офлайн-програма, яка розшифровує journal-файли Autodesk Revit простою мовою: що сталося, чому і що робити.
-Без AI і без передачі даних: файл аналізується лише на комп'ютері користувача за базою правил і обчисленими метриками.
+An offline Windows app that explains Autodesk Revit journal files in plain English: what happened, why, and what to do.
+No AI and no uploads: journals are analyzed only on the user's computer, using a rule base and computed metrics.
+It runs separately from Revit, so it also works when Revit has crashed or is hung.
 
-## Структура
+## Build (Windows, .NET 10 SDK)
+
+```bat
+dotnet build RevitJournalAnalyzer.slnx -c Release
+dotnet test tests\RevitJournal.Tests\RevitJournal.Tests.csproj
+dotnet publish src\RevitJournal.App\RevitJournal.App.csproj -c Release -r win-x64 --self-contained true ^
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish\win-x64
+```
+
+- `RevitJournalAnalyzer.exe` — the app: lists every journal on the PC (all Revit versions), status per session, report per journal. Drag a journal onto the window or pass it as an argument.
+- `rja.exe <journal.txt>` — the same report in the console; `rja <folder>|--local` lists sessions; `rja --local --stats` shows how often each rule fires (use it to find noisy rules).
+- Development from a Mac: `tools/vm.sh sync` copies the tree to the Windows VM, `tools/vm.sh run "<cmd>"` runs a command there.
+
+## Structure
 
 ```
+src/RevitJournal.Core/   parser, rule engine, metrics, report (the rule base is embedded as resources)
+src/RevitJournal.Cli/    rja.exe console tool
+src/RevitJournal.App/    WPF app
+tests/                   xUnit tests on synthetic journal excerpts
 knowledge-base/
-  schema.json            формат правила
+  schema.json            rule format
   rules/
-    autodesk-help.json   правила з офіційної довідки Autodesk (Revit Troubleshooting)
-    community.json       сигнатури й рішення з форумів Autodesk та BIM-блогів
-    metrics.json         правила, що потребують обчислень (пам'ять, падіння, add-in'и, синхронізація)
+    autodesk-help.json   rules from Autodesk Help (Revit Troubleshooting)
+    community.json       signatures and fixes from Autodesk forums and BIM blogs
+    metrics.json         computed rules (memory, crashes, add-ins, sync)
+    observed.json        rules found in real journals
   notes/
-    journal-format.md    опис формату journal-файлу для парсера
+    journal-format.md    journal file format reference for the parser
 tools/
-  validate_kb.py         перевірка бази правил
+  validate_kb.py         validates the rule base
+  scan.py                quick Python prototype scanner
+  vm.sh                  sync/run on the Windows VM
 ```
 
-## Правило
+## Rules
 
-Кожне правило містить:
-- `match`: рядки (`any`) або regex (`regex`) для пошуку в journal; правила з `metrics.json` мають блок `metric`;
-- `title`, `cause`, `fix`: пояснення і кроки виправлення українською (`uk`) та англійською (`en`);
+Each rule has:
+- `match`: substrings (`any`) or regexes (`regex`) to look for in journal lines, optional `ignore_case` and `exclude`; computed rules have a `metric` block instead;
+- `title`, `cause`, `fix`: explanation and fix steps. The app shows English (`en`); `uk` texts are kept as an optional translation;
 - `severity`, `category`;
-- `confidence`: `official` (документація Autodesk), `community-verified` (підтверджене рішення на форумі), `community` (не підтверджено);
-- `related`: правила з інших джерел, що спрацьовують на той самий текст. Аналізатор показує їх разом.
+- `confidence`: `official` (Autodesk documentation), `community-verified` (confirmed forum solution), `community` (unconfirmed);
+- `related`: rules from other sources that match the same text; the analyzer shows them as one finding.
 
-## Перевірка
+Dialog text in journals is translated into the Revit UI language, so rules should match dialog IDs (`'Id : TaskDialog_...`) and command IDs (`ID_...`), not message text.
+
+## Validate
 
 ```bash
 python3 tools/validate_kb.py
 ```
 
-## Приватність
+## Privacy
 
-Справжні journal-файли містять імена користувачів, шляхи, назви серверів і проєктів.
-Їх **не можна комітити** в цей репозиторій: `.gitignore` блокує `*.txt`, `samples/` і `journals/`.
+Real journal files contain user names, paths, server and project names.
+They **must never be committed** to this public repository: `.gitignore` blocks `*.txt`, `samples/` and `journals/`.

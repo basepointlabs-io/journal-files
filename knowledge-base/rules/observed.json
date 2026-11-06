@@ -48,7 +48,92 @@
         }
       ],
       "confidence": "community",
-      "related": ["operation-could-not-be-completed"]
+      "related": [
+        "forum-addin-assembly-load",
+        "operation-could-not-be-completed"
+      ]
+    },
+    {
+      "id": "metric-sync-failed",
+      "category": "worksharing",
+      "severity": "critical",
+      "match": {},
+      "metric": {
+        "type": "failed_sync_count",
+        "threshold": 1,
+        "description": "Pair SLOG '>STC' / '<STC' events. A sync failed if, between them, Revit logged an exception (System./Autodesk./Microsoft.*Exception) or a dialog whose Id contains Could_Not / Fail / Error / Cannot / Unable. Report failed vs succeeded counts; if none succeeded, warn that changes exist only locally."
+      },
+      "context": "Seen in Revit 2025.4.2 with cloud models: every sync ended with TaskDialog_Operation_Could_Not_Be_Completed.",
+      "title": {
+        "uk": "Синхронізація з центральною моделлю не вдалася",
+        "en": "Synchronize with Central failed"
+      },
+      "cause": {
+        "uk": "Revit почав синхронізацію, але під час неї сталася помилка, і зміни не були відправлені в центральну модель. Поки синхронізація не пройде успішно, ваші зміни є лише у локальній копії, а колеги їх не бачать.",
+        "en": "Revit started a sync, but an error occurred during it and your changes were not sent to the central model. Until a sync succeeds, your changes exist only in your local copy and your colleagues cannot see them."
+      },
+      "fix": {
+        "uk": [
+          "Не закривайте модель без збереження: спершу зробіть Save, щоб локальна копія мала всі зміни.",
+          "Подивіться на першу помилку нижче: якщо для неї є окреме правило в цьому звіті, виконайте його кроки.",
+          "Закрийте Revit повністю, запустіть знову, відкрийте модель і повторіть Synchronize with Central.",
+          "Якщо синхронізація далі не вдається, запустіть Revit без сторонніх add-in'ів і спробуйте ще раз; для хмарних моделей перевірте з'єднання з Autodesk Docs."
+        ],
+        "en": [
+          "Do not close the model without saving: run Save first so the local copy keeps all changes.",
+          "Look at the first error below: if this report has a separate finding for it, follow those steps.",
+          "Close Revit completely, start it again, open the model and retry Synchronize with Central.",
+          "If sync still fails, start Revit without third-party add-ins and try again; for cloud models check the connection to Autodesk Docs."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: \"Sync with central failed... This operation could not be completed\"",
+          "url": "https://autodesk.com/support/technical/article/Sync-with-central-failed-This-operation-could-not-be-completed-infrequently-received-when-syncing-from-Revit"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "metric-shutdown-incomplete",
+      "category": "crash",
+      "severity": "low",
+      "match": {},
+      "metric": {
+        "type": "exit_requested_without_finish",
+        "threshold": 1,
+        "description": "The user requested exit (Jrn.Command ID_APP_EXIT or ' [Jrn.CloseRevitMainFrame]') but the journal has no 'finished recording journal file'. Distinguishes a crash/hang during shutdown from a crash during work (metric-journal-no-normal-exit)."
+      },
+      "context": "Very common: in 52 of 144 journals on a test PC (Revit 2025-2027) the session ended this way.",
+      "title": {
+        "uk": "Revit не завершив закриття до кінця",
+        "en": "Revit did not finish shutting down after you closed it"
+      },
+      "cause": {
+        "uk": "Ви закрили Revit, але процес зупинився (впав або був примусово завершений) ще до того, як Revit дописав журнал. Зазвичай це не шкодить роботі, якщо моделі були збережені й синхронізовані перед закриттям. Часто таке спричиняють add-in'и, які вивантажуються під час закриття.",
+        "en": "You closed Revit, but the process stopped (crashed or was force-closed) before Revit finished writing the journal. This is usually harmless if your models were saved and synchronized before closing. It is often caused by add-ins being unloaded during shutdown."
+      },
+      "fix": {
+        "uk": [
+          "Перед закриттям Revit завжди робіть Save або Synchronize with Central.",
+          "Якщо Revit часто зависає під час закриття, подивіться останній рядок журналу нижче: він показує, на чому Revit зупинився (наприклад, вивантаження add-in'ів).",
+          "Перевірте, чи проблема зникає, якщо тимчасово вимкнути сторонні add-in'и."
+        ],
+        "en": [
+          "Always Save or Synchronize with Central before closing Revit.",
+          "If Revit often hangs while closing, look at the last journal line below: it shows what Revit was doing when it stopped (for example unloading add-ins).",
+          "Check whether the problem goes away with third-party add-ins temporarily disabled."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Revit journal format reference (this project)",
+          "url": "https://github.com/basepointlabs-io/journal-files/blob/main/knowledge-base/notes/journal-format.md"
+        }
+      ],
+      "confidence": "community",
+      "related": []
     }
   ]
 }

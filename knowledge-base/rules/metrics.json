@@ -37,9 +37,18 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error and Cannot Continue", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
-        { "title": "Journalysis Journal.WasSessionTerminatedProperly (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
-        { "title": "Real R2015 crash journal ending abruptly (OTOY forum attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" }
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error and Cannot Continue",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        },
+        {
+          "title": "Journalysis Journal.WasSessionTerminatedProperly (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+        },
+        {
+          "title": "Real R2015 crash journal ending abruptly (OTOY forum attachment)",
+          "url": "https://render.otoy.com/forum/download/file.php?id=38838"
+        }
       ],
       "confidence": "official"
     },
@@ -76,8 +85,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Revit Has Encountered a Fatal Error and Cannot Continue (check the journal)", "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
-        { "title": "Real R2017 fatal-error excerpt (revitpythonshell issue #43)", "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43" }
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal Error and Cannot Continue (check the journal)",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        },
+        {
+          "title": "Real R2017 fatal-error excerpt (revitpythonshell issue #43)",
+          "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43"
+        }
       ],
       "confidence": "official"
     },
@@ -112,8 +127,14 @@
         ]
       },
       "sources": [
-        { "title": "IMAGINiT: Journal Reader (Part 1) - files in the Journals folder", "url": "https://resources.imaginit.com/revit/imaginit-utilities-for-revit-journal-reader-part-1" },
-        { "title": "amcgoey/Synthetic-Revit revit_journal_tool.py (dump detection)", "url": "https://github.com/amcgoey/Synthetic-Revit/blob/HEAD/.agents/plugins/RevitTDDWorkflow/scripts/revit_journal_tool.py" }
+        {
+          "title": "IMAGINiT: Journal Reader (Part 1) - files in the Journals folder",
+          "url": "https://resources.imaginit.com/revit/imaginit-utilities-for-revit-journal-reader-part-1"
+        },
+        {
+          "title": "amcgoey/Synthetic-Revit revit_journal_tool.py (dump detection)",
+          "url": "https://github.com/amcgoey/Synthetic-Revit/blob/HEAD/.agents/plugins/RevitTDDWorkflow/scripts/revit_journal_tool.py"
+        }
       ],
       "confidence": "community"
     },
@@ -152,7 +173,10 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (narrow the scope: one model / one computer / one network)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (narrow the scope: one model / one computer / one network)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        }
       ],
       "confidence": "official"
     },
@@ -163,7 +187,10 @@
       "match": {},
       "metric": {
         "type": "last_ram_available_before_abnormal_end_mb",
-        "threshold": { "absolute_mb": 1024, "fraction_of_total": 0.05 },
+        "threshold": {
+          "absolute_mb": 1024,
+          "fraction_of_total": 0.05
+        },
         "description": "Only when metric-journal-no-normal-exit fires. Take the last machine free-RAM reading in the final 200 lines: RAM Avail after '->' in 'Delta VM: ...; RAM: Avail <d> -> <MB> MB', or <Available> in 'RAM Statistics: <Available> / <Total> <InUse>=InUse <Peak>=Peak'. Fire if it is < 1024 MB OR < 5% of total RAM (Total from RAM Statistics; fallback TotalVisibleMemorySize/1024). Report the value, total RAM and Revit's InUse/Peak at that moment."
       },
       "context": "Crash during a memory-heavy operation (open, print, export, upgrade, render)",
@@ -193,9 +220,18 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
-        { "title": "Revit Clinic (Autodesk support blog): A Journal File Story Part 3 - memory", "url": "https://web.archive.org/web/2016/http://revitclinic.typepad.com/my_weblog/2009/03/a-journal-file-story-part-3.html" },
-        { "title": "Journalysis wiki: JournalMemoryMetrics", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies to improve performance",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        },
+        {
+          "title": "Revit Clinic (Autodesk support blog): A Journal File Story Part 3 - memory",
+          "url": "https://web.archive.org/web/2016/http://revitclinic.typepad.com/my_weblog/2009/03/a-journal-file-story-part-3.html"
+        },
+        {
+          "title": "Journalysis wiki: JournalMemoryMetrics",
+          "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types"
+        }
       ],
       "confidence": "official"
     },
@@ -206,8 +242,11 @@
       "match": {},
       "metric": {
         "type": "min_ram_available_mb",
-        "threshold": { "absolute_mb": 2048, "fraction_of_total": 0.10 },
-        "description": "Compute min_ram_avail_mb over all Delta VM 'RAM: Avail ... -> X MB' values and all 'RAM Statistics: X / Total' values in the session. Fire if min < 2048 MB OR min < 10% of total RAM. Report when it happened (block timestamp) and the nearest preceding Jrn.Command. Do not use VM Avail: on 64-bit it is the address space (~8 or ~128 TB) and is meaningless here."
+        "threshold": {
+          "absolute_mb": 1024,
+          "fraction_of_total": 0.1
+        },
+        "description": "Compute min_ram_avail_mb over all Delta VM 'RAM: Avail ... -> X MB' values and all 'RAM Statistics: X / Total' values in the session. Fire if min < 1024 MB OR min < 10% of total RAM (2048 MB fired on 2/3 of journals from an 8 GB PC with ~20% free). Report when it happened (block timestamp) and the nearest preceding Jrn.Command. Do not use VM Avail: on 64-bit it is the address space (~8 or ~128 TB) and is meaningless here."
       },
       "context": "Long sessions, large models, many links, rendering/printing",
       "versions": "R2015-R2024",
@@ -234,8 +273,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
-        { "title": "Journalysis Journal.MinRAMAvailable (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies to improve performance",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        },
+        {
+          "title": "Journalysis Journal.MinRAMAvailable (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+        }
       ],
       "confidence": "official"
     },
@@ -272,8 +317,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
-        { "title": "Journalysis Journal.MaxRAMPeak (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies to improve performance",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        },
+        {
+          "title": "Journalysis Journal.MaxRAMPeak (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+        }
       ],
       "confidence": "official"
     },
@@ -308,7 +359,10 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies to improve performance",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
       ],
       "confidence": "official"
     },
@@ -345,7 +399,10 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance (RAM ~20x central file size)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies to improve performance (RAM ~20x central file size)",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
       ],
       "confidence": "official"
     },
@@ -356,7 +413,10 @@
       "match": {},
       "metric": {
         "type": "session_hours_and_ram_growth",
-        "threshold": { "session_hours": 8, "revit_ram_growth_mb": 8192 },
+        "threshold": {
+          "session_hours": 8,
+          "revit_ram_growth_mb": 8192
+        },
         "description": "session_hours = (last timestamp - first timestamp). growth = last Revit RAM Used (Delta VM 'RAM: ... Used x -> Y MB' or RAM Statistics InUse) minus the first such value after the first model open. Fire if session_hours >= 8 AND growth >= 8192 MB. Suggests restarting Revit periodically."
       },
       "context": "All-day sessions without restart",
@@ -380,7 +440,10 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies (restart Revit before memory-heavy tasks)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies (restart Revit before memory-heavy tasks)",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
       ],
       "confidence": "community"
     },
@@ -417,7 +480,10 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis wiki: JournalGUIResourceUsage", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" }
+        {
+          "title": "Journalysis wiki: JournalGUIResourceUsage",
+          "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types"
+        }
       ],
       "confidence": "community"
     },
@@ -454,8 +520,14 @@
         ]
       },
       "sources": [
-        { "title": "Real R2024 journal with hardware support flags (BrokawSkills)", "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt" },
-        { "title": "Real R2015 journal with hardware support flags (OTOY attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" }
+        {
+          "title": "Real R2024 journal with hardware support flags (BrokawSkills)",
+          "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt"
+        },
+        {
+          "title": "Real R2015 journal with hardware support flags (OTOY attachment)",
+          "url": "https://render.otoy.com/forum/download/file.php?id=38838"
+        }
       ],
       "confidence": "community"
     },
@@ -490,8 +562,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (Update Revit)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
-        { "title": "Autodesk Help: Workshared Model Won't Synchronize (everyone on the latest build)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" }
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (Update Revit)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        },
+        {
+          "title": "Autodesk Help: Workshared Model Won't Synchronize (everyone on the latest build)",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm"
+        }
       ],
       "confidence": "official"
     },
@@ -524,8 +602,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Workshared Model Won't Synchronize (make sure everyone is on the latest build)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" },
-        { "title": "Journalysis WorksharingLog.AllSessionsUseSameBuild", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+        {
+          "title": "Autodesk Help: Workshared Model Won't Synchronize (make sure everyone is on the latest build)",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm"
+        },
+        {
+          "title": "Journalysis WorksharingLog.AllSessionsUseSameBuild",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        }
       ],
       "confidence": "official"
     },
@@ -560,8 +644,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help (2020): Memory-based strategies (restart before upgrading models)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
-        { "title": "Journalysis LoadedModel.Version ('File was saved in')", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/LoadedModel.cs" }
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies (restart before upgrading models)",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        },
+        {
+          "title": "Journalysis LoadedModel.Version ('File was saved in')",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/LoadedModel.cs"
+        }
       ],
       "confidence": "official"
     },
@@ -598,8 +688,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis Journal.StartupTime (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
-        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (one computer: check add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+        {
+          "title": "Journalysis Journal.StartupTime (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+        },
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (one computer: check add-ins)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        }
       ],
       "confidence": "community"
     },
@@ -638,8 +734,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis LoadedModelAnalyzer (open events and 'Loaded' marker)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedModelAnalyzer.cs" },
-        { "title": "Journalysis WorksharingSession.GetLoadDuration", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+        {
+          "title": "Journalysis LoadedModelAnalyzer (open events and 'Loaded' marker)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedModelAnalyzer.cs"
+        },
+        {
+          "title": "Journalysis WorksharingSession.GetLoadDuration",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        }
       ],
       "confidence": "community"
     },
@@ -678,9 +780,18 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis wiki: Worksharing Log Dictionary (STC = Synchronize with Central)", "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary" },
-        { "title": "Journalysis WorksharingSession.GetSyncEvents (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" },
-        { "title": "jeremytammik/tbc CommandIds.txt (ID_FILE_SAVE_TO_MASTER, ID_FILE_SAVE_TO_MASTER_SHORTCUT)", "url": "https://github.com/jeremytammik/tbc/blob/HEAD/a/zip/CommandIds.txt" }
+        {
+          "title": "Journalysis wiki: Worksharing Log Dictionary (STC = Synchronize with Central)",
+          "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary"
+        },
+        {
+          "title": "Journalysis WorksharingSession.GetSyncEvents (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        },
+        {
+          "title": "jeremytammik/tbc CommandIds.txt (ID_FILE_SAVE_TO_MASTER, ID_FILE_SAVE_TO_MASTER_SHORTCUT)",
+          "url": "https://github.com/jeremytammik/tbc/blob/HEAD/a/zip/CommandIds.txt"
+        }
       ],
       "confidence": "community"
     },
@@ -719,8 +830,14 @@
         ]
       },
       "sources": [
-        { "title": "Autodesk Help: Workshared Model Won't Synchronize (audit, check journal for corrupt families)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" },
-        { "title": "Journalysis WorksharingSession.GetSyncEvents (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+        {
+          "title": "Autodesk Help: Workshared Model Won't Synchronize (audit, check journal for corrupt families)",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm"
+        },
+        {
+          "title": "Journalysis WorksharingSession.GetSyncEvents (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        }
       ],
       "confidence": "community"
     },
@@ -757,8 +874,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis SyncEvent.WasAborted (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" },
-        { "title": "Journalysis wiki: Worksharing Log Dictionary", "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary" }
+        {
+          "title": "Journalysis SyncEvent.WasAborted (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        },
+        {
+          "title": "Journalysis wiki: Worksharing Log Dictionary",
+          "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary"
+        }
       ],
       "confidence": "community"
     },
@@ -793,7 +916,10 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis SyncEvent.ReloadLatestCount (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+        {
+          "title": "Journalysis SyncEvent.ReloadLatestCount (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py"
+        }
       ],
       "confidence": "community"
     },
@@ -828,7 +954,10 @@
         ]
       },
       "sources": [
-        { "title": "Real journal excerpts with createNewLocal lines (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" }
+        {
+          "title": "Real journal excerpts with createNewLocal lines (rhino.inside-revit issue #248)",
+          "url": "https://github.com/mcneel/rhino.inside-revit/issues/248"
+        }
       ],
       "confidence": "community"
     },
@@ -837,8 +966,14 @@
       "category": "addin",
       "severity": "high",
       "match": {
-        "any": ["API_ERROR { Starting External Application", "API_ERROR { Starting External DB Application", "Revit cannot run the external application"],
-        "regex": ["API_ERROR \\{ Starting External (DB )?Application: ([^,]+),"]
+        "any": [
+          "API_ERROR { Starting External Application",
+          "API_ERROR { Starting External DB Application",
+          "Revit cannot run the external application"
+        ],
+        "regex": [
+          "API_ERROR \\{ Starting External (DB )?Application: ([^,]+),"
+        ]
       },
       "metric": {
         "type": "failed_addin_starts",
@@ -868,8 +1003,14 @@
         ]
       },
       "sources": [
-        { "title": "Real R2024 journal excerpt: API_ERROR Starting External Application + TaskDialog (bringfire/bim-agent-lab)", "url": "https://github.com/bringfire/bim-agent-lab/blob/HEAD/projects/revit-readiness/docs/verification/host-diagnostic-startup-evidence/repeated-startup-journal.txt" },
-        { "title": "Journalysis LoadedAssemblyAnalyzer (parsing of Starting External Application)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs" }
+        {
+          "title": "Real R2024 journal excerpt: API_ERROR Starting External Application + TaskDialog (bringfire/bim-agent-lab)",
+          "url": "https://github.com/bringfire/bim-agent-lab/blob/HEAD/projects/revit-readiness/docs/verification/host-diagnostic-startup-evidence/repeated-startup-journal.txt"
+        },
+        {
+          "title": "Journalysis LoadedAssemblyAnalyzer (parsing of Starting External Application)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs"
+        }
       ],
       "confidence": "community"
     },
@@ -878,7 +1019,11 @@
       "category": "addin",
       "severity": "medium",
       "match": {
-        "any": ["Managed exception caught from external API application", "was thrown from a handler of", "An external service execution throws"]
+        "any": [
+          "Managed exception caught from external API application",
+          "was thrown from a handler of",
+          "An external service execution throws"
+        ]
       },
       "metric": {
         "type": "addin_exception_count_by_application",
@@ -908,8 +1053,14 @@
         ]
       },
       "sources": [
-        { "title": "Real journal excerpts with managed exceptions (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" },
-        { "title": "Journalysis RecordedExceptionAnalyzer (exception patterns)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/RecordedExceptionAnalyzer.cs" }
+        {
+          "title": "Real journal excerpts with managed exceptions (rhino.inside-revit issue #248)",
+          "url": "https://github.com/mcneel/rhino.inside-revit/issues/248"
+        },
+        {
+          "title": "Journalysis RecordedExceptionAnalyzer (exception patterns)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/RecordedExceptionAnalyzer.cs"
+        }
       ],
       "confidence": "community"
     },
@@ -920,7 +1071,10 @@
       "match": {},
       "metric": {
         "type": "addin_activity_before_abnormal_end",
-        "threshold": { "last_user_actions": 3, "seconds": 120 },
+        "threshold": {
+          "last_user_actions": 3,
+          "seconds": 120
+        },
         "description": "Only when metric-journal-no-normal-exit fires. Look at the last 3 user actions (Jrn.* after 'E timestamps) before the end. Fire if one of them is Jrn.RibbonEvent \"Execute external command:<ctrl>:<Class>\", Jrn.AddInEvent, or a Jrn.Command with an add-in/Dynamo ID (e.g. ID_VISUAL_PROGRAMMING_DYNAMO), AND it occurred within 120 s of the last timestamp, OR an 'API External Command Time' / managed add-in exception is among the last 50 lines. Report the add-in class/name (from the RibbonEvent text or the matching 'Starting External Application' line)."
       },
       "context": "Crash while an add-in command was running",
@@ -946,9 +1100,18 @@
         ]
       },
       "sources": [
-        { "title": "Real R2015 crash journal: crash right after 'Execute external command' (OTOY attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" },
-        { "title": "Real R2019 excerpt: Dynamo AddInEvent then ExceptionCode (DynamoRevit issue #2066)", "url": "https://github.com/DynamoDS/DynamoRevit/issues/2066" },
-        { "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+        {
+          "title": "Real R2015 crash journal: crash right after 'Execute external command' (OTOY attachment)",
+          "url": "https://render.otoy.com/forum/download/file.php?id=38838"
+        },
+        {
+          "title": "Real R2019 excerpt: Dynamo AddInEvent then ExceptionCode (DynamoRevit issue #2066)",
+          "url": "https://github.com/DynamoDS/DynamoRevit/issues/2066"
+        },
+        {
+          "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        }
       ],
       "confidence": "community"
     },
@@ -957,7 +1120,9 @@
       "category": "addin",
       "severity": "low",
       "match": {
-        "regex": ["^\\s*'\\s*(\\d+\\.\\d+)!*\\s+\\d+:(?:!!!BIG_GAP\\s+|<+)API External Command Time"]
+        "regex": [
+          "^\\s*'\\s*(\\d+\\.\\d+)!*\\s+\\d+:(?:!!!BIG_GAP\\s+|<+)API External Command Time"
+        ]
       },
       "metric": {
         "type": "external_command_seconds",
@@ -985,8 +1150,14 @@
         ]
       },
       "sources": [
-        { "title": "Real journal excerpts with 'API External Command Time' (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" },
-        { "title": "Real R2017 excerpt with BIG_GAP API External Command Time (revitpythonshell issue #43)", "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43" }
+        {
+          "title": "Real journal excerpts with 'API External Command Time' (rhino.inside-revit issue #248)",
+          "url": "https://github.com/mcneel/rhino.inside-revit/issues/248"
+        },
+        {
+          "title": "Real R2017 excerpt with BIG_GAP API External Command Time (revitpythonshell issue #43)",
+          "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43"
+        }
       ],
       "confidence": "community"
     },
@@ -1021,8 +1192,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis LoadedAssemblyAnalyzer (inventory of loaded assemblies)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs" },
-        { "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+        {
+          "title": "Journalysis LoadedAssemblyAnalyzer (inventory of loaded assemblies)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs"
+        },
+        {
+          "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        }
       ],
       "confidence": "community"
     },
@@ -1057,8 +1234,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis wiki: JournalTimeStamp (measure time between events)", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" },
-        { "title": "Autodesk Help (2020): Memory-based strategies (restart before printing/exporting)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+        {
+          "title": "Journalysis wiki: JournalTimeStamp (measure time between events)",
+          "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types"
+        },
+        {
+          "title": "Autodesk Help (2020): Memory-based strategies (restart before printing/exporting)",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
       ],
       "confidence": "community"
     },
@@ -1067,8 +1250,13 @@
       "category": "other",
       "severity": "info",
       "match": {
-        "any": ["started journal file playback", "finished journal file playback"],
-        "regex": ["stopped at line .* journal file playback"]
+        "any": [
+          "started journal file playback",
+          "finished journal file playback"
+        ],
+        "regex": [
+          "stopped at line .* journal file playback"
+        ]
       },
       "metric": {
         "type": "playback_state",
@@ -1094,8 +1282,14 @@
         ]
       },
       "sources": [
-        { "title": "Journalysis Journal.IsInPlaybackMode / WasPlaybackInterrupted (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
-        { "title": "Real R2024 playback journal (BrokawSkills)", "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt" }
+        {
+          "title": "Journalysis Journal.IsInPlaybackMode / WasPlaybackInterrupted (source)",
+          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+        },
+        {
+          "title": "Real R2024 playback journal (BrokawSkills)",
+          "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt"
+        }
       ],
       "confidence": "community"
     }

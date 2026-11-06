@@ -6,3 +6,10 @@ journals/
 
 # macOS
 .DS_Store
+
+# .NET build output
+bin/
+obj/
+*.user
+.vs/
+publish/

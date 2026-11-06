@@ -1,0 +1,36 @@
+<Application x:Class="RevitJournal.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:RevitJournal.App"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <local:SeverityBrushConverter x:Key="SeverityBrush" />
+    <local:StatusBrushConverter x:Key="StatusBrush" />
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+    <SolidColorBrush x:Key="Ink" Color="#1F2328" />
+    <SolidColorBrush x:Key="Muted" Color="#656D76" />
+    <SolidColorBrush x:Key="Line" Color="#D8DEE4" />
+    <SolidColorBrush x:Key="Panel" Color="#F6F8FA" />
+    <SolidColorBrush x:Key="Accent" Color="#0969DA" />
+
+    <Style TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource Ink}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="ToolbarButton" TargetType="Button">
+      <Setter Property="Padding" Value="12,5" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+    </Style>
+
+    <Style x:Key="SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="Margin" Value="0,18,0,6" />
+    </Style>
+  </Application.Resources>
+</Application>

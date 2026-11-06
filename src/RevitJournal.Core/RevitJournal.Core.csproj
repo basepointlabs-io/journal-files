@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>RevitJournal.Core</RootNamespace>
+  </PropertyGroup>
+
+  <!-- The rule base ships inside the assembly so the analyzer works fully offline. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\knowledge-base\rules\*.json" LogicalName="rules/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="RevitJournal.Tests" />
+  </ItemGroup>
+
+</Project>

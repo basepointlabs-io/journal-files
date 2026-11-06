@@ -985,10 +985,7 @@
         "any": [
           "Why no ElemRec?",
           "Missing owner, or cycle of owners!",
-          "Failed to translate big ElemId.",
-          "OwnerGraph\\KingOf.cpp",
-          "Family\\FamilyDocument.cpp",
-          "ElemTable\\Marshaller.cpp"
+          "Failed to translate big ElemId."
         ],
         "regex": [
           "Assertion failed: line \\d+ of ElemTable\\\\Marshaller\\.cpp",
