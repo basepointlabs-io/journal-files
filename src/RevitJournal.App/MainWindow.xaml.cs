@@ -1,49 +1,171 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Reporting;
+using RevitJournal.Core.Symptoms;
 
 namespace RevitJournal.App;
 
 public partial class MainWindow : Window
 {
     private readonly Analyzer _analyzer = Analyzer.CreateDefault();
+    private readonly SymptomAdvisor _advisor;
     private readonly ObservableCollection<JournalItem> _items = [];
     private readonly Dictionary<DateOnly, DayGroup> _days = [];
     private readonly DispatcherTimer _liveTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private CancellationTokenSource? _scan;
+    private TaskCompletionSource _analyzed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private Symptom? _shownSymptom;
+    private Hint? _hint;
 
     public MainWindow()
     {
         InitializeComponent();
+        _advisor = SymptomAdvisor.CreateDefault(_analyzer.Rules);
+        SymptomCards.ItemsSource = _advisor.Symptoms.Select(s => new SymptomCard(s)).ToList();
+
         Sessions.ItemsSource = _items;
         var view = CollectionViewSource.GetDefaultView(_items);
         view.SortDescriptions.Add(new SortDescription(nameof(JournalItem.SortKey), ListSortDirection.Descending));
         view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(JournalItem.Day)));
+        view.Filter = o => o is JournalItem i && MatchesVersion(i);
+
         Loaded += async (_, _) =>
         {
             await ReloadAsync();
             // "Open with" / drag onto the exe: analyze the given journals first.
-            foreach (string path in Environment.GetCommandLineArgs().Skip(1).Where(File.Exists))
+            string[] args = Environment.GetCommandLineArgs()[1..];
+            foreach (string path in args.Where(File.Exists))
                 await OpenExternalAsync(path);
+            // --symptom <id> opens the answer directly (e.g. from a desktop shortcut "Revit is slow").
+            int at = Array.IndexOf(args, "--symptom");
+            if (at >= 0 && at + 1 < args.Length && _advisor.Symptoms.FirstOrDefault(s => s.Id == args[at + 1]) is { } symptom)
+                await ShowDiagnosisAsync(symptom);
         };
         _liveTimer.Tick += async (_, _) => await RefreshChangedAsync();
         _liveTimer.Start();
     }
+
+    // ---- pages -------------------------------------------------------------------------------------------
+
+    private void ShowPage(FrameworkElement page)
+    {
+        foreach (var p in new FrameworkElement[] { HomePage, AnswerPage, HistoryPage })
+            p.Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
+        if (page != AnswerPage)
+            _shownSymptom = null;
+    }
+
+    private void OnHome(object sender, RoutedEventArgs e) => ShowPage(HomePage);
+
+    private void OnHistory(object sender, RoutedEventArgs e) => ShowPage(HistoryPage);
+
+    private async void OnSymptomClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is SymptomCard card)
+            await ShowDiagnosisAsync(card.Symptom);
+    }
+
+    private async void OnHintClick(object sender, RoutedEventArgs e)
+    {
+        if (_hint is not null)
+            await ShowDiagnosisAsync(_hint.Symptom);
+    }
+
+    private async Task ShowDiagnosisAsync(Symptom symptom)
+    {
+        ShowPage(AnswerPage);
+        _shownSymptom = symptom;
+        if (!_analyzed.Task.IsCompleted)
+        {
+            Answer.Content = new System.Windows.Controls.TextBlock
+            {
+                Text = "Checking the Revit journals on this computer…", Margin = new Thickness(40, 32, 40, 0), FontSize = 16,
+            };
+            await _analyzed.Task;
+            if (_shownSymptom != symptom)
+                return; // the user went elsewhere meanwhile
+        }
+        // A running Revit may have written more since the last scan; "slow / not responding" needs the latest state.
+        await RefreshChangedAsync();
+        Answer.Content = new DiagnosisView(_advisor.Diagnose(symptom, VisibleResults(), DateTime.Now));
+        AnswerPage.ScrollToTop();
+    }
+
+    private void OnOpenFullReport(object sender, RoutedEventArgs e)
+    {
+        if (Answer.Content is not DiagnosisView { Diagnosis.Session: { } session })
+            return;
+        var item = _items.FirstOrDefault(i => ReferenceEquals(i.Result, session));
+        if (item is null)
+            return;
+        if (item.Day is { } day)
+            day.IsExpanded = true;
+        ShowPage(HistoryPage);
+        Sessions.SelectedItem = item;
+        Sessions.ScrollIntoView(item);
+    }
+
+    // ---- Revit version -----------------------------------------------------------------------------------
+
+    private string? SelectedVersion => (VersionPicker.SelectedItem as VersionOption)?.Version;
+
+    private bool MatchesVersion(JournalItem i) =>
+        SelectedVersion is not { } v || string.IsNullOrEmpty(i.File.RevitVersion) || i.File.RevitVersion == v;
+
+    private List<AnalysisResult> VisibleResults() =>
+        [.. _items.Where(i => MatchesVersion(i) && i.Result is not null).Select(i => i.Result!)];
+
+    /// <summary>Several Revit versions can be installed; default to the one used most recently.</summary>
+    private void FillVersions()
+    {
+        var versions = _items.Select(i => i.File.RevitVersion).Where(v => v.Length > 0).Distinct().OrderDescending().ToList();
+        string? keep = SelectedVersion;
+        string? newest = _items.Where(i => i.File.RevitVersion.Length > 0).MaxBy(i => i.File.LastWrite)?.File.RevitVersion;
+
+        var options = versions.Select(v => new VersionOption(v, $"Revit {v}")).ToList();
+        if (versions.Count > 1)
+            options.Insert(0, new VersionOption(null, "All versions"));
+        VersionPicker.ItemsSource = options;
+        VersionPicker.SelectedItem = options.FirstOrDefault(o => o.Version == (keep ?? newest)) ?? options.FirstOrDefault();
+        VersionPicker.IsEnabled = options.Count > 1;
+    }
+
+    private async void OnVersionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        CollectionViewSource.GetDefaultView(_items).Refresh();
+        UpdateHomeText();
+        if (_analyzed.Task.IsCompleted)
+        {
+            UpdateHints();
+            if (_shownSymptom is { } s)
+                await ShowDiagnosisAsync(s);
+        }
+    }
+
+    private void UpdateHomeText()
+    {
+        string which = SelectedVersion is { } v ? $"Revit {v}" : "all Revit versions";
+        HomeSubtitle.Text = $"Pick what you see. We'll check the journals of {which} on this computer.";
+    }
+
+    // ---- loading and analysis ----------------------------------------------------------------------------
 
     /// <summary>Lists every journal on this PC and analyzes them in the background, newest first.</summary>
     private async Task ReloadAsync()
     {
         _scan?.Cancel();
         var cts = _scan = new CancellationTokenSource();
+        if (_analyzed.Task.IsCompleted)
+            _analyzed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var files = await Task.Run(() => JournalLocator.FindAll());
         var external = _items.Where(i => string.IsNullOrEmpty(i.File.RevitVersion)).ToList(); // files opened by hand
@@ -53,15 +175,19 @@ public partial class MainWindow : Window
             Add(item);
         foreach (var f in files)
             Add(new JournalItem(f));
+        FillVersions();
+        UpdateHomeText();
 
         if (_items.Count == 0)
         {
             StatusLine.Text = $"No Revit journals found in {JournalLocator.DefaultRoot}. Use \"Open journal…\" or drag a file here.";
+            _analyzed.TrySetResult();
             return;
         }
+
         var pending = _items.Where(i => i.Result is null).ToList();
         int done = 0;
-        StatusLine.Text = $"Analyzing {pending.Count} journals…";
+        StatusLine.Text = $"Checking {pending.Count} journals…";
         try
         {
             await Parallel.ForEachAsync(pending, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cts.Token },
@@ -69,14 +195,34 @@ public partial class MainWindow : Window
                 {
                     await AnalyzeAsync(item);
                     int n = Interlocked.Increment(ref done);
-                    await Dispatcher.InvokeAsync(() => StatusLine.Text = $"Analyzed {n} of {pending.Count} journals");
+                    await Dispatcher.InvokeAsync(() => StatusLine.Text = $"Checked {n} of {pending.Count} journals");
                 });
             int problems = _items.Count(i => i.StatusKey is "crash" or "warning");
             StatusLine.Text = $"{_items.Count} journals · {problems} with problems or abnormal endings";
-            UpdateHistoryBanner();
+            UpdateHints();
+            _analyzed.TrySetResult();
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private void UpdateHints()
+    {
+        var results = VisibleResults();
+        _hint = _advisor.Suggest(results, DateTime.Now);
+        HintText.Text = _hint?.Text ?? "";
+        HintBanner.Visibility = _hint is null ? Visibility.Collapsed : Visibility.Visible;
+
+        if (History.RepeatedCrashes(_analyzer.Rules, results) is { } f)
+        {
+            HistoryTitle.Text = f.Rule.Title.En;
+            HistoryFacts.ItemsSource = f.Facts;
+            HistoryBanner.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            HistoryBanner.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -113,21 +259,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateHistoryBanner()
-    {
-        var local = _items.Where(i => !string.IsNullOrEmpty(i.File.RevitVersion) && i.Result is not null).Select(i => i.Result!);
-        if (History.RepeatedCrashes(_analyzer.Rules, local) is { } f)
-        {
-            HistoryTitle.Text = f.Rule.Title.En;
-            HistoryFacts.ItemsSource = f.Facts;
-            HistoryBanner.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            HistoryBanner.Visibility = Visibility.Collapsed;
-        }
-    }
-
     /// <summary>Adds a session to the list and to its day group (one shared DayGroup per date).</summary>
     private void Add(JournalItem item)
     {
@@ -139,6 +270,8 @@ public partial class MainWindow : Window
         day.Recompute();
         _items.Add(item);
     }
+
+    // ---- history page ------------------------------------------------------------------------------------
 
     private void ShowReport(JournalItem? item)
     {
@@ -152,7 +285,7 @@ public partial class MainWindow : Window
             Report.Content = null;
             EmptyState.Visibility = Visibility.Visible;
             EmptyState.Text = item is null
-                ? "Select a session on the left, or drag a journal file (journal.NNNN.txt) onto this window."
+                ? "Open a day on the left and select a session, or drag a journal file (journal.NNNN.txt) onto this window."
                 : item.Error ?? "Analyzing…";
         }
     }
@@ -168,6 +301,7 @@ public partial class MainWindow : Window
         }
         if (item.Day is { } day)
             day.IsExpanded = true;
+        ShowPage(HistoryPage);
         Sessions.SelectedItem = item;
         Sessions.ScrollIntoView(item);
         if (item.Result is null)

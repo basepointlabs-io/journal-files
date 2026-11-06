@@ -13,8 +13,9 @@ dotnet publish src\RevitJournal.App\RevitJournal.App.csproj -c Release -r win-x6
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish\win-x64
 ```
 
-- `RevitJournalAnalyzer.exe` — the app: lists every journal on the PC (all Revit versions), status per session, report per journal. Drag a journal onto the window or pass it as an argument.
-- `rja.exe <journal.txt>` — the same report in the console; `rja <folder>|--local` lists sessions; `rja --local --stats` shows how often each rule fires (use it to find noisy rules).
+- `RevitJournalAnalyzer.exe` — the app. It starts with **"What's wrong with Revit?"**: the user picks a symptom (crashed, won't sync, slow) and gets the answer for the relevant session of the selected Revit version, plus a hint when a recent crash or failed sync is found. **History** lists every session grouped by day with a full report each. Drag a journal onto the window or pass it as an argument; `--symptom crashed|wont-sync|slow` opens an answer directly.
+- Symptoms and their fallback checklists live in `knowledge-base/symptoms.json`.
+- `rja.exe <journal.txt>` — the same report in the console; `rja <folder>|--local` lists sessions; `rja --local --stats` shows how often each rule fires (use it to find noisy rules); `rja --local --symptom slow [--version 2025]` prints the start-screen answer.
 - Development from a Mac: `tools/vm.sh sync` copies the tree to the Windows VM, `tools/vm.sh run "<cmd>"` runs a command there.
 
 ## Structure

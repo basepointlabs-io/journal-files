@@ -2,6 +2,7 @@ using System.Diagnostics;
 using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Reporting;
+using RevitJournal.Core.Symptoms;
 
 // rja <journal.txt>         full report for one journal
 // rja <folder> | --local    one line per journal (folder, or all Revit versions on this PC)
@@ -34,6 +35,41 @@ if (journals is null)
 }
 
 var total = Stopwatch.StartNew();
+
+// rja --local --symptom crashed|wont-sync|slow : what the start screen would answer
+if (Array.IndexOf(args, "--symptom") is int si and >= 0 && si + 1 < args.Length)
+{
+    var advisor = SymptomAdvisor.CreateDefault(analyzer.Rules);
+    var symptom = advisor.Symptoms.FirstOrDefault(s => s.Id == args[si + 1]);
+    if (symptom is null)
+    {
+        Console.Error.WriteLine($"Unknown symptom. Use one of: {string.Join(", ", advisor.Symptoms.Select(s => s.Id))}");
+        return 2;
+    }
+    // --version 2025 : only that Revit version (several can be installed side by side)
+    string? version = Array.IndexOf(args, "--version") is int vi and >= 0 && vi + 1 < args.Length ? args[vi + 1] : null;
+    var all = journals.Where(j => version is null || j.RevitVersion == version)
+        .Select(j => analyzer.AnalyzeFile(j.Path)).ToList();
+    if (advisor.Suggest(all, DateTime.Now) is { } hint)
+        Console.WriteLine($"Hint: {hint.Text} [{hint.Symptom.Id}]\n");
+    var d = advisor.Diagnose(symptom, all, DateTime.Now);
+    Console.WriteLine($"{symptom.Title.En.ToUpperInvariant()}\n{d.Headline}");
+    if (d.Session is { } session)
+        Console.WriteLine($"(from {Path.GetFileName(session.Session.FilePath)})");
+    foreach (string fact in d.Facts)
+        Console.WriteLine($"  • {fact}");
+    foreach (var f in d.Findings)
+    {
+        Console.WriteLine($"  [{f.Severity}] {f.Rule.Title.En}");
+        foreach (string fact in f.Facts)
+            Console.WriteLine($"      ▸ {fact}");
+    }
+    Console.WriteLine(d.FoundSpecificCause ? "  (+ general checklist)" : "  No specific cause found; general checklist:");
+    int n = 1;
+    foreach (string step in symptom.Checklist.En)
+        Console.WriteLine($"    {n++}. {step}");
+    return 0;
+}
 
 // rja --local --stats : how often each rule fires across journals, to spot noisy rules
 if (args.Contains("--stats"))

@@ -8,6 +8,7 @@
   <!-- The rule base ships inside the assembly so the analyzer works fully offline. -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\knowledge-base\rules\*.json" LogicalName="rules/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\knowledge-base\symptoms.json" LogicalName="symptoms.json" />
   </ItemGroup>
 
   <ItemGroup>

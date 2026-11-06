@@ -11,6 +11,19 @@ public static class Fmt
 
     public static string Stamp(DateTime? t) => t?.ToString("yyyy-MM-dd HH:mm", C) ?? "unknown";
 
+    /// <summary>"today at 11:46", "yesterday at 09:12", "on Tue 03 Nov at 14:05".</summary>
+    public static string When(DateTime t, DateTime now)
+    {
+        string time = t.ToString("HH:mm", C);
+        return t.Date == now.Date ? $"today at {time}"
+            : t.Date == now.Date.AddDays(-1) ? $"yesterday at {time}"
+            : $"on {t.ToString("ddd dd MMM", C)} at {time}";
+    }
+
+    public static string Ago(TimeSpan d) => d.TotalMinutes < 1 ? "just now"
+        : d.TotalHours < 1 ? $"{(int)d.TotalMinutes} min ago"
+        : $"{(int)d.TotalHours} h {d.Minutes} min ago";
+
     public static string Mb(int mb) => mb >= 1024 ? (mb / 1024.0).ToString("0.0", C) + " GB" : mb.ToString(C) + " MB";
 
     public static string Duration(TimeSpan d) => d.TotalSeconds < 60

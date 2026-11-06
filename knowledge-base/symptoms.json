@@ -1,0 +1,80 @@
+{
+  "description": "Start-screen symptoms. Each symptom says which journal to look at and which rule categories are relevant; the checklist is shown when the journal has no specific finding. The app shows English (en); uk is an optional translation.",
+  "symptoms": [
+    {
+      "id": "crashed",
+      "icon": "💥",
+      "title": { "en": "Revit crashed or closed by itself", "uk": "Revit впав або закрився сам" },
+      "subtitle": { "en": "Fatal error, \"Revit has stopped working\", or it just disappeared", "uk": "Fatal error, «Revit перестав працювати» або просто зник" },
+      "journal": "last-abnormal-end",
+      "categories": ["crash", "serious-error", "memory", "addin", "graphics", "file-corruption"],
+      "exclude": ["metric-journal-no-normal-exit", "metric-crash-last-user-action", "metric-addin-inventory", "metric-total-ram-below-recommended"],
+      "checklist": {
+        "en": [
+          "Start Revit again and reopen the model. If Revit offers to recover a file, review it before saving over your local copy.",
+          "Install the latest update for your Revit version (Autodesk Access).",
+          "If it crashes in one model only: open that model with Audit, then save it.",
+          "If it crashes on this computer only: update the graphics driver and test with third-party add-ins disabled.",
+          "If it keeps crashing, send the journal file (and the CER report number, if one was shown) to your BIM manager or Autodesk support."
+        ],
+        "uk": [
+          "Запустіть Revit знову і відкрийте модель. Якщо Revit пропонує відновити файл, перегляньте його, перш ніж зберігати поверх локальної копії.",
+          "Встановіть останнє оновлення для вашої версії Revit (Autodesk Access).",
+          "Якщо падає лише одна модель: відкрийте її з Audit і збережіть.",
+          "Якщо падає лише на цьому комп'ютері: оновіть драйвер відеокарти і перевірте з вимкненими сторонніми add-in'ами.",
+          "Якщо падіння повторюються, надішліть journal-файл (і номер звіту CER, якщо він був) BIM-менеджеру або в підтримку Autodesk."
+        ]
+      }
+    },
+    {
+      "id": "wont-sync",
+      "icon": "🔄",
+      "title": { "en": "Synchronize with Central fails", "uk": "Не синхронізується з центральною моделлю" },
+      "subtitle": { "en": "Error while syncing, or sync never finishes", "uk": "Помилка під час синхронізації або вона не закінчується" },
+      "journal": "last-sync",
+      "categories": ["worksharing", "cloud"],
+      "exclude": ["metric-model-saved-in-different-build"],
+      "checklist": {
+        "en": [
+          "Save first (Save) so your changes are kept in the local copy.",
+          "Check your network: internet and VPN for cloud models (Autodesk Docs / ACC), the office network for server models.",
+          "Close Revit completely, start it again, open the model and retry Synchronize with Central.",
+          "Make sure everyone working on this model uses the same Revit update.",
+          "If it still fails, contact your BIM manager before creating a new local copy, so unsynchronized work is not lost."
+        ],
+        "uk": [
+          "Спершу збережіться (Save), щоб зміни залишились у локальній копії.",
+          "Перевірте мережу: інтернет і VPN для хмарних моделей (Autodesk Docs / ACC), офісну мережу для серверних моделей.",
+          "Повністю закрийте Revit, запустіть знову, відкрийте модель і повторіть Synchronize with Central.",
+          "Переконайтеся, що всі, хто працює з цією моделлю, мають однакове оновлення Revit.",
+          "Якщо не допомагає, зверніться до BIM-менеджера, перш ніж створювати нову локальну копію, щоб не втратити несинхронізовану роботу."
+        ]
+      }
+    },
+    {
+      "id": "slow",
+      "icon": "🐢",
+      "title": { "en": "Revit is slow or not responding", "uk": "Revit працює повільно або не відповідає" },
+      "subtitle": { "en": "Hangs, freezes, takes ages to open or save", "uk": "Зависає, довго відкриває чи зберігає" },
+      "journal": "running-or-latest",
+      "categories": ["performance", "memory", "graphics", "addin", "startup"],
+      "exclude": ["metric-addin-inventory"],
+      "checklist": {
+        "en": [
+          "If Revit is busy with a sync, an export or an add-in command, give it a few minutes before closing it.",
+          "Save, synchronize and restart Revit: memory is freed only on restart.",
+          "Close inactive views, unload links you don't need and open only the worksets you work in.",
+          "Close other heavy programs and check free memory in Task Manager.",
+          "If it is slow every day, ask your BIM manager about RAM (16 GB or more) and the model size."
+        ],
+        "uk": [
+          "Якщо Revit зайнятий синхронізацією, експортом або командою add-in'а, дайте йому кілька хвилин, перш ніж закривати.",
+          "Збережіться, синхронізуйтеся і перезапустіть Revit: пам'ять звільняється лише після перезапуску.",
+          "Закрийте неактивні види, вивантажте непотрібні лінки і відкривайте лише робочі набори, з якими працюєте.",
+          "Закрийте інші важкі програми і перевірте вільну пам'ять у Диспетчері завдань.",
+          "Якщо повільно щодня, обговоріть з BIM-менеджером обсяг RAM (16 ГБ і більше) та розмір моделі."
+        ]
+      }
+    }
+  ]
+}

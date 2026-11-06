@@ -5,6 +5,7 @@ using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Reporting;
 using RevitJournal.Core.Rules;
+using RevitJournal.Core.Symptoms;
 
 namespace RevitJournal.App;
 
@@ -119,6 +120,42 @@ public sealed class DayGroup(DateOnly date) : Observable
             parts.Add("all OK");
         Summary = string.Join(" · ", parts);
     }
+}
+
+/// <summary>A big button on the start screen.</summary>
+public sealed class SymptomCard(Symptom symptom)
+{
+    public Symptom Symptom => symptom;
+    public string Icon => symptom.Icon;
+    public string Title => symptom.Title.En;
+    public string Subtitle => symptom.Subtitle.En;
+}
+
+/// <summary>Option in the Revit version picker; Version null means all versions.</summary>
+public sealed record VersionOption(string? Version, string Label)
+{
+    public override string ToString() => Label;
+}
+
+/// <summary>The answer page for a symptom.</summary>
+public sealed class DiagnosisView(Diagnosis d)
+{
+    public Diagnosis Diagnosis => d;
+    public string Icon => d.Symptom.Icon;
+    public string SymptomTitle => d.Symptom.Title.En;
+    public string Headline => d.Headline;
+    public string Source => d.Session is { } r
+        ? $"Based on {System.IO.Path.GetFileName(r.Session.FilePath)} · session {Fmt.Stamp(r.Session.Start)} – {Fmt.Time(r.Session.LastTimestamp)}"
+        : "";
+    public bool HasSource => d.Session is not null;
+    public IReadOnlyList<string> Facts => d.Facts;
+    public bool HasFacts => d.Facts.Count > 0;
+    public IReadOnlyList<FindingView> Findings { get; } = [.. d.Findings.Select((f, i) => new FindingView(f, i == 0))];
+    public bool HasFindings => d.Findings.Count > 0;
+    public string NoCauseText => "The journal does not point to a specific cause. These steps fix most cases:";
+    public bool ShowNoCause => d.Findings.Count == 0;
+    public string ChecklistTitle => d.Findings.Count > 0 ? "IF THAT DOESN'T HELP" : "WHAT TO DO";
+    public IReadOnlyList<string> Checklist { get; } = [.. d.Symptom.Checklist.En.Select((s, i) => $"{i + 1}.  {s}")];
 }
 
 /// <summary>The report pane for the selected journal.</summary>
