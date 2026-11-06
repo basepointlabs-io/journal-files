@@ -31,6 +31,12 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     public List<UserAction> UserActions { get; } = [];
     public List<DialogShown> Dialogs { get; } = [];
     public List<SyncAttempt> Syncs { get; } = [];
+    /// <summary>Model opens timed by SLOG '>Open' / '<Open' events.</summary>
+    public List<TimedOperation> Opens { get; } = [];
+    /// <summary>Local copies of a central model ('createNewLocal: starting' / 'finished').</summary>
+    public List<TimedOperation> LocalCopies { get; } = [];
+    /// <summary>Top-level operations Revit timed itself ("' 352.79  1:&lt;&lt;API External Command Time"), 60 s or longer.</summary>
+    public List<SlowOperation> LongOperations { get; } = [];
     public List<AddIn> AddIns { get; } = [];
     public List<ModelInfo> Models { get; } = [];
     public List<LineRef> Exceptions { get; } = [];
@@ -69,6 +75,19 @@ public sealed class SyncAttempt
 
     public bool Finished => End is not null;
     public bool Succeeded => Finished && !GaveUp && Errors.Count == 0;
+    public TimeSpan? Duration => End - Start;
+}
+
+/// <summary>An operation with a start and (if it completed) an end in the journal.</summary>
+public sealed class TimedOperation
+{
+    public required int StartLine { get; init; }
+    public required DateTime Start { get; init; }
+    public string? Name { get; set; }
+    public int? EndLine { get; set; }
+    public DateTime? End { get; set; }
+
+    public bool Finished => End is not null;
     public TimeSpan? Duration => End - Start;
 }
 

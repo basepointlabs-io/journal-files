@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
@@ -29,11 +30,15 @@ public sealed class JournalItem(JournalFile file) : Observable
 
     public JournalFile File { get; private set; } = file;
 
-    public AnalysisResult? Result { get => _result; set => Set(ref _result, value); }
-    public string? Error { get => _error; set => Set(ref _error, value); }
+    public AnalysisResult? Result { get => _result; set { Set(ref _result, value); Day?.Recompute(); } }
+    public string? Error { get => _error; set { Set(ref _error, value); Day?.Recompute(); } }
+
+    /// <summary>The day this session belongs to (by the journal's last write time). Used for list grouping.</summary>
+    public DayGroup? Day { get; set; }
+    public DateTime SortKey => File.LastWrite;
 
     public string Title => string.IsNullOrEmpty(File.RevitVersion) ? File.Name : $"Revit {File.RevitVersion} · {File.Name}";
-    public string When => File.LastWrite.ToString("ddd dd MMM, HH:mm");
+    public string When => File.LastWrite.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     public string StatusKey => Error is not null ? "error" : Result?.Status switch
     {
@@ -58,6 +63,62 @@ public sealed class JournalItem(JournalFile file) : Observable
     public string Headline => Error ?? Result?.Headline ?? "";
 
     public void Refresh(JournalFile file) => File = file;
+}
+
+/// <summary>
+/// A day in the session list. One shared instance per date, so the list can group items by reference
+/// and the header updates as the day's journals finish analyzing.
+/// </summary>
+public sealed class DayGroup(DateOnly date) : Observable
+{
+    // Worst first: the day takes the status of its most serious session.
+    private static readonly string[] Precedence = ["crash", "error", "warning", "running", "exit", "pending", "ok"];
+
+    private string _statusKey = "pending";
+    private string _summary = "";
+    private bool _isExpanded;
+
+    /// <summary>Days start collapsed; the user opens the ones they need.</summary>
+    public bool IsExpanded { get => _isExpanded; set => Set(ref _isExpanded, value); }
+
+    public DateOnly Date { get; } = date;
+    public List<JournalItem> Items { get; } = [];
+
+    public string Label
+    {
+        get
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            string day = Date.ToString("ddd dd MMM yyyy", CultureInfo.InvariantCulture);
+            return Date == today ? $"Today · {day}" : Date == today.AddDays(-1) ? $"Yesterday · {day}" : day;
+        }
+    }
+
+    public string StatusKey { get => _statusKey; private set => Set(ref _statusKey, value); }
+    public string Summary { get => _summary; private set => Set(ref _summary, value); }
+
+    /// <summary>✓ for a day without problems, a dot otherwise.</summary>
+    public string Icon => StatusKey is "ok" or "exit" ? "✓" : "●";
+
+    public void Recompute()
+    {
+        var keys = Items.Select(i => i.StatusKey).ToList();
+        StatusKey = Precedence.FirstOrDefault(keys.Contains) ?? "pending";
+
+        int crashes = keys.Count(k => k is "crash" or "error");
+        int problems = keys.Count(k => k == "warning");
+        int running = keys.Count(k => k == "running");
+        var parts = new List<string> { Items.Count == 1 ? "1 session" : $"{Items.Count} sessions" };
+        if (crashes > 0)
+            parts.Add($"{crashes} ended abnormally");
+        if (problems > 0)
+            parts.Add($"{problems} with problems");
+        if (running > 0)
+            parts.Add($"{running} running");
+        if (crashes + problems + running == 0 && !keys.Contains("pending"))
+            parts.Add("all OK");
+        Summary = string.Join(" · ", parts);
+    }
 }
 
 /// <summary>The report pane for the selected journal.</summary>

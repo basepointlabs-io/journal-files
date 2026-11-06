@@ -5,8 +5,7 @@ namespace RevitJournal.Core.Analysis;
 /// <summary>
 /// Computed checks for the rules in metrics.json (and metric rules elsewhere). Each returns the facts to show
 /// when the check fires, or null. Thresholds follow the "metric" block of the rule.
-/// Not implemented yet: metric-slow-model-open, metric-slow-local-file-creation, metric-long-unresponsive-gap,
-/// metric-addin-command-before-crash, metric-repeated-crashes (folder level).
+/// metric-repeated-crashes looks across journals and lives in <see cref="History"/>.
 /// </summary>
 internal static class Metrics
 {
@@ -126,6 +125,66 @@ internal static class Metrics
             return [$"Revit needed {Fmt.Duration(t - start)} to start up."];
         },
 
+        ["metric-slow-model-open"] = (s, status, _) =>
+        {
+            var facts = s.Opens
+                .Where(o => o.Duration is { TotalSeconds: > 300 })
+                .Select(o => $"Opening {o.Name ?? "a model"} at {Fmt.Time(o.Start)} took {Fmt.Duration(o.Duration!.Value)}.")
+                .ToList();
+            if (s.Opens.LastOrDefault() is { Finished: false } pending && status != SessionStatus.ClosedNormally)
+                facts.Add(status == SessionStatus.Running
+                    ? $"A model has been opening since {Fmt.Time(pending.Start)}."
+                    : $"Revit stopped while opening a model (started at {Fmt.Time(pending.Start)}).");
+            return facts.Count > 0 ? facts : null;
+        },
+
+        ["metric-slow-local-file-creation"] = (s, status, _) =>
+        {
+            var facts = s.LocalCopies
+                .Where(c => c.Duration is { TotalSeconds: > 300 })
+                .Select(c => $"Creating the local copy of {c.Name} took {Fmt.Duration(c.Duration!.Value)}.")
+                .ToList();
+            if (s.LocalCopies.LastOrDefault() is { Finished: false } pending && status == SessionStatus.EndedAbnormally)
+                facts.Add($"Revit stopped while creating the local copy of {pending.Name} (started at {Fmt.Time(pending.Start)}).");
+            return facts.Count > 0 ? facts : null;
+        },
+
+        // Uses only durations Revit measured itself: gaps between timestamps also cover lunch breaks and nights.
+        ["metric-long-unresponsive-gap"] = (s, _, _) =>
+        {
+            var facts = s.LongOperations.Concat(s.SlowOperations)
+                .Where(o => o.Seconds > 600)
+                .OrderByDescending(o => o.Seconds)
+                .Take(3)
+                .Select(o => $"\"{Fmt.Trim(o.Operation.Split('/')[0], 60)}\" kept Revit busy for {Fmt.Duration(TimeSpan.FromSeconds(o.Seconds))}, " +
+                             $"until {Fmt.Time(o.Time)} (line {o.Line}).")
+                .ToList();
+            return facts.Count > 0 ? facts : null;
+        },
+
+        ["metric-addin-command-before-crash"] = (s, status, _) =>
+        {
+            if (status != SessionStatus.EndedAbnormally || s.LastTimestamp is not { } end)
+                return null;
+            var recent = s.UserActions.TakeLast(3)
+                .Where(a => a.Time is { } t && (end - t).TotalSeconds <= 120 && AddInCommand(a) is not null)
+                .ToList();
+            var facts = recent.Select(a => $"Add-in command \"{AddInCommand(a)}\" was started at {Fmt.Time(a.Time)}, " +
+                                           $"{Fmt.Duration(end - a.Time!.Value)} before the journal ends.").ToList();
+            int tail = Math.Max(0, s.Lines.Count - 50);
+            for (int i = tail; i < s.Lines.Count; i++)
+            {
+                string l = s.Lines[i];
+                if (l.Contains("Managed exception caught from external API application", StringComparison.Ordinal)
+                    || (l.Contains("API_ERROR", StringComparison.Ordinal) && l.Contains("exception", StringComparison.OrdinalIgnoreCase)))
+                {
+                    facts.Add($"An add-in error was logged just before the end (line {i + 1}): {Fmt.Trim(l.Trim(), 160)}");
+                    break;
+                }
+            }
+            return facts.Count > 0 ? facts : null;
+        },
+
         ["metric-long-sync"] = (s, _, _) => SyncsLongerThan(s, 300, 900),
         ["metric-very-long-sync"] = (s, _, _) => SyncsLongerThan(s, 900, double.MaxValue),
 
@@ -190,6 +249,19 @@ internal static class Metrics
             ? ["This session was driven by a journal script (automation or batch tool), not by a person."]
             : null,
     };
+
+    /// <summary>Add-in class from 'Execute external command:&lt;ctrl&gt;:&lt;Class&gt;', or a Dynamo command; else null.</summary>
+    internal static string? AddInCommand(UserAction a)
+    {
+        const string marker = "Execute external command:";
+        int at = a.Text.IndexOf(marker, StringComparison.Ordinal);
+        if (at >= 0)
+        {
+            string rest = a.Text[(at + marker.Length)..].TrimEnd('"', ' ');
+            return rest[(rest.LastIndexOf(':') + 1)..];
+        }
+        return a.CommandId?.Contains("DYNAMO", StringComparison.Ordinal) == true ? "Dynamo" : null;
+    }
 
     internal static int? PeakRevitRam(JournalSession s) =>
         s.Ram.Select(r => r.RevitPeakMb).Where(p => p is not null).Max();

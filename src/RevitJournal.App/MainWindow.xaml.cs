@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -15,6 +17,7 @@ public partial class MainWindow : Window
 {
     private readonly Analyzer _analyzer = Analyzer.CreateDefault();
     private readonly ObservableCollection<JournalItem> _items = [];
+    private readonly Dictionary<DateOnly, DayGroup> _days = [];
     private readonly DispatcherTimer _liveTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private CancellationTokenSource? _scan;
 
@@ -22,6 +25,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Sessions.ItemsSource = _items;
+        var view = CollectionViewSource.GetDefaultView(_items);
+        view.SortDescriptions.Add(new SortDescription(nameof(JournalItem.SortKey), ListSortDirection.Descending));
+        view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(JournalItem.Day)));
         Loaded += async (_, _) =>
         {
             await ReloadAsync();
@@ -42,19 +48,17 @@ public partial class MainWindow : Window
         var files = await Task.Run(() => JournalLocator.FindAll());
         var external = _items.Where(i => string.IsNullOrEmpty(i.File.RevitVersion)).ToList(); // files opened by hand
         _items.Clear();
+        _days.Clear();
         foreach (var item in external)
-            _items.Add(item);
+            Add(item);
         foreach (var f in files)
-            _items.Add(new JournalItem(f));
+            Add(new JournalItem(f));
 
         if (_items.Count == 0)
         {
             StatusLine.Text = $"No Revit journals found in {JournalLocator.DefaultRoot}. Use \"Open journal…\" or drag a file here.";
             return;
         }
-        if (Sessions.SelectedIndex < 0)
-            Sessions.SelectedIndex = 0;
-
         var pending = _items.Where(i => i.Result is null).ToList();
         int done = 0;
         StatusLine.Text = $"Analyzing {pending.Count} journals…";
@@ -69,6 +73,7 @@ public partial class MainWindow : Window
                 });
             int problems = _items.Count(i => i.StatusKey is "crash" or "warning");
             StatusLine.Text = $"{_items.Count} journals · {problems} with problems or abnormal endings";
+            UpdateHistoryBanner();
         }
         catch (OperationCanceledException)
         {
@@ -108,6 +113,33 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateHistoryBanner()
+    {
+        var local = _items.Where(i => !string.IsNullOrEmpty(i.File.RevitVersion) && i.Result is not null).Select(i => i.Result!);
+        if (History.RepeatedCrashes(_analyzer.Rules, local) is { } f)
+        {
+            HistoryTitle.Text = f.Rule.Title.En;
+            HistoryFacts.ItemsSource = f.Facts;
+            HistoryBanner.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            HistoryBanner.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>Adds a session to the list and to its day group (one shared DayGroup per date).</summary>
+    private void Add(JournalItem item)
+    {
+        var date = DateOnly.FromDateTime(item.File.LastWrite);
+        if (!_days.TryGetValue(date, out var day))
+            _days[date] = day = new DayGroup(date);
+        day.Items.Add(item);
+        item.Day = day;
+        day.Recompute();
+        _items.Add(item);
+    }
+
     private void ShowReport(JournalItem? item)
     {
         if (item?.Result is { } r)
@@ -132,8 +164,10 @@ public partial class MainWindow : Window
         if (item is null)
         {
             item = new JournalItem(new JournalFile(info.FullName, "", 0, info.LastWriteTime, info.Length));
-            _items.Insert(0, item);
+            Add(item);
         }
+        if (item.Day is { } day)
+            day.IsExpanded = true;
         Sessions.SelectedItem = item;
         Sessions.ScrollIntoView(item);
         if (item.Result is null)

@@ -1211,7 +1211,7 @@
       "metric": {
         "type": "max_gap_between_timestamps_during_operation_seconds",
         "threshold": 600,
-        "description": "Walk consecutive timestamp lines. A 'busy gap' is an interval where the previous record is NOT waiting for user input (i.e. the interval does not start right after a 'E user event followed only by idle/memory lines) and > 600 s passes without any new timestamp. Practical approximation: gaps > 600 s whose following line is not an 'E user-input event. Report the operation before the gap (last Jrn.Command / elapsed-time line). Elapsed-time lines with BIG_GAP > 600 s count directly."
+        "description": "Use only durations Revit measured itself: top-level elapsed lines (\"' <seconds> 1:<<<operation>\") and BIG_GAP lines longer than 600 s. Gaps between timestamps are NOT used: on real journals they mostly measured lunch breaks and nights (an idle pause is often ended by a background 'C line, not by 'E user input)."
       },
       "context": "Revit 'Not Responding' periods",
       "versions": "all (heuristic)",

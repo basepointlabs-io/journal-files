@@ -141,8 +141,54 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
+      <DockPanel>
+      <!-- Shown when Revit ended abnormally several times in the last week (metric-repeated-crashes). -->
+      <Border x:Name="HistoryBanner" DockPanel.Dock="Top" Visibility="Collapsed" Background="#FFF1F0"
+              BorderBrush="#FFCECB" BorderThickness="0,0,0,1" Padding="12,10">
+        <StackPanel>
+          <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" Foreground="#CF222E" />
+          <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding StringFormat='• {0}'}" FontSize="12" Margin="0,1" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
       <ListBox x:Name="Sessions" BorderThickness="0" SelectionChanged="OnSelectionChanged"
-               ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="{StaticResource Panel}">
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="{StaticResource Panel}"
+               VirtualizingPanel.IsVirtualizingWhenGrouping="True" VirtualizingPanel.ScrollUnit="Pixel">
+        <ListBox.GroupStyle>
+          <GroupStyle>
+            <GroupStyle.ContainerStyle>
+              <Style TargetType="GroupItem">
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <!-- DataContext is the CollectionViewGroup; its Name is the shared DayGroup instance. -->
+                    <ControlTemplate TargetType="GroupItem">
+                      <Expander IsExpanded="{Binding Name.IsExpanded, Mode=TwoWay}" Background="White" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+                        <Expander.Header>
+                          <DockPanel Margin="2,6,6,6" LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Left" Text="{Binding Name.Icon}" FontSize="14" FontWeight="Bold" Width="20"
+                                       TextAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
+                            <StackPanel Margin="4,0,0,0">
+                              <TextBlock Text="{Binding Name.Label}" FontWeight="Bold" FontSize="13" />
+                              <TextBlock Text="{Binding Name.Summary}" FontSize="11.5"
+                                         Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
+                            </StackPanel>
+                          </DockPanel>
+                        </Expander.Header>
+                        <ItemsPresenter />
+                      </Expander>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </GroupStyle.ContainerStyle>
+          </GroupStyle>
+        </ListBox.GroupStyle>
         <ListBox.ItemContainerStyle>
           <Style TargetType="ListBoxItem">
             <Setter Property="Padding" Value="0" />
@@ -151,7 +197,7 @@
         </ListBox.ItemContainerStyle>
         <ListBox.ItemTemplate>
           <DataTemplate DataType="{x:Type local:JournalItem}">
-            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="12,8">
+            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="28,8,12,8">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="14" />
@@ -174,6 +220,7 @@
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
+      </DockPanel>
 
       <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="{StaticResource Line}" />
 

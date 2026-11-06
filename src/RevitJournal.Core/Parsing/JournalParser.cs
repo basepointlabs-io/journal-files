@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Model;
 
 namespace RevitJournal.Core.Parsing;
@@ -22,7 +23,10 @@ public static partial class JournalParser
     [GeneratedRegex(@"Jrn\.(RibbonEvent|AddInEvent)\s+(.+)$")] private static partial Regex UiEventRegex();
     [GeneratedRegex(@"TaskDialog ""(.*)""\s*$")] private static partial Regex TaskDialogTextRegex();
     [GeneratedRegex(@"^\s*'Id : (\S+)")] private static partial Regex DialogIdRegex();
-    [GeneratedRegex(@"SLOG \$(\w+) (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) ([<>.])STC(\S*)")] private static partial Regex SlogRegex();
+    [GeneratedRegex(@"SLOG \$(\w+) (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) ([<>.])(STC|Open)(\S*)")] private static partial Regex SlogRegex();
+    [GeneratedRegex(@"createNewLocal: (starting|finished) .*?from ""(.+?)""")] private static partial Regex CreateLocalRegex();
+    // Revit's own elapsed-time lines; depth 1 is a whole user-level operation. Sub-steps (2:<<<...) are skipped.
+    [GeneratedRegex(@"^\s*'\s+(\d+\.\d+)!*\s+1:<<(?!<)(.+?)\s*$")] private static partial Regex TopLevelTimingRegex();
     [GeneratedRegex(@"(API_SUCCESS|API_ERROR) \{ Starting External (?:DB )?Application: (.+?), Class: .+?, Vendor : ([^(,]*)\(([^)]*)\)")]
     private static partial Regex AddInRegex();
     [GeneratedRegex(@"API External Application added: (.+?), Class: .+?, VendorId: ([^,]*)")] private static partial Regex AddInLegacyRegex();
@@ -41,6 +45,7 @@ public static partial class JournalParser
         DateTime? ts = null;
         string? pendingDialogText = null;
         var openSyncs = new Dictionary<string, SyncAttempt>();
+        var openOpens = new Dictionary<string, TimedOperation>();
         var seenModels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < lines.Count; i++)
@@ -89,6 +94,11 @@ public static partial class JournalParser
             {
                 s.SlowOperations.Add(new SlowOperation(n, ts, secs, gap.Groups[2].Value));
             }
+            else if (line.Contains("1:<<", StringComparison.Ordinal) && TopLevelTimingRegex().Match(line) is { Success: true } tm
+                     && double.TryParse(tm.Groups[1].Value, CultureInfo.InvariantCulture, out double opSecs) && opSecs >= 60)
+            {
+                s.LongOperations.Add(new SlowOperation(n, ts, opSecs, tm.Groups[2].Value));
+            }
             else if (line.TrimStart().StartsWith("Jrn.", StringComparison.Ordinal))
             {
                 string logical = JoinContinuation(lines, ref i);
@@ -119,7 +129,24 @@ public static partial class JournalParser
             }
 
             if (line.Contains("SLOG", StringComparison.Ordinal) && SlogRegex().Match(line) is { Success: true } slog)
-                HandleSlog(s, openSyncs, slog, n, line);
+            {
+                if (slog.Groups[4].Value == "STC")
+                    HandleSync(s, openSyncs, slog, n, line);
+                else
+                    HandleOpen(s, openOpens, slog, n);
+            }
+
+            if (line.Contains("createNewLocal:", StringComparison.Ordinal) && ts is { } tl
+                && CreateLocalRegex().Match(line) is { Success: true } cl)
+            {
+                if (cl.Groups[1].Value == "starting")
+                    s.LocalCopies.Add(new TimedOperation { StartLine = n, Start = tl, Name = Fmt.FileName(cl.Groups[2].Value) });
+                else if (s.LocalCopies.LastOrDefault(x => !x.Finished) is { } copy)
+                {
+                    copy.End = tl;
+                    copy.EndLine = n;
+                }
+            }
 
             if (line.Contains("Exception", StringComparison.Ordinal) && ExceptionRegex().IsMatch(line))
             {
@@ -147,13 +174,36 @@ public static partial class JournalParser
         return s;
     }
 
-    private static void HandleSlog(JournalSession s, Dictionary<string, SyncAttempt> open, Match slog, int n, string line)
+    private static bool TrySlogTime(Match slog, out DateTime time) =>
+        DateTime.TryParseExact(slog.Groups[2].Value, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeLocal, out time);
+
+    private static void HandleOpen(JournalSession s, Dictionary<string, TimedOperation> open, Match slog, int n)
+    {
+        string id = slog.Groups[1].Value;
+        if (slog.Groups[5].Value.Length != 0 || !TrySlogTime(slog, out var time))
+            return; // only the top-level ">Open" / "<Open", not ">Open:Local"
+        if (slog.Groups[3].Value == ">")
+        {
+            var op = new TimedOperation { StartLine = n, Start = time };
+            open[id] = op;
+            s.Opens.Add(op);
+        }
+        else if (slog.Groups[3].Value == "<" && open.Remove(id, out var op))
+        {
+            op.End = time;
+            op.EndLine = n;
+            // The model's BasicFileInfo is logged while it opens.
+            op.Name = s.Models.LastOrDefault(m => m.Line > op.StartLine) is { } m ? Fmt.FileName(m.Path) : null;
+        }
+    }
+
+    private static void HandleSync(JournalSession s, Dictionary<string, SyncAttempt> open, Match slog, int n, string line)
     {
         string id = slog.Groups[1].Value;
         string kind = slog.Groups[3].Value;
-        string sub = slog.Groups[4].Value;
-        if (!DateTime.TryParseExact(slog.Groups[2].Value, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeLocal, out var time))
+        string sub = slog.Groups[5].Value;
+        if (!TrySlogTime(slog, out var time))
             return;
 
         bool topLevel = sub.Length == 0;

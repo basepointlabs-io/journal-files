@@ -59,12 +59,14 @@ if (args.Contains("--stats"))
     return 0;
 }
 
+var results = new List<AnalysisResult>();
 Console.WriteLine($"{"Revit",-6} {"Journal",-18} {"Status",-10} {"Worst",-9} {"#",3}  Headline");
 foreach (var j in journals)
 {
     try
     {
         var r = analyzer.AnalyzeFile(j.Path);
+        results.Add(r);
         string status = r.Status switch
         {
             SessionStatus.Running => "running",
@@ -78,6 +80,12 @@ foreach (var j in journals)
     {
         Console.WriteLine($"{j.RevitVersion,-6} {j.Name,-18} ERROR      {ex.GetType().Name}: {ex.Message}");
     }
+}
+if (History.RepeatedCrashes(analyzer.Rules, results) is { } repeated)
+{
+    Console.WriteLine($"\n[{repeated.Severity.ToString().ToUpperInvariant()}] {repeated.Rule.Title.En}");
+    foreach (string fact in repeated.Facts)
+        Console.WriteLine($"  • {fact}");
 }
 Console.WriteLine($"\n{journals.Count} journals in {total.Elapsed.TotalSeconds:F1} s");
 return 0;

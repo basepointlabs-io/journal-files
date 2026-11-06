@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RULES_DIR = ROOT / "knowledge-base" / "rules"
-SCHEMA = json.loads((ROOT / "knowledge-base" / "schema.json").read_text())
+SCHEMA = json.loads((ROOT / "knowledge-base" / "schema.json").read_text(encoding="utf-8"))
 
 RULE_SCHEMA = SCHEMA["properties"]["rules"]["items"]
 CATEGORIES = set(RULE_SCHEMA["properties"]["category"]["enum"])
@@ -64,7 +64,7 @@ def main():
     totals = defaultdict(int)
 
     for path in sorted(RULES_DIR.glob("*.json")):
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         for i, rule in enumerate(data["rules"]):
             where = f"{path.name}#{i} ({rule.get('id', '?')})"
             errors += check_rule(rule, where)
