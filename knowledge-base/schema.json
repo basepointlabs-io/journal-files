@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Revit journal rule file",
+  "type": "object",
+  "required": ["source", "rules"],
+  "properties": {
+    "source": { "type": "string", "description": "Where these rules were collected from" },
+    "collected": { "type": "string", "description": "Date collected, YYYY-MM-DD" },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "severity", "match", "title", "cause", "fix", "sources", "confidence"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "category": {
+            "enum": ["crash", "serious-error", "memory", "addin", "graphics", "worksharing", "cloud",
+                     "link-import", "file-corruption", "performance", "startup", "upgrade", "printing-export", "other"]
+          },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "match": {
+            "type": "object",
+            "description": "A rule fires if any substring or regex matches a journal line (case-sensitive unless regex flag says otherwise)",
+            "properties": {
+              "any": { "type": "array", "items": { "type": "string" } },
+              "regex": { "type": "array", "items": { "type": "string" },
+                         "description": "Portable (Python + JavaScript) syntax; no inline flags like (?i)" },
+              "ignore_case": { "type": "boolean", "description": "Apply case-insensitive matching to this rule's patterns" }
+            }
+          },
+          "related": {
+            "type": "array", "items": { "type": "string" },
+            "description": "Ids of rules that match the same journal text (e.g. official + community version); show them together"
+          },
+          "metric": {
+            "type": "object",
+            "description": "For computed rules: what the parser must calculate instead of (or in addition to) text matching"
+          },
+          "context": { "type": "string", "description": "When it typically happens (operation, version)" },
+          "versions": { "type": "string", "description": "Affected Revit versions, if known" },
+          "title": { "$ref": "#/$defs/i18n" },
+          "cause": { "$ref": "#/$defs/i18n" },
+          "fix": {
+            "type": "object",
+            "required": ["uk", "en"],
+            "properties": {
+              "uk": { "type": "array", "items": { "type": "string" } },
+              "en": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["title", "url"],
+              "properties": { "title": { "type": "string" }, "url": { "type": "string" } }
+            }
+          },
+          "confidence": {
+            "enum": ["official", "community-verified", "community"],
+            "description": "official = Autodesk docs; community-verified = forum accepted solution; community = forum/blog, unconfirmed"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "i18n": {
+      "type": "object",
+      "required": ["uk", "en"],
+      "properties": { "uk": { "type": "string" }, "en": { "type": "string" } }
+    }
+  }
+}

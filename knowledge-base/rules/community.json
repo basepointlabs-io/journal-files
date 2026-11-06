@@ -1,0 +1,1472 @@
+{
+  "source": "Autodesk Community forums and BIM blogs",
+  "collected": "2026-11-06",
+  "rules": [
+    {
+      "id": "forum-generate-view-specific-grep",
+      "category": "crash",
+      "severity": "high",
+      "match": {
+        "any": [
+          "System exception in generateViewSpecificGRep",
+          "generateViewSpecificGRep"
+        ],
+        "regex": [
+          "System\\s+exception\\s+in\\s+generateViewSpecificGRep"
+        ]
+      },
+      "context": "Usually happens when a specific view or sheet is opened or redrawn.",
+      "title": {
+        "uk": "Збій під час побудови графіки конкретного виду",
+        "en": "Crash while building the graphics of a specific view"
+      },
+      "cause": {
+        "uk": "Revit не зміг намалювати вміст певного виду. На форумах такі збої зазвичай пов'язують з одним проблемним елементом у цьому виді (дуже деталізована сім'я, складна форма, вставлений AutoCAD-вміст) або з пошкодженим самим видом. Офіційного пояснення цього рядка Autodesk не публікував.",
+        "en": "Revit failed to generate the view-specific graphics of a view. Forum threads about crashes on opening particular views usually trace them to one problem element in that view (a highly detailed family, an extreme shape, imported AutoCAD content) or to the view itself being damaged. Autodesk has not published an official explanation of this line."
+      },
+      "fix": {
+        "uk": [
+          "Перевірте в журналі, який вид відкривався перед збоєм, і чи збій повторюється лише в ньому.",
+          "Перед відкриттям цього виду вимкніть усі категорії (Visibility/Graphics) або вимикайте робочі набори по одному, щоб знайти елемент, що спричиняє збій.",
+          "Зверніть увагу на дуже деталізовані сім'ї, елементи складної форми та імпортований CAD-вміст — видаліть або перезавантажте підозрілий елемент.",
+          "Якщо проблема саме у виді, видаліть його та створіть новий.",
+          "Відкрийте модель з опцією Audit, оновіть Revit і драйвер відеокарти до останніх версій."
+        ],
+        "en": [
+          "Find in the journal which view was being opened before the crash and check whether the crash happens only in that view.",
+          "Before opening the view, hide all categories (Visibility/Graphics) or close worksets one by one to find the element that triggers the crash.",
+          "Focus on highly detailed families, extreme shapes and imported CAD content; delete or reload the suspect element.",
+          "If the view itself is the problem, delete it and create a new one.",
+          "Open the model with Audit and update Revit and the graphics driver."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: How to check a view for corrupted elements",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/how-to-check-a-view-for-corrupted-elements/m-p/10372296"
+        },
+        {
+          "title": "Autodesk Community: During opening some views - fatal error",
+          "url": "https://forums.autodesk.com/t5/revit-structure-forum/during-opening-some-views-fatal-error/td-p/11365228"
+        },
+        {
+          "title": "Autodesk Help: Revit Has Encountered a Fatal Error (lists this journal line)",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        }
+      ],
+      "confidence": "community",
+      "related": [
+        "system-exception-generateviewspecificgrep"
+      ]
+    },
+    {
+      "id": "forum-sqlclient-steel-connections",
+      "category": "crash",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Exception caught from managed method .Net SqlClient",
+          ".Net SqlClient Data Provider"
+        ],
+        "regex": [
+          "Exception\\s+caught\\s+from\\s+managed\\s+method\\s+\\.Net\\s+SqlClient",
+          "SqlException.*(SteelConnections|AstorBase)"
+        ],
+        "ignore_case": true
+      },
+      "context": "Models with steel connections or structural elements; on opening or editing. Revit 2020 and later.",
+      "versions": "2020+",
+      "title": {
+        "uk": "Помилка локальної бази даних сталевих з'єднань (SQL)",
+        "en": "Steel Connections local SQL database error"
+      },
+      "cause": {
+        "uk": "Revit зберігає дані сталевих з'єднань (Steel Connections) у локальній базі SQL на вашому комп'ютері. Якщо файли цієї бази пошкоджені або не збігаються між собою (наприклад, після оновлення Revit), з'являється SqlException, і Revit може видати «unrecoverable error». Проблема в комп'ютері, а не в моделі.",
+        "en": "Revit keeps Steel Connections data in a local SQL (LocalDB) database on the workstation. When those database files are damaged or no longer match each other (for example after a Revit update), an SqlException is logged and Revit may show an unrecoverable error. The problem is on the workstation, not in the model."
+      },
+      "fix": {
+        "uk": [
+          "Закрийте Revit.",
+          "Зробіть резервну копію і видаліть (або перейменуйте) папку мови Steel Connections для вашої версії в C:\\ProgramData\\Autodesk\\... — Revit заново розпакує її з архіву SteelConnections_lang.zip під час запуску.",
+          "Якщо не допомогло: скиньте екземпляр LocalDB для вашої версії Revit командами sqllocaldb stop / delete / create / start, потім видаліть файли .mdf, .ldf і AS_ContentBuildNumber.txt у папці мови, щоб вони розпакувались знову (краще з допомогою IT).",
+          "Встановіть останнє оновлення Revit і тимчасово вимкніть додатки (add-ins), щоб перевірити, чи збій зник."
+        ],
+        "en": [
+          "Close Revit.",
+          "Back up and delete (or rename) the Steel Connections language folder for your Revit version under C:\\ProgramData\\Autodesk\\...; Revit recreates it from SteelConnections_lang.zip at the next start.",
+          "If that does not help, reset the LocalDB instance for your Revit version (sqllocaldb stop / delete / create / start), then delete the .mdf, .ldf and AS_ContentBuildNumber.txt files in the language folder so they are unpacked again (ideally with IT help).",
+          "Install the latest Revit update and temporarily disable add-ins to test."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: An unrecoverable error has occurred when working with models that contain steel elements",
+          "url": "https://autodesk.com/support/technical/article/An-unrecoverable-error-has-occurred-when-working-with-model-in-Revit"
+        },
+        {
+          "title": "Arkance: Revit 2025 Steel Connection Details Not Listed or Unavailable",
+          "url": "https://emea.support.arkance.world/hc/es/articles/36471301114386-Revit-2025-Steel-Connection-Details-Not-Listed-or-Unavailable"
+        },
+        {
+          "title": "LEO A DALY support: Unrecoverable errors in Revit 2020 Structural Models",
+          "url": "https://support.leoadaly.com/support/solutions/articles/13000031067-unrecoverable-errors-in-revit-2020-structural-models"
+        },
+        {
+          "title": "Autodesk Support: An unrecoverable error has occurred when opening files in Revit",
+          "url": "https://autodesk.com/support/technical/article/An-unrecoverable-error-has-occurred-when-opening-files-in-Revit"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "managed-exception-sqlclient"
+      ]
+    },
+    {
+      "id": "forum-path-too-long",
+      "category": "other",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "System.IO.PathTooLongException",
+          "TryExpandShortFileName",
+          "The specified path, file name, or both are too long"
+        ],
+        "regex": [
+          "TryExpandShortFileName\\(\\)\\s*<System\\.IO\\.PathTooLongException>"
+        ]
+      },
+      "context": "Opening, saving, linking or syncing files that sit in deeply nested folders; also Revit Server models with long paths.",
+      "title": {
+        "uk": "Шлях до файлу задовгий",
+        "en": "File path is too long"
+      },
+      "cause": {
+        "uk": "Повний шлях до файлу (папки + ім'я) перевищує ліміт Windows у 260 символів, а деякі програми Autodesk мають ще менший практичний ліміт. Revit не може відкрити або записати такий файл.",
+        "en": "The full path (folders plus file name) exceeds the Windows limit of 260 characters; some Autodesk products hit problems even earlier. Revit cannot read or write the file."
+      },
+      "fix": {
+        "uk": [
+          "Знайдіть у журналі шлях до файлу поруч із цією помилкою.",
+          "Перенесіть проєкт або зв'язані файли в папку ближче до кореня диска (наприклад, D:\\Projects\\...) і скоротіть назви папок та файлів.",
+          "Для Revit Server: скоротіть шляхи моделей у Revit Server Administrator або перевстановіть хост із коротшим розташуванням проєктів.",
+          "Перепризначте зв'язки (Manage Links) на нове коротше розташування."
+        ],
+        "en": [
+          "Find the file path next to this error in the journal.",
+          "Move the project or linked files to a folder closer to the drive root and shorten folder and file names.",
+          "For Revit Server: shorten model paths in Revit Server Administrator, or reinstall the host with a shorter project location.",
+          "Repath links in Manage Links to the new, shorter location."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Operation Could Not Be Completed when syncing models in a specific folder on a Revit Server",
+          "url": "https://autodesk.com/support/technical/article/Operation-Could-Not-Be-Completed-when-syncing-a-specific-model-or-models-in-a-specific-folder-on-a-Revit-Server"
+        },
+        {
+          "title": "IMAGINiT: Character limit in Windows vs Autodesk",
+          "url": "https://resources.imaginit.com/support-blog/character-limit-in-windows-vs-autodesk"
+        },
+        {
+          "title": "Autodesk Revit API Forum: CorruptModelException during Document.SaveAs (path near length limit)",
+          "url": "https://forums.autodesk.com/t5/revit-api-forum/corruptmodelexception-during-autodesk-revit-db-document-saveas/m-p/11187322"
+        }
+      ],
+      "confidence": "community",
+      "related": [
+        "path-too-long-exception"
+      ]
+    },
+    {
+      "id": "forum-recent-dynamic-not-in-dynamics",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "any": [
+          "Recent Dynamic Added but not to Dynamics"
+        ],
+        "regex": [
+          "Recent\\s+Dynamic\\s+Added\\s+but\\s+not\\s+to\\s+Dynamics"
+        ]
+      },
+      "context": "Seen in journals shortly before crashes (e.g. adding a keynote, selecting steel connection plates), but also in normal sessions.",
+      "title": {
+        "uk": "Службове повідомлення Revit (зазвичай не причина збою)",
+        "en": "Internal Revit diagnostic (usually not the crash cause)"
+      },
+      "cause": {
+        "uk": "Це внутрішнє діагностичне повідомлення про те, як Revit відстежує змінені елементи. У форумних темах воно з'являється поруч зі збоями, але справжня причина — у рядках перед ним (дія користувача, додаток, макрос, попередження про параметр).",
+        "en": "This is an internal diagnostic about how Revit tracks recently changed elements. In forum threads it appears near crashes, but the real trigger is in the lines just before it (a user action, add-in, macro, or a parameter warning)."
+      },
+      "fix": {
+        "uk": [
+          "Не зосереджуйтесь на цьому рядку — прочитайте 20–50 рядків журналу перед ним, щоб побачити останню дію або команду.",
+          "Перевірте, чи збій повторюється лише в одному файлі, чи в усіх файлах.",
+          "Тимчасово вимкніть додатки (add-ins) і макроси та перевірте, чи збій зникне."
+        ],
+        "en": [
+          "Do not focus on this line: read the 20-50 journal lines before it to see the last action or command.",
+          "Check whether the crash follows one specific file or happens in all files.",
+          "Temporarily disable add-ins and macros and test again."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: Revit Crashes when adding User Keynote",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-crashes-when-adding-user-keynote/m-p/11863597"
+        },
+        {
+          "title": "Autodesk Community: Revit closing randomly",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-closing-randomly/m-p/9104931"
+        },
+        {
+          "title": "Autodesk Revit API Forum: Revit 2019 crashes after selecting a plate in a steel connection",
+          "url": "https://forums.autodesk.com/t5/revit-api-forum/revit-2019-crashes-after-selecting-a-plate-in-a-steel-connection/m-p/8395430"
+        }
+      ],
+      "confidence": "community",
+      "related": [
+        "recent-dynamic-added-not-to-dynamics"
+      ]
+    },
+    {
+      "id": "forum-readdwgfile-exception",
+      "category": "link-import",
+      "severity": "high",
+      "match": {
+        "any": [
+          "AcDbDatabase::readDwgFile threw an exception",
+          "readDwgFile threw an exception"
+        ],
+        "regex": [
+          "readDwgFile\\s+threw\\s+an\\s+exception"
+        ]
+      },
+      "context": "Linking, importing or reloading a DWG file.",
+      "title": {
+        "uk": "Revit не зміг прочитати файл DWG",
+        "en": "Revit could not read a DWG file"
+      },
+      "cause": {
+        "uk": "Модуль читання DWG не зміг обробити файл AutoCAD. Найчастіше файл DWG пошкоджений, дуже «важкий» (наприклад, усе креслення — один великий блок) або містить проблемні об'єкти, як-от суцільні штрихування.",
+        "en": "The DWG reader failed to process the AutoCAD file. Most often the DWG is damaged, very heavy (for example the whole drawing is one block) or contains problem objects such as solid hatches."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте DWG в AutoCAD, виконайте AUDIT (з виправленням помилок) і PURGE, збережіть файл.",
+          "Якщо креслення — це один великий блок, розбийте його (EXPLODE) і знову виконайте AUDIT.",
+          "Видаліть або спростіть суцільні штрихування та зайвий вміст, залиште лише потрібне.",
+          "Якщо Revit досі зависає: імпортуйте DWG в окремий файл RVT і зв'яжіть уже цей RVT з проєктом."
+        ],
+        "en": [
+          "Open the DWG in AutoCAD, run AUDIT (fix errors) and PURGE, then save.",
+          "If the drawing is a single big block, EXPLODE it and run AUDIT again.",
+          "Remove or simplify solid hatches and unnecessary content.",
+          "If Revit still hangs, import the DWG into a separate RVT and link that RVT into the project."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: Can't link or import dwg file to Revit",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/can-t-link-or-import-dwg-file-to-revit/m-p/11973236"
+        },
+        {
+          "title": "Autodesk Community: Revit 2021 crashing when importing (linking) CAD dwg file",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2021-crashing-when-importing-linking-cad-dwg-file/td-p/10953236"
+        },
+        {
+          "title": "AUGI: Corrupt error message (solid hatch in DWG)",
+          "url": "https://forums.augi.com/archive/index.php/t-60654.html"
+        }
+      ],
+      "confidence": "community",
+      "related": [
+        "acdbdatabase-readdwgfile-exception"
+      ]
+    },
+    {
+      "id": "forum-missing-esschema",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Missing ESSchema"
+        ],
+        "regex": [
+          "DBG_WARN:\\s*Missing\\s+ESSchema"
+        ]
+      },
+      "context": "Opening a model or loading families; frequently reported after Revit 2024.1-2024.3 updates.",
+      "versions": "2021+ (many reports for 2024.x)",
+      "title": {
+        "uk": "Відсутня схема даних додатка (Extensible Storage)",
+        "en": "Missing add-in data schema (Extensible Storage)"
+      },
+      "cause": {
+        "uk": "Додатки зберігають свої дані в моделі за «схемою» з унікальним GUID. Схема пошкоджена або відсутня, або два файли мають однаковий GUID схеми з різною структурою (тоді «перемагає» файл, відкритий першим). GUID у рядку журналу вказує, якому додатку належать дані.",
+        "en": "Add-ins store their data in the model using a schema identified by a GUID. The schema is damaged or missing, or two files carry the same schema GUID with different structures (the first file opened in the session wins). The GUID in the journal line identifies the add-in."
+      },
+      "fix": {
+        "uk": [
+          "Закрийте Revit і скопіюйте GUID з рядка Missing ESSchema в останньому журналі.",
+          "Відкрийте модель з опцією Audit, збережіть її, закрийте Revit і відкрийте модель знову звичайним способом.",
+          "Якщо помилка повертається: пошукайте цей GUID в інших журналах. Якщо знайдете файл, де ця схема завантажувалась нормально, відкрийте спочатку його, а потім проблемну модель з Audit.",
+          "За GUID визначте додаток і встановіть його актуальну версію; для хмарних моделей скористайтеся інструкцією Autodesk щодо Audit хмарних моделей."
+        ],
+        "en": [
+          "Close Revit and copy the GUID from the Missing ESSchema line in the latest journal.",
+          "Open the model with Audit, save, close Revit and reopen the model normally.",
+          "If it comes back, search other journals for the GUID; if you find a file where that schema loaded fine, open that file first, then open the affected model with Audit.",
+          "Use the GUID to identify the add-in and install its current version; for cloud models follow Autodesk's cloud-model Audit procedure."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Corruption or crash when opening file and journal shows Missing ESSchema: GUID",
+          "url": "https://autodesk.com/support/technical/article/Revit-Corruption-crash-opening-file-and-journal-shows-Missing-ESSchema-GUID"
+        },
+        {
+          "title": "Autodesk Support: Journal records DBG_WARN: Missing ESSchema prior to crash with Revit 2024.3",
+          "url": "https://autodesk.com/support/technical/article/A-serious-error-has-occurred-Please-open-the-model-with-Audit-error-with-Revit-2024-3"
+        },
+        {
+          "title": "Autodesk Community: 2024.1 Update causes new Schema errors",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/2024-1-update-causes-new-schema-errors/m-p/12411702"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "missing-esschema"
+      ]
+    },
+    {
+      "id": "forum-categories-not-filterable",
+      "category": "other",
+      "severity": "low",
+      "match": {
+        "any": [
+          "One of the given categories is not filterable"
+        ],
+        "regex": [
+          "One\\s+of\\s+the\\s+given\\s+categories\\s+is\\s+not\\s+filterable"
+        ]
+      },
+      "context": "Creating or applying view filters, often from an add-in or template.",
+      "title": {
+        "uk": "Спроба створити фільтр виду з категорією, яку не можна фільтрувати",
+        "en": "A view filter was given a category that cannot be filtered"
+      },
+      "cause": {
+        "uk": "Це повідомлення Revit API: фільтру виду передали категорію, яка не підтримує фільтрацію. Зазвичай так робить додаток або шаблон. Скидання файлу Revit.ini до стандартного — поширена порада, але прямого підтвердження зв'язку з цим рядком ми не знайшли.",
+        "en": "This is a Revit API message: a view filter was given a category that does not support filtering, usually by an add-in or a template. Resetting Revit.ini is commonly suggested, but we found no source directly confirming it for this line."
+      },
+      "fix": {
+        "uk": [
+          "Подивіться в журналі, яка команда або додаток виконувались перед цим рядком; якщо це додаток — повідомте його розробника (йому слід використовувати RemoveUnfilterableCategories).",
+          "Якщо помилка з'являється при звичайній роботі без додатків: закрийте Revit, зробіть копію Revit.ini з %APPDATA%\\Autodesk\\Revit\\Autodesk Revit <версія> і замініть його файлом Revit.ini з C:\\ProgramData\\Autodesk\\RVT <версія>\\UserDataCache.",
+          "Запустіть Revit і перевірте знову."
+        ],
+        "en": [
+          "Check in the journal which command or add-in ran before this line; if it is an add-in, report it to the developer (it should use RemoveUnfilterableCategories).",
+          "If it happens without add-ins: close Revit, back up Revit.ini in %APPDATA%\\Autodesk\\Revit\\Autodesk Revit <version> and replace it with Revit.ini from C:\\ProgramData\\Autodesk\\RVT <version>\\UserDataCache.",
+          "Restart Revit and test again."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Revit API: ParameterFilterUtilities.RemoveUnfilterableCategories",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-API-MainReference/files/html/21cd2cd7-3054-d114-1f32-efbbfd069ef0.htm"
+        },
+        {
+          "title": "Autodesk Support: Revit Model crashes with varying error messages (replace Revit.ini from UserDataCache)",
+          "url": "https://autodesk.com/support/technical/article/Revit-Model-crashes-with-varying-error-messages"
+        }
+      ],
+      "confidence": "community",
+      "related": [
+        "category-not-filterable"
+      ]
+    },
+    {
+      "id": "forum-revit-ini-problem",
+      "category": "startup",
+      "severity": "medium",
+      "match": {
+        "regex": [
+          "problem\\s+with\\s+(the\\s+)?Revit\\.ini",
+          "Revit\\.ini.{0,60}(corrupt|invalid|cannot be read|could not be read)"
+        ],
+        "ignore_case": true
+      },
+      "context": "Random crashes with varying messages, or settings resetting.",
+      "title": {
+        "uk": "Пошкоджений файл налаштувань Revit.ini",
+        "en": "Damaged Revit.ini settings file"
+      },
+      "cause": {
+        "uk": "Revit зберігає дві копії Revit.ini: у профілі користувача і в папці UserDataCache. Якщо копія користувача пошкоджена (буває навіть 0 байт) або не відповідає основній, Revit може падати або скидати налаштування.",
+        "en": "Revit keeps two copies of Revit.ini: in the user profile and in UserDataCache. If the user copy is damaged (it can even become 0 bytes) or out of sync with the master copy, Revit can crash or reset settings."
+      },
+      "fix": {
+        "uk": [
+          "Закрийте Revit.",
+          "Зробіть резервну копію файлу C:\\Users\\<ім'я>\\AppData\\Roaming\\Autodesk\\Revit\\Autodesk Revit <версія>\\Revit.ini.",
+          "Скопіюйте Revit.ini з C:\\ProgramData\\Autodesk\\RVT <версія>\\UserDataCache і замініть ним файл у профілі.",
+          "Не змінюйте вручну значення InstallGUID і ReinstallGUID. Запустіть Revit і перевірте."
+        ],
+        "en": [
+          "Close Revit.",
+          "Back up C:\\Users\\<name>\\AppData\\Roaming\\Autodesk\\Revit\\Autodesk Revit <version>\\Revit.ini.",
+          "Copy Revit.ini from C:\\ProgramData\\Autodesk\\RVT <version>\\UserDataCache over the profile copy.",
+          "Do not edit InstallGUID or ReinstallGUID by hand. Start Revit and test."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Revit Model crashes with varying error messages",
+          "url": "https://autodesk.com/support/technical/article/Revit-Model-crashes-with-varying-error-messages"
+        },
+        {
+          "title": "Autodesk Community: Revit 2015 Revit.ini in ProgramData UserDataCache becoming 0-bytes",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2015-revit-ini-in-programdata-userdatacache-becoming-0/m-p/5335013"
+        },
+        {
+          "title": "Autodesk Help: Revit.ini file copies (Revit LT 2020)",
+          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/RevitLT-Troubleshoot/files/GUID-A6110043-4702-467B-8820-005AAAFC2AEF.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-model-incompatible-relinquish-fault",
+      "category": "cloud",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "ModelIncompatibleRelinquishFault"
+        ]
+      },
+      "context": "Linking or reloading a cloud model; the link is missing in Manage Links or reloads as not found.",
+      "title": {
+        "uk": "Хмарний зв'язок не завантажується після примусового звільнення елементів",
+        "en": "Cloud link will not load after a Force Relinquish"
+      },
+      "cause": {
+        "uk": "Для зв'язаної хмарної моделі було виконано Force Relinquish (примусове звільнення елементів), а локальний кеш цієї моделі після цього не оновився.",
+        "en": "A Force Relinquish was performed on the linked cloud model, and its local cache was not refreshed afterwards."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте зв'язану модель і виконайте Synchronize with Central, нічого не змінюючи.",
+          "Відкрийте основну модель і знову додайте або перезавантажте зв'язок.",
+          "Якщо у вас немає доступу до зв'язаної моделі (робота через Shared/Consumed пакети) — попросіть її авторів опублікувати і поділитися новим пакетом, прийміть його і перезавантажте зв'язок."
+        ],
+        "en": [
+          "Open the linked model and Synchronize with Central without making changes.",
+          "Open the host model and link or reload again.",
+          "If you have no access to the linked model (Shared/Consumed packages), ask its authors to publish and share a new package, consume it and reload the link."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Cloud model will not link or reload in Revit project",
+          "url": "https://autodesk.com/support/technical/article/Cloud-model-will-not-link-into-Revit-project"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "cloud-link-not-found-after-force-relinquish"
+      ]
+    },
+    {
+      "id": "forum-null-adoc-soft-crash",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "TransactionStateInterface constructed with NULL ADoc"
+        ],
+        "regex": [
+          "TransactionStateInterface\\s+constructed\\s+with\\s+NULL\\s+ADoc"
+        ]
+      },
+      "context": "Usually followed by 'Expect a soft crash after this warning'; often while an add-in works with family documents.",
+      "title": {
+        "uk": "Операція з документом, який не відкрито (часто — додаток і сім'я)",
+        "en": "Operation on a document that is not open (often an add-in and a family)"
+      },
+      "cause": {
+        "uk": "Revit спробував почати зміну в документі, якого фактично немає. Модератор форуму пов'язав це з документом сім'ї, який не було коректно відкрито або закрито — зазвичай це робота додатка чи скрипта.",
+        "en": "Revit tried to start a change on a document that does not exist. A forum moderator traced it to a family document that was not opened or closed properly, typically by an add-in or script."
+      },
+      "fix": {
+        "uk": [
+          "Перегляньте журнал перед цим рядком, щоб знайти додаток або скрипт (Dynamo, pyRevit тощо), що працював із сім'ями.",
+          "Тимчасово вимкніть цей додаток і повторіть дію.",
+          "Якщо це ваш власний скрипт — перевірте, що документ сім'ї успішно відкривається та закривається перед змінами."
+        ],
+        "en": [
+          "Look at the journal lines before this warning to find the add-in or script (Dynamo, pyRevit, etc.) that was working with families.",
+          "Temporarily disable that add-in and repeat the action.",
+          "If it is your own script, check that the family document is opened and closed successfully before editing it."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Revit API Forum: Revit exit error code",
+          "url": "https://forums.autodesk.com/t5/revit-api-forum/revit-exit-error-code/m-p/8140707"
+        }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "forum-invalid-spec-unit-type",
+      "category": "upgrade",
+      "severity": "info",
+      "match": {
+        "any": [
+          "Invalid Spec",
+          "does not specify default format options"
+        ],
+        "regex": [
+          "Unit\\s+Type\\s+.*does\\s+not\\s+specify\\s+default\\s+format\\s+options"
+        ]
+      },
+      "context": "File was saved in Revit 2021.1 or later and is now opened in Revit 2021.0.",
+      "versions": "2021",
+      "title": {
+        "uk": "Файл відкрито в старішій збірці Revit 2021",
+        "en": "File opened in an older Revit 2021 build"
+      },
+      "cause": {
+        "uk": "Файл раніше відкривали в Revit 2021.1 або новішому оновленні, а зараз — у базовій версії Revit 2021. Самі ці попередження файлу не шкодять.",
+        "en": "The file was previously opened in Revit 2021.1 or a later update and is now open in base Revit 2021. The warnings themselves do not harm the file."
+      },
+      "fix": {
+        "uk": [
+          "Оновіть Revit до 2021.1 або новішої версії на всіх комп'ютерах команди.",
+          "Якщо Revit падає, шукайте причину в інших рядках журналу — ці попередження зазвичай не причина збою."
+        ],
+        "en": [
+          "Update Revit to 2021.1 or later on all team machines.",
+          "If Revit crashes, look elsewhere in the journal; these warnings are not normally the crash cause."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help: Journal: Invalid Spec/Unit Type",
+          "url": "https://help.autodesk.com/cloudhelp/2024/ENU/RevitLT-Troubleshoot/files/GUID-254E1F20-1A25-4C3E-BB71-AB3F8F8B8B32.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "journal-invalid-spec-unit-type"
+      ]
+    },
+    {
+      "id": "forum-root-element-missing",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Root element is missing"
+        ]
+      },
+      "context": "'File not saved' or 'This operation could not be completed' when saving or synchronizing, often on Revit Server.",
+      "title": {
+        "uk": "Збереження/синхронізація не вдається: пошкоджені дані моделі",
+        "en": "Save/sync fails: model data is corrupted"
+      },
+      "cause": {
+        "uk": "Під час збереження або синхронізації Revit отримав порожні чи пошкоджені дані. Autodesk пов'язує це з пошкодженням моделі на Revit Server; також заважати можуть антивірус або інші програми, що блокують запис файлів.",
+        "en": "Revit received empty or damaged data while saving or syncing. Autodesk ties this to a corrupted model on Revit Server; antivirus or other software blocking file operations can also contribute."
+      },
+      "fix": {
+        "uk": [
+          "Спробуйте відновити модель із резервної копії.",
+          "Або: візьміть локальну копію когось із команди, відкрийте її з Detach from Central (Detach and preserve worksets) і збережіть як нову центральну модель на сервері.",
+          "Перевірте, чи антивірус або інші програми не блокують запис у папки Revit."
+        ],
+        "en": [
+          "Restore the model from a backup.",
+          "Or take a team member's local copy, open it with Detach from Central (Detach and preserve worksets) and save it as a new central model on the server.",
+          "Check that antivirus or other software is not blocking writes to Revit folders."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: This operation could not be completed when synchronizing a specific file to Revit Server",
+          "url": "https://autodesk.com/support/technical/article/This-operation-could-not-be-completed-when-synchronizing-a-specific-file-to-Revit-Server"
+        },
+        {
+          "title": "Autodesk Support: Revit Error File not saved",
+          "url": "https://autodesk.com/br/support/technical/article/Revit-Error-File-not-saved"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-mirrorid-duplicate",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {
+        "any": [
+          "mirrorId duplicate"
+        ],
+        "regex": [
+          "DBG_WARN:\\s*\\[TKY\\]\\s*mirrorId\\s+duplicate"
+        ]
+      },
+      "context": "'File Not Saved' on Synchronize with Central for users with existing local files, after someone else created a new local and synced.",
+      "title": {
+        "uk": "Синхронізація не вдається: пошкоджені права редагування елемента",
+        "en": "Sync fails: corrupted editing permissions on an element"
+      },
+      "cause": {
+        "uk": "Права редагування (editing permissions) одного або кількох елементів пошкоджені. ID проблемного елемента вказано в журналі як origId.",
+        "en": "The editing permissions of one or more elements are corrupted. The problem element ID is given in the journal as origId."
+      },
+      "fix": {
+        "uk": [
+          "Зробіть резервну копію моделі.",
+          "Скопіюйте число після origId з журналу, знайдіть елемент через Manage > Select by ID і видаліть його.",
+          "Збережіть і закрийте модель, відкрийте її з Detach from Central і оберіть Discard Worksets.",
+          "Знову увімкніть Worksharing, збережіть як нову центральну модель і створіть усім нові локальні копії."
+        ],
+        "en": [
+          "Back up the model.",
+          "Copy the number after origId from the journal, find the element with Manage > Select by ID and delete it.",
+          "Save and close, then reopen with Detach from Central and choose Discard Worksets.",
+          "Re-enable worksharing, save as a new central model and have everyone create new local files."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Revit Journal records DBG_WARN: [TKY] mirrorId duplicate when synchronizing",
+          "url": "https://autodesk.com/support/technical/article/File-not-saved-during-synchronize-with-central"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-token-expired-fault",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {
+        "any": [
+          "ModelDataAccessTokenExpiredFault",
+          "ModelDataAccessTokenExpiredException"
+        ]
+      },
+      "context": "'This operation could not be completed' when synchronizing with a central model on Revit Server (often during AbortWriteData).",
+      "title": {
+        "uk": "Синхронізація з Revit Server перервалась (термін доступу минув)",
+        "en": "Revit Server sync interrupted (access token expired)"
+      },
+      "cause": {
+        "uk": "Під час синхронізації з Revit Server доступ до даних моделі «прострочився». Часто винен акселератор Revit Server, що працює некоректно, неоновлений сервер або старі тимчасові та локальні файли.",
+        "en": "Access to the model data expired during sync with Revit Server. Often caused by a misbehaving Revit Server Accelerator, an unpatched server, or stale temp and local files."
+      },
+      "fix": {
+        "uk": [
+          "Тимчасово приберіть акселератор (Accelerator) з налаштувань — якщо помилка зникла, проблема в ньому.",
+          "Попросіть IT встановити всі оновлення Windows Server і перезавантажити сервер.",
+          "На робочому комп'ютері очистіть папку Temp Windows і видаліть старі локальні копії моделі, створіть нову локальну копію.",
+          "Перевірте журнал Revit Server у час помилки (за GUID сервера з журналу Revit)."
+        ],
+        "en": [
+          "Temporarily remove the Accelerator; if the error disappears, the accelerator is the problem.",
+          "Have IT apply all Windows Server updates and reboot the server.",
+          "On the workstation, clear the Windows Temp folder, delete old local files and create a new local.",
+          "Check the Revit Server log around the time of the error (match the server GUID in the Revit journal)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: This operation could not be completed when synchronizing to Revit Server",
+          "url": "https://autodesk.com/support/technical/article/Revit-Server-This-operation-could-not-be-completed-Please-try-again-when-synchronizing-to-Revit-Server"
+        },
+        {
+          "title": "Autodesk Help: Operation Could Not Be Completed (Revit Server)",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-751AAA0B-19DA-4C33-94E2-58642AAB381E.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "model-data-access-token-expired"
+      ]
+    },
+    {
+      "id": "forum-missing-elements",
+      "category": "file-corruption",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "missing elem",
+          "is missing many elements"
+        ],
+        "regex": [
+          "missing\\s+elem"
+        ],
+        "ignore_case": true
+      },
+      "context": "Opening a model; elements are missing or the model will not open.",
+      "title": {
+        "uk": "У моделі бракує елементів (пошкодження)",
+        "en": "Model has missing elements (corruption)"
+      },
+      "cause": {
+        "uk": "Пошкодження на рівні окремих елементів моделі. Журнал містить 8-значні ID елементів, яких бракує.",
+        "en": "Element-level corruption in the model. The journal lists the 8-digit IDs of the missing elements."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте останній журнал у текстовому редакторі, знайдіть «missing elem» і випишіть усі 8-значні ID.",
+          "Якщо модель відкрилась: відкрийте найновішу резервну копію, де ці елементи є, знайдіть їх через Manage > Select by ID (ID через крапку з комою), скопіюйте і вставте в пошкоджену модель через Paste > Aligned to Same Place.",
+          "Збережіть, закрийте і відкрийте модель з опцією Audit; перевірте елементи.",
+          "Якщо модель не відкривається: відкрийте з Audit найновішу резервну копію з цими елементами і працюйте далі в ній (пошкоджений файл перейменуйте і збережіть)."
+        ],
+        "en": [
+          "Open the latest journal in a text editor, search for 'missing elem' and note all 8-digit IDs.",
+          "If the model opened: open the newest backup that still has those elements, find them with Manage > Select by ID (IDs separated by semicolons), copy and use Paste > Aligned to Same Place in the damaged model.",
+          "Save, close and reopen with Audit; check the elements.",
+          "If the model will not open: open the newest backup containing the elements with Audit and continue in it (rename and keep the damaged file)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help: Missing Elements",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-9AFAAE6B-4107-4478-8B80-53467FE118DB.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "model-missing-many-elements"
+      ]
+    },
+    {
+      "id": "forum-audit-corrupt-family",
+      "category": "file-corruption",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "Why no ElemRec?",
+          "Missing owner, or cycle of owners!",
+          "Failed to translate big ElemId",
+          "ElemTable\\Marshaller.cpp"
+        ],
+        "regex": [
+          "Why\\s+no\\s+ElemRec",
+          "Missing\\s+owner,\\s+or\\s+cycle\\s+of\\s+owners",
+          "Failed\\s+to\\s+translate\\s+big\\s+ElemId"
+        ]
+      },
+      "context": "The model cannot be opened with Audit, or cannot be saved or purged.",
+      "title": {
+        "uk": "Пошкоджена сім'я блокує Audit або збереження",
+        "en": "Corrupt family blocks Audit or saving"
+      },
+      "cause": {
+        "uk": "У моделі є пошкоджена сім'я. Через неї модель не відкривається з Audit, не зберігається або не очищається (Purge Unused).",
+        "en": "A corrupt family in the model prevents opening with Audit, saving or Purge Unused."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте модель без опції Audit.",
+          "Збережіть завантажені сім'ї в папку (Save As > Library > Family).",
+          "Коли з'явиться помилка, подивіться в рядок стану Revit, яка сім'я саме зберігалась.",
+          "Перезавантажте цю сім'ю з чистої бібліотеки (має з'явитись запит на перезапис параметрів) або видаліть її з моделі.",
+          "Повторюйте, доки не знайдете всі пошкоджені сім'ї, потім відкрийте модель з Audit."
+        ],
+        "en": [
+          "Open the model without Audit.",
+          "Save the loaded families to a folder (Save As > Library > Family).",
+          "When an error appears, check the Revit status bar to see which family was being exported.",
+          "Reload that family from a clean library (you should get the overwrite-parameters prompt) or delete it.",
+          "Repeat until all corrupt families are handled, then open with Audit."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help: Cannot Open a Model Using Audit",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-A5E9D895-E3D4-4C9A-8AEC-DB9022A4BD33.htm"
+        },
+        {
+          "title": "Autodesk Support: Cannot open or save file with audit in Revit",
+          "url": "https://autodesk.com/support/technical/article/Cannot-open-a-file-with-audit"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "cannot-open-with-audit-corrupt-family"
+      ]
+    },
+    {
+      "id": "forum-non-existent-content-doc",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {
+        "any": [
+          "NON_EXISTENT_CONTENT_DOC",
+          "Please reload!",
+          "Please Reload"
+        ],
+        "regex": [
+          "NON_EXISTENT_CONTENT_DOC.*Please\\s+reload"
+        ],
+        "ignore_case": true
+      },
+      "context": "Local file will not synchronize with central.",
+      "title": {
+        "uk": "Сім'я посилається на неіснуючий документ (Please reload!)",
+        "en": "Family refers to a non-existent content document (Please reload!)"
+      },
+      "cause": {
+        "uk": "Пошкоджені сім'ї в моделі: їхній внутрішній документ більше не знаходиться. Через це локальна копія не синхронізується з центральною. Журнал називає кожну таку сім'ю.",
+        "en": "Corrupt families whose internal content document no longer resolves stop the local file from syncing. The journal names each affected family."
+      },
+      "fix": {
+        "uk": [
+          "Переконайтеся, що вся команда працює в останній збірці Revit.",
+          "Відкрийте проєкт з опцією Audit.",
+          "У журналі знайдіть рядки з NON_EXISTENT_CONTENT_DOC і випишіть назви сімей.",
+          "Перезавантажте ці сім'ї з резервної копії або бібліотеки через Load Family (або відкрийте сім'ю і натисніть Load into Project). Не використовуйте Reload з контекстного меню Project Browser."
+        ],
+        "en": [
+          "Make sure everyone is on the latest Revit build.",
+          "Open the project with Audit.",
+          "Find NON_EXISTENT_CONTENT_DOC lines in the journal and note the family names.",
+          "Reload those families from a backup or library with Load Family (or open the family and use Load into Project). Do not use Reload from the Project Browser context menu."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help: Workshared Model Won't Synchronize",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "family-non-existent-content-doc-please-reload"
+      ]
+    },
+    {
+      "id": "forum-undo-ddgraph",
+      "category": "crash",
+      "severity": "high",
+      "match": {
+        "any": [
+          "rollBackSubTransaction_() called while undoing",
+          "An active transaction phase on the stack while UndoMgr has no transaction currently open"
+        ],
+        "regex": [
+          "rollBackSubTransaction_\\(\\)\\s+called\\s+while\\s+undoing"
+        ]
+      },
+      "context": "Crash when modifying elements, changing phases, editing family types, duplicating views, or copy/paste between models.",
+      "versions": "2023, 2024 (fixed in 2023.1 and 2024 updates)",
+      "title": {
+        "uk": "Збій механізму Undo при зміні елементів",
+        "en": "Undo manager crash when modifying elements"
+      },
+      "cause": {
+        "uk": "Відома помилка Revit 2023/2024: стек скасування (Undo) розсинхронізується. Пов'язана з файлом DDGraph у локальній папці Revit.",
+        "en": "Known Revit 2023/2024 issue where the undo stack gets out of sync; linked to the DDGraph file in the local Revit folder."
+      },
+      "fix": {
+        "uk": [
+          "Встановіть оновлення Revit 2023.1 / 2024 або новіше.",
+          "Закрийте всі сеанси Revit і перейменуйте файл DDGraph у %LOCALAPPDATA%\\Autodesk\\Revit\\Autodesk Revit <версія>, потім запустіть Revit.",
+          "Якщо не допомогло: скопіюйте справний DDGraph з іншого комп'ютера, або скиньте налаштування Revit (перейменуйте папки налаштувань у Local, Roaming і ProgramData, додавши _Backup).",
+          "В останню чергу — чиста перевстановка Revit."
+        ],
+        "en": [
+          "Install Revit 2023.1 / 2024 or later.",
+          "Close all Revit sessions, rename the DDGraph file in %LOCALAPPDATA%\\Autodesk\\Revit\\Autodesk Revit <version> and restart Revit.",
+          "If it persists, copy a healthy DDGraph from another machine, or reset Revit settings (rename the Local, Roaming and ProgramData settings folders with _Backup).",
+          "Last resort: clean reinstall of Revit."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Crash occurs when modifying elements in Revit",
+          "url": "https://autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/KOR/Crash-occurs-when-switching-phase-of-Element-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support: Crash when copy & paste elements between Revit models",
+          "url": "https://autodesk.com/support/technical/article/Crash-when-copy-paste-elements-between-Revit-models"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-message-queue-failed",
+      "category": "startup",
+      "severity": "high",
+      "match": {
+        "any": [
+          "failed to open message_queue"
+        ],
+        "regex": [
+          "failed\\s+to\\s+open\\s+message_queue"
+        ],
+        "ignore_case": true
+      },
+      "context": "'Revit has stopped working' and Revit closes, often at startup.",
+      "title": {
+        "uk": "Revit не може зв'язатися зі своїм фоновим процесом",
+        "en": "Revit cannot talk to its background worker process"
+      },
+      "cause": {
+        "uk": "Відсутній або неправильний ключ реєстру Windows (Shell Folders > Common AppData) або в службовій папці міжпроцесного зв'язку лишилися старі файли.",
+        "en": "A missing or wrong Windows registry value (Shell Folders > Common AppData), or leftover files in the inter-process communication folder."
+      },
+      "fix": {
+        "uk": [
+          "Перезавантажте комп'ютер.",
+          "Перевірте, що папка C:\\ProgramData\\boost_interprocess (Revit 2024+) або C:\\ProgramData\\RevitInterProcess (2023 і старші) порожня; якщо ні — перенесіть файли звідти.",
+          "Попросіть IT перевірити в реєстрі Shell Folders значення Common AppData (має вказувати на C:\\ProgramData). Перед змінами — резервна копія реєстру.",
+          "Якщо папки немає — запустіть Revit від імені адміністратора (Run as administrator) один раз і перевірте знову."
+        ],
+        "en": [
+          "Restart the computer.",
+          "Make sure C:\\ProgramData\\boost_interprocess (Revit 2024+) or C:\\ProgramData\\RevitInterProcess (2023 and earlier) is empty; move any leftover files out.",
+          "Ask IT to check the Shell Folders registry value Common AppData (should point to C:\\ProgramData); back up the registry first.",
+          "If the folder is missing, run Revit once as administrator and test again."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Revit has stopped working and then Revit shuts down",
+          "url": "https://autodesk.com/support/technical/article/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down"
+        },
+        {
+          "title": "Autodesk Community: Revit 2017 stop working from one day to another",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2017-stop-working-from-one-day-to-another/m-p/6978137"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-worker-services",
+      "category": "startup",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Could not establish Worker Services",
+          "Failed to launch Worker",
+          "RevitWorker.exe was not found"
+        ]
+      },
+      "context": "Revit fails to start, sometimes with a crash report before the splash screen.",
+      "title": {
+        "uk": "Revit не запускається: не стартує RevitWorker",
+        "en": "Revit fails to start: RevitWorker cannot be launched"
+      },
+      "cause": {
+        "uk": "Revit і його допоміжний процес RevitWorker запущені з різними правами (наприклад, RevitWorker — як адміністратор, Revit — ні), або заважає служба WMI чи захисне ПЗ.",
+        "en": "Revit and its helper RevitWorker run with different rights (e.g. RevitWorker as administrator, Revit not), or WMI or security software interferes."
+      },
+      "fix": {
+        "uk": [
+          "Спробуйте запустити Revit через Run as administrator — якщо працює, причина в правах.",
+          "Відкрийте папку C:\\Program Files\\Autodesk\\Revit <версія>, клацніть правою кнопкою на RevitWorker.exe > Properties > Compatibility і зніміть галочку запуску від імені адміністратора.",
+          "Якщо не допомогло — попросіть IT перезапустити або відновити службу Windows Management Instrumentation (WMI) і перевірити, чи захисне ПЗ не блокує RevitWorker.",
+          "В останню чергу — перевстановіть Revit."
+        ],
+        "en": [
+          "Try starting Revit with Run as administrator; if it works, rights are the cause.",
+          "In C:\\Program Files\\Autodesk\\Revit <version>, right-click RevitWorker.exe > Properties > Compatibility and clear run-as-administrator.",
+          "Otherwise ask IT to restart or repair the Windows Management Instrumentation (WMI) service and check security software is not blocking RevitWorker.",
+          "Last resort: reinstall Revit."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Revit failed to start or RevitWorker.exe was not found",
+          "url": "https://autodesk.com/support/technical/article/Error-RevitWorker-exe-was-not-found-at-launching-Revit-program-crash"
+        },
+        {
+          "title": "Arkance: Revit Error Failed to start or RevitWorker.exe was not found",
+          "url": "https://emea.support.arkance.world/hc/nl-nl/articles/34699729759762-Revit-Error-Failed-to-start-of-RevitWorker-exe-was-not-found"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-cannot-connect-central-cloud",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Cannot connect to central model"
+        ]
+      },
+      "context": "Opening cloud (ACC/BIM 360) models: crash or 'This operation could not be completed'.",
+      "title": {
+        "uk": "Не вдається підключитися до хмарної центральної моделі",
+        "en": "Cannot connect to the cloud central model"
+      },
+      "cause": {
+        "uk": "Найчастіше — пошкоджений локальний кеш хмарних моделей (CollaborationCache) або пошкоджений файл user.config (буває після «синього екрана» чи збою відеодрайвера). Також може заважати антивірус.",
+        "en": "Most often a corrupt local cloud cache (CollaborationCache) or a bad user.config file (can follow a blue screen or video driver crash). Antivirus can also interfere."
+      },
+      "fix": {
+        "uk": [
+          "Оновіть Revit до останньої версії.",
+          "Закрийте Revit, перейменуйте папку %LOCALAPPDATA%\\Autodesk,_Inc на Autodesk,_Inc_OLD і відкрийте хмарну модель — Revit створить налаштування заново.",
+          "Якщо не допомогло: завершіть Personal Accelerator у Task Manager, перейменуйте папки CefCache, CollaborationCache і PacCache у %LOCALAPPDATA%\\Autodesk\\Revit\\Autodesk Revit <версія> (додайте _OLD) і запустіть Revit знову.",
+          "Перевірте, чи антивірус не блокує запис у ці папки."
+        ],
+        "en": [
+          "Update Revit.",
+          "Close Revit, rename %LOCALAPPDATA%\\Autodesk,_Inc to Autodesk,_Inc_OLD and open a cloud model so Revit rebuilds it.",
+          "If not fixed: end Personal Accelerator in Task Manager, rename CefCache, CollaborationCache and PacCache under %LOCALAPPDATA%\\Autodesk\\Revit\\Autodesk Revit <version> with _OLD, and restart Revit.",
+          "Check antivirus is not blocking writes to these folders."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Crash occurs when trying to open any cloud model in Revit",
+          "url": "https://autodesk.com/support/technical/article/Crash-with-CER-occurs-when-trying-to-open-any-cloud-model-in-Revit"
+        },
+        {
+          "title": "Autodesk Support: This operation could not be completed appears when opening certain cloud models",
+          "url": "https://autodesk.com/support/technical/article/This-operation-could-not-be-completed-opening-certain-cloud-models-in-Revit"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "forum-file-past-its-end",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "past its end"
+        ],
+        "regex": [
+          "Attempted\\s+to\\s+access\\s+.*\\s+past\\s+its\\s+end"
+        ]
+      },
+      "context": "Opening or linking a model (local, network or cloud).",
+      "title": {
+        "uk": "Файл обрізаний або неповний (past its end)",
+        "en": "File is truncated or incomplete (past its end)"
+      },
+      "cause": {
+        "uk": "Revit дочитав файл до кінця раніше, ніж очікував: файл скопійовано або збережено не повністю. Для хмарних моделей — пошкоджений локальний кеш на одному комп'ютері (в інших користувачів модель відкривається).",
+        "en": "Revit reached the end of the file earlier than expected: the file was not copied or saved completely. For cloud models, a corrupt local collaboration cache on one machine (others can open it)."
+      },
+      "fix": {
+        "uk": [
+          "Скопіюйте файл ще раз і порівняйте розмір з оригіналом.",
+          "Закрийте Revit, завершіть у Task Manager процеси Revit.exe, RevitAccelerator.exe і RevitWorker.exe, очистіть папку %TEMP%.",
+          "Перейменуйте (як резервну копію) локальну папку Autodesk Revit <версія> і папку PacCache, запустіть Revit і відкрийте модель знову.",
+          "Для хмарної моделі очистіть кеш CollaborationCache, як описано в правилі про Cannot connect to central model."
+        ],
+        "en": [
+          "Copy the file again and compare its size with the original.",
+          "Close Revit, end Revit.exe, RevitAccelerator.exe and RevitWorker.exe in Task Manager, clear %TEMP%.",
+          "Rename (as backup) the local Autodesk Revit <version> folder and the PacCache folder, restart Revit and reopen the model.",
+          "For a cloud model, clear the CollaborationCache as for 'Cannot connect to central model'."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Attempted to access an unnamed file past its end when opening or linking a Revit model from the cloud",
+          "url": "https://autodesk.com/support/technical/article/Error-Attempted-to-access-an-unnamed-file-past-its-end-when-opening-a-Revit-model-from-the-cloud"
+        },
+        {
+          "title": "Autodesk Help: Attempted to access <file name> past its end",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/RevitLT-Troubleshoot/files/GUID-809A057B-4F89-4960-95F5-2EA81A10C836.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "attempted-to-access-past-its-end"
+      ]
+    },
+    {
+      "id": "forum-corrupt-manually-recovered",
+      "category": "file-corruption",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "is corrupt and needs to be manually recovered"
+        ]
+      },
+      "context": "Opening a model; for cloud models often only one user is affected.",
+      "title": {
+        "uk": "Дані файлу пошкоджені і потребують ручного відновлення",
+        "en": "File data is corrupt and needs manual recovery"
+      },
+      "cause": {
+        "uk": "Для хмарної моделі, яку не може відкрити лише один користувач, — пошкоджений локальний кеш на його комп'ютері. Для звичайного файлу — пошкоджена сім'я або елементи в моделі.",
+        "en": "For a cloud model that fails for one user only, a corrupt local cache on that machine. For a regular file, a corrupt family or elements in the model."
+      },
+      "fix": {
+        "uk": [
+          "Хмарна модель: закрийте Revit і перенесіть файли цієї моделі з папки CollaborationCache (і копію CentralCache) в інше місце, потім відкрийте модель знову.",
+          "Перевірте вільне місце на диску; спробуйте відкрити модель під іншим профілем Windows.",
+          "Звичайний файл: відкрийте без Audit і знайдіть пошкоджену сім'ю (див. правило про пошкоджену сім'ю) або відкрийте останню резервну копію (файл .0001.rvt тощо) з Audit."
+        ],
+        "en": [
+          "Cloud model: close Revit and move that model's files out of CollaborationCache (and the CentralCache copy), then reopen.",
+          "Check free disk space; try another Windows profile.",
+          "Regular file: open without Audit and find the corrupt family, or open the latest backup (.0001.rvt etc.) with Audit."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Data in file is corrupt and needs to be manually recovered when opening cloud model",
+          "url": "https://knowledge.autodesk.com/article/Cloud-collaboration-corruption-for-one-user"
+        },
+        {
+          "title": "Autodesk Help: Cannot Open a Model Using Audit",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-A5E9D895-E3D4-4C9A-8AEC-DB9022A4BD33.htm"
+        },
+        {
+          "title": "Autodesk Help: Unknown Error Occurred (backups and Audit)",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-54345994-6F92-4066-BB4B-2383823C6507.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "data-in-file-corrupt"
+      ]
+    },
+    {
+      "id": "forum-dxgi-device-removed",
+      "category": "graphics",
+      "severity": "high",
+      "match": {
+        "any": [
+          "DXGI_ERROR_DEVICE_REMOVED"
+        ]
+      },
+      "context": "Crash while navigating, rendering or with hardware acceleration on.",
+      "title": {
+        "uk": "Відеокарта «зникла» для Revit (збій драйвера)",
+        "en": "Graphics device was lost (driver reset)"
+      },
+      "cause": {
+        "uk": "Драйвер відеокарти перезапустився або перестав відповідати, і DirectX-графіка Revit впала. Інженер Autodesk підтвердив цей діагноз за журналом.",
+        "en": "The graphics driver reset or stopped responding and Revit's DirectX graphics failed. An Autodesk QA engineer confirmed this diagnosis from the journal."
+      },
+      "fix": {
+        "uk": [
+          "Встановіть начисто (clean install) сертифікований драйвер відеокарти з сайту виробника.",
+          "Вимкніть оверлеї (наприклад, NVIDIA ShadowPlay) і розгін відеокарти.",
+          "Спробуйте вимкнути апаратне прискорення: Options > Graphics > Use Hardware Acceleration.",
+          "На ноутбуках з двома відеокартами увімкніть режим лише дискретної відеокарти (Discrete/dGPU only) або вимкніть інтегровану відеокарту."
+        ],
+        "en": [
+          "Clean-install a certified graphics driver from the vendor.",
+          "Disable overlays (e.g. NVIDIA ShadowPlay) and GPU overclocking.",
+          "Try turning off Options > Graphics > Use Hardware Acceleration.",
+          "On laptops with two GPUs, switch to discrete/dGPU-only mode or disable the integrated GPU."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: Crash when rendering in high resolution",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/crash-when-rendering-in-high-resolution/m-p/6931326"
+        },
+        {
+          "title": "Autodesk Community: Revit 2025/2026 crashes with Video driver error",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2025-2026-crashes-with-quot-video-driver-error-quot-on/td-p/14075214"
+        }
+      ],
+      "confidence": "community-verified"
+    },
+    {
+      "id": "forum-video-driver-error",
+      "category": "graphics",
+      "severity": "high",
+      "match": {
+        "regex": [
+          "video\\s+driver\\s+error",
+          "cannot\\s+use\\s+hardware\\s+acceleration"
+        ],
+        "ignore_case": true
+      },
+      "context": "Display errors or crashes related to the graphics card.",
+      "title": {
+        "uk": "Помилка відеодрайвера / апаратного прискорення",
+        "en": "Video driver / hardware acceleration error"
+      },
+      "cause": {
+        "uk": "Revit не може коректно працювати з відеокартою: застарілий або несумісний драйвер, несертифікована відеокарта, або ноутбук перемикається на інтегровану графіку.",
+        "en": "Revit cannot work properly with the graphics card: outdated or incompatible driver, uncertified card, or a laptop switching to integrated graphics."
+      },
+      "fix": {
+        "uk": [
+          "Вимкніть апаратне прискорення: Options > Graphics > зніміть Use Hardware Acceleration, перезапустіть Revit.",
+          "Оновіть драйвер відеокарти з сайту виробника.",
+          "На ноутбуках: увімкніть режим дискретної відеокарти або вимкніть інтегровану відеокарту в BIOS / Device Manager."
+        ],
+        "en": [
+          "Turn off Options > Graphics > Use Hardware Acceleration and restart Revit.",
+          "Update the graphics driver from the vendor.",
+          "On laptops, switch to discrete-GPU mode or disable the integrated GPU in BIOS / Device Manager."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: Video driver error for Revit 2017",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/video-driver-error-for-revit-2017/m-p/6904044"
+        },
+        {
+          "title": "Autodesk Community: Revit 2025/2026 crashes with Video driver error",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2025-2026-crashes-with-quot-video-driver-error-quot-on/td-p/14075214"
+        },
+        {
+          "title": "AUGI: 2016 Display Error - Cannot use Hardware Acceleration",
+          "url": "https://forums.augi.com/archive/index.php/t-169161.html"
+        }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "forum-access-violation",
+      "category": "crash",
+      "severity": "high",
+      "match": {
+        "any": [
+          "0xC0000005",
+          "EXCEPTION_ACCESS_VIOLATION"
+        ],
+        "regex": [
+          "access\\s+violation"
+        ],
+        "ignore_case": true
+      },
+      "context": "Revit has stopped working at startup or during work.",
+      "title": {
+        "uk": "Порушення доступу до пам'яті (access violation)",
+        "en": "Memory access violation"
+      },
+      "cause": {
+        "uk": "Загальний тип збою. Найчастіші причини за форумами та Autodesk: конфлікт додатків, антивірус, проблеми з драйвером відеокарти, пошкоджені налаштування профілю Revit, відсутні оновлення Windows.",
+        "en": "Generic crash type. Common causes per forums and Autodesk: add-in conflicts, antivirus, graphics driver issues, damaged Revit profile settings, missing Windows updates."
+      },
+      "fix": {
+        "uk": [
+          "Подивіться в журналі, яка дія або додаток були останніми перед збоєм.",
+          "Тимчасово вимкніть додатки (перенесіть файли .addin з папок Addins) і перевірте.",
+          "Встановіть оновлення Windows, оновіть драйвер відеокарти, очистіть папку Temp, спробуйте вимкнути апаратне прискорення.",
+          "Перевірте, чи не заважає антивірус.",
+          "Скиньте профіль Revit: замініть Revit.ini стандартним або (після резервної копії) перейменуйте папки Revit у AppData\\Local і AppData\\Roaming. В останню чергу — чиста перевстановка."
+        ],
+        "en": [
+          "Check in the journal which action or add-in ran last before the crash.",
+          "Temporarily disable add-ins (move .addin files out of the Addins folders) and test.",
+          "Install Windows updates, update the graphics driver, clear Temp, try disabling hardware acceleration.",
+          "Check whether antivirus interferes.",
+          "Reset the Revit profile: replace Revit.ini with the default, or (after backup) rename the Revit folders in AppData\\Local and AppData\\Roaming. Last resort: clean reinstall."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support: Autodesk Revit has stopped working when opening Revit",
+          "url": "https://autodesk.com/support/technical/article/Revit-Error-Autodesk-Revit-has-Stopped-Working"
+        },
+        {
+          "title": "Autodesk Community: Revit 2017 Crash on Startup",
+          "url": "https://forums.autodesk.com/t5/installation-licensing-forum/revit-2017-crash-on-startup/m-p/6971192"
+        },
+        {
+          "title": "Pirros help: Revit crashes - access violations",
+          "url": "https://help.pirros.com/en/articles/14490700-revit-crashes-access-violations"
+        }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "forum-addin-assembly-load",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Could not load file or assembly",
+          "0x80131515"
+        ]
+      },
+      "context": "Revit startup or running an add-in command.",
+      "title": {
+        "uk": "Не вдалося завантажити файл додатка (DLL)",
+        "en": "Add-in assembly (DLL) could not be loaded"
+      },
+      "cause": {
+        "uk": "Windows заблокував завантажений з інтернету файл додатка, або Revit посилається на старий шлях/версію додатка, якого вже немає.",
+        "en": "Windows blocked an add-in file downloaded from the internet, or Revit points to an old path or version of an add-in that no longer exists."
+      },
+      "fix": {
+        "uk": [
+          "У журналі знайдіть назву і шлях DLL поруч із помилкою.",
+          "Клацніть правою кнопкою на DLL (або на ZIP до розпакування) > Properties > поставте Unblock > OK, перезапустіть Revit.",
+          "Якщо шлях вказує на стару версію — видаліть залишки старого додатка (файли .addin) і перевстановіть актуальну версію з інсталятора.",
+          "Якщо не допомогло — зверніться до розробника додатка з текстом помилки."
+        ],
+        "en": [
+          "Find the DLL name and path next to the error in the journal.",
+          "Right-click the DLL (or ZIP before extracting) > Properties > Unblock > OK, restart Revit.",
+          "If the path points to an old version, remove the leftover .addin files and reinstall the current version.",
+          "Otherwise contact the add-in developer with the error text."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Developer Blog: Revit Add-in File Load Exception",
+          "url": "https://blog.autodesk.io/revit-add-in-file-load-exception/"
+        },
+        {
+          "title": "IMAGINiT: Revit APL error - could not load file or assembly Apl_Glue",
+          "url": "https://resources.imaginit.com/support-blog/revit-apl-error-could-not-load-file-or-assembly-apl-glue"
+        }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "forum-managed-exception-addin",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Exception caught from managed method",
+          "Managed exception"
+        ],
+        "regex": [
+          "Exception\\s+caught\\s+from\\s+managed\\s+method"
+        ]
+      },
+      "context": "Generic .NET exception; check the text after it for the method and exception type.",
+      "title": {
+        "uk": "Виняток у .NET-коді (часто — додаток)",
+        "en": ".NET exception (often an add-in)"
+      },
+      "cause": {
+        "uk": "Помилка сталася в .NET-коді — це може бути додаток (add-in) або компонент Revit. Назва методу і тип винятку після цього рядка підказують джерело. Якщо там SqlClient або PathTooLongException — дивіться окремі правила.",
+        "en": "An error occurred in .NET code, either an add-in or a Revit component. The method name and exception type after the line show the source. For SqlClient or PathTooLongException see the dedicated rules."
+      },
+      "fix": {
+        "uk": [
+          "Прочитайте рядок повністю: назва методу і тип винятку часто вказують на конкретний додаток.",
+          "Тимчасово вимкніть підозрілий додаток (перенесіть його файл .addin) і перевірте, чи помилка зникла.",
+          "Оновіть додаток до версії, сумісної з вашою версією Revit, або зверніться до його розробника."
+        ],
+        "en": [
+          "Read the full line: the method name and exception type often point to a specific add-in.",
+          "Temporarily disable the suspect add-in (move its .addin file) and test.",
+          "Update the add-in to a version compatible with your Revit, or contact its developer."
+        ]
+      },
+      "sources": [
+        {
+          "title": "ModPlus forum: ModPlus crashing Revit Architecture 2015",
+          "url": "https://modplus.org/en/forum/revitgeneral/187-modplus-crashing-revit-architecture-2015"
+        },
+        {
+          "title": "NOVEDGE: Revit Journal Management for Faster Issue Resolution",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-journal-management-for-faster-issue-resolution"
+        }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "forum-out-of-memory",
+      "category": "memory",
+      "severity": "high",
+      "match": {
+        "regex": [
+          "\\bout\\s+of\\s+memory\\b",
+          "\\blow\\s+memory\\b",
+          "insufficient\\s+memory"
+        ],
+        "ignore_case": true
+      },
+      "context": "Large models, many links, opening heavy views or saving.",
+      "title": {
+        "uk": "Revit бракує пам'яті",
+        "en": "Revit ran out of memory"
+      },
+      "cause": {
+        "uk": "Моделі разом зі зв'язками потребують більше оперативної або віртуальної пам'яті, ніж доступно. Сприяють мало вільного місця на системному диску, інші важкі програми та проблемний вид або зв'язок.",
+        "en": "The model and its links need more RAM or virtual memory than available. Low free space on the system drive, other heavy apps, or one problem view or link make it worse."
+      },
+      "fix": {
+        "uk": [
+          "Закрийте інші важкі програми і звільніть місце на системному диску (кілька ГБ).",
+          "Якщо збій у конкретному виді: сховайте всі зв'язки у Visibility/Graphics, відкрийте вид знову і вмикайте зв'язки по одному, щоб знайти проблемний.",
+          "Відкрийте модель з Audit, виправте попередження, виконайте Purge Unused.",
+          "За потреби додайте оперативної пам'яті (орієнтовно в 20 разів більше за розмір файлу моделі)."
+        ],
+        "en": [
+          "Close other heavy applications and free several GB on the system drive.",
+          "If one view crashes: hide all links in Visibility/Graphics, reopen the view and unhide links one by one to find the culprit.",
+          "Open with Audit, resolve warnings and run Purge Unused.",
+          "Add RAM if needed (a rule of thumb is about 20 times the model file size)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Community: Revit crashes (solved by isolating links per view)",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-crashes/m-p/6851787"
+        },
+        {
+          "title": "AUGI: Can anyone decipher this crashed journal file?",
+          "url": "https://forums.augi.com/archive/index.php/t-115340.html"
+        },
+        {
+          "title": "Autodesk Community: Revit 2023 Crashing multiple times",
+          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2023-crashing-multiple-times/m-p/11388042"
+        }
+      ],
+      "confidence": "community-verified"
+    },
+    {
+      "id": "forum-cefsharp-load-failure",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Failed to load CefSharp",
+          "libcef.dll"
+        ],
+        "regex": [
+          "CefSharp.*(fail|exception|could not load)"
+        ],
+        "ignore_case": true
+      },
+      "context": "Startup, when an add-in with an embedded web browser loads.",
+      "title": {
+        "uk": "Не завантажується вбудований браузер (CefSharp) додатка",
+        "en": "Add-in embedded browser (CefSharp) fails to load"
+      },
+      "cause": {
+        "uk": "Компонент CefSharp потребує бібліотек Microsoft Visual C++ Redistributable. Якщо вони пошкоджені, або додатки використовують різні версії CefSharp, завантаження не вдається.",
+        "en": "CefSharp needs the Microsoft Visual C++ Redistributables. If they are damaged, or add-ins ship conflicting CefSharp versions, loading fails."
+      },
+      "fix": {
+        "uk": [
+          "Встановіть оновлення Windows, що очікують.",
+          "Перевстановіть Microsoft Visual C++ Redistributable (x64 і x86).",
+          "Оновіть додаток, який використовує CefSharp, до версії для вашої версії Revit; тимчасово вимкніть інші додатки, щоб перевірити конфлікт."
+        ],
+        "en": [
+          "Install pending Windows updates.",
+          "Reinstall the Microsoft Visual C++ Redistributables (x64 and x86).",
+          "Update the add-in that uses CefSharp for your Revit version; temporarily disable other add-ins to test for conflicts."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Relux: ReluxCAD for Revit - Error Failed to load CefSharp DLL",
+          "url": "https://relux.com/knowledge-hub/knowledge-db/reluxcad-for-revit/troubleshooting/cefsharp-dll-fail"
+        }
+      ],
+      "confidence": "community"
+    }
+  ]
+}

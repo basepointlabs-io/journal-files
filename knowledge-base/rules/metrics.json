@@ -1,0 +1,1103 @@
+{
+  "source": "Computed metrics",
+  "collected": "2026-11-06",
+  "rules": [
+    {
+      "id": "metric-journal-no-normal-exit",
+      "category": "crash",
+      "severity": "critical",
+      "match": {},
+      "metric": {
+        "type": "session_end_state",
+        "threshold": "no 'finished recording journal file' AND journal is not the active one",
+        "description": "Set ended_properly = true if any timestamp line ('C/'E/'H) has the description 'finished recording journal file'. If it is false and the journal is not the currently active one (a newer journal.NNNN.txt exists in the same folder, or the file mtime is more than 10 minutes old), the session ended abnormally. Skip *.worker*.log files. Then classify the end from the last 200 lines: 'ExceptionCode=' or 'Exception occurred' or 'unhandledExceptionFilter' = crash; 'IDS_UNRECOVERABLE_ERROR' or 'A fatal error has occurred' or 'program terminated' = fatal error; none of these = process killed / power loss / hang ended by user."
+      },
+      "context": "Any session. The normal end is '<-desktop ExitNativeInstance' followed by 'finished recording journal file'.",
+      "versions": "2010-2024 verified; 2025-2026 assumed",
+      "title": {
+        "uk": "Revit закрився аварійно (сеанс не завершився нормально)",
+        "en": "Revit did not close normally (abnormal end of session)"
+      },
+      "cause": {
+        "uk": "У журналі немає запису про нормальне закриття програми. Отже, Revit «впав», його закрили примусово через Диспетчер завдань, або комп'ютер вимкнувся. Те, що ви робили безпосередньо перед цим, найімовірніше пов'язане з проблемою.",
+        "en": "The journal has no normal-shutdown record. Revit crashed, was killed (e.g. via Task Manager), or the computer lost power. The last actions recorded before the end are the most likely trigger."
+      },
+      "fix": {
+        "uk": [
+          "Встановіть останнє оновлення (update/hotfix) вашої версії Revit.",
+          "Перевірте, чи проблема виникає лише в одній моделі: якщо так, відкрийте її з позначкою Audit (Перевірка) у вікні Open.",
+          "Якщо проблема лише на одному комп'ютері — тимчасово вимкніть сторонні додатки (add-ins) і перевірте ще раз.",
+          "Передайте BIM-менеджеру або в підтримку Autodesk цей журнал і номер звіту про помилку (CER), якщо він з'явився."
+        ],
+        "en": [
+          "Install the latest update/hotfix for your Revit version.",
+          "Check whether the problem happens with one model only; if so, open it with the Audit option enabled.",
+          "If it happens on one computer only, temporarily disable third-party add-ins and test again.",
+          "Send this journal (and the CER report number if one was shown) to your BIM manager or Autodesk support."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error and Cannot Continue", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
+        { "title": "Journalysis Journal.WasSessionTerminatedProperly (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
+        { "title": "Real R2015 crash journal ending abruptly (OTOY forum attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-crash-last-user-action",
+      "category": "crash",
+      "severity": "info",
+      "match": {},
+      "metric": {
+        "type": "last_actions_before_abnormal_end",
+        "threshold": 10,
+        "description": "Only when metric-journal-no-normal-exit fires. List the last 10 user actions before the end of the file (Jrn.Command IDs, Jrn.RibbonEvent texts, Jrn.AddInEvent, Jrn.Data 'File Name'), each with its block timestamp. Also report the seconds between the last user action and the last timestamp in the file, and the last [Jrn.BasicFileInfo] LastSavePath (the active model, anonymized)."
+      },
+      "context": "Crash context reporting",
+      "versions": "all",
+      "title": {
+        "uk": "Що ви робили перед аварійним закриттям",
+        "en": "What happened just before the crash"
+      },
+      "cause": {
+        "uk": "Це не окрема помилка, а підказка: перелік останніх команд і дій перед аварією. Якщо аварія повторюється після тієї самої команди, причину найпростіше знайти саме там.",
+        "en": "Not a separate problem but a clue: the last commands and actions before the crash. If crashes repeat after the same command, that command is the place to investigate."
+      },
+      "fix": {
+        "uk": [
+          "Спробуйте повторити ту саму дію в копії моделі, щоб перевірити, чи аварія повторюється.",
+          "Якщо остання дія — команда додатка (вкладка Add-Ins або інша стороння вкладка), спершу перевірте цей додаток.",
+          "Повідомте BIM-менеджеру назву останньої команди і час аварії."
+        ],
+        "en": [
+          "Try to repeat the same action in a copy of the model to see whether the crash is reproducible.",
+          "If the last action was an add-in command (Add-Ins tab or another third-party tab), check that add-in first.",
+          "Report the last command name and the crash time to your BIM manager."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Revit Has Encountered a Fatal Error and Cannot Continue (check the journal)", "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
+        { "title": "Real R2017 fatal-error excerpt (revitpythonshell issue #43)", "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-crash-dump-present",
+      "category": "crash",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "sibling_dump_file_exists",
+        "threshold": 1,
+        "description": "Folder-level check: if a file named <journal base name>*.dmp (e.g. journal.0388.dmp, journal.0388.0001.dmp) exists next to the journal, the session wrote a crash dump. Use it to confirm metric-journal-no-normal-exit. Only applies when the analyzer is given the whole Journals folder."
+      },
+      "context": "Journals folder contents",
+      "versions": "all (naming observed in third-party tools)",
+      "title": {
+        "uk": "Знайдено файл аварійного дампа (.dmp)",
+        "en": "Crash dump file (.dmp) found for this session"
+      },
+      "cause": {
+        "uk": "Поруч із журналом лежить файл .dmp з тим самим номером. Revit створює його під час аварійного закриття.",
+        "en": "A .dmp file with the same number sits next to the journal. Revit writes it when it crashes."
+      },
+      "fix": {
+        "uk": [
+          "Збережіть журнал і .dmp файл — їх може попросити підтримка Autodesk.",
+          "Встановіть останнє оновлення Revit і перевірте, чи аварія повторюється."
+        ],
+        "en": [
+          "Keep the journal and the .dmp file; Autodesk support may ask for them.",
+          "Install the latest Revit update and check whether the crash repeats."
+        ]
+      },
+      "sources": [
+        { "title": "IMAGINiT: Journal Reader (Part 1) - files in the Journals folder", "url": "https://resources.imaginit.com/revit/imaginit-utilities-for-revit-journal-reader-part-1" },
+        { "title": "amcgoey/Synthetic-Revit revit_journal_tool.py (dump detection)", "url": "https://github.com/amcgoey/Synthetic-Revit/blob/HEAD/.agents/plugins/RevitTDDWorkflow/scripts/revit_journal_tool.py" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-repeated-crashes",
+      "category": "crash",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "abnormal_end_count_in_window",
+        "threshold": 3,
+        "description": "Folder-level: count journals (main journals only, not worker logs) that ended abnormally (metric-journal-no-normal-exit) and whose start timestamp falls within the 7 days before the newest journal. Fire when the count is >= 3. Group them by last active model (LastSavePath) and by last add-in command to suggest a common factor."
+      },
+      "context": "Several journals analyzed together",
+      "versions": "all",
+      "title": {
+        "uk": "Revit аварійно закривався кілька разів за тиждень",
+        "en": "Revit crashed repeatedly during the last week"
+      },
+      "cause": {
+        "uk": "Три або більше сеансів за 7 днів завершилися аварійно. Причина, найімовірніше, постійна: конкретна модель, додаток, драйвер відеокарти або застаріла версія Revit.",
+        "en": "Three or more sessions in 7 days ended abnormally. The cause is probably persistent: a specific model, add-in, graphics driver or an outdated Revit build."
+      },
+      "fix": {
+        "uk": [
+          "Порівняйте, яка модель була відкрита під час кожної аварії: якщо та сама — відкрийте її з позначкою Audit.",
+          "Якщо аварії на різних моделях, але на одному комп'ютері — тимчасово вимкніть сторонні додатки та оновіть драйвер відеокарти.",
+          "Встановіть останнє оновлення Revit.",
+          "Зверніться до BIM-менеджера з цими журналами."
+        ],
+        "en": [
+          "Compare which model was open during each crash; if it is the same model, open it with Audit.",
+          "If crashes happen in different models on one computer, temporarily disable third-party add-ins and update the graphics driver.",
+          "Install the latest Revit update.",
+          "Contact your BIM manager with these journals."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (narrow the scope: one model / one computer / one network)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-ram-low-before-crash",
+      "category": "memory",
+      "severity": "critical",
+      "match": {},
+      "metric": {
+        "type": "last_ram_available_before_abnormal_end_mb",
+        "threshold": { "absolute_mb": 1024, "fraction_of_total": 0.05 },
+        "description": "Only when metric-journal-no-normal-exit fires. Take the last machine free-RAM reading in the final 200 lines: RAM Avail after '->' in 'Delta VM: ...; RAM: Avail <d> -> <MB> MB', or <Available> in 'RAM Statistics: <Available> / <Total> <InUse>=InUse <Peak>=Peak'. Fire if it is < 1024 MB OR < 5% of total RAM (Total from RAM Statistics; fallback TotalVisibleMemorySize/1024). Report the value, total RAM and Revit's InUse/Peak at that moment."
+      },
+      "context": "Crash during a memory-heavy operation (open, print, export, upgrade, render)",
+      "versions": "R2015-R2024 verified line formats",
+      "title": {
+        "uk": "Перед аварією на комп'ютері майже закінчилася оперативна пам'ять",
+        "en": "The computer was almost out of RAM just before the crash"
+      },
+      "cause": {
+        "uk": "Останні записи журналу показують дуже мало вільної оперативної пам'яті (RAM) на комп'ютері. Найімовірніше, Revit закрився саме через нестачу пам'яті.",
+        "en": "The last journal readings show very little free physical memory on the machine. The crash was most likely caused by running out of memory."
+      },
+      "fix": {
+        "uk": [
+          "Перезапускайте Revit перед важкими операціями: друк, рендеринг, експорт, оновлення (upgrade) моделей.",
+          "Закрийте інші програми, які займають багато пам'яті, і непотрібні види в Revit.",
+          "Відкривайте лише потрібні робочі набори (worksets) і вивантажуйте (Unload) непотрібні зв'язані моделі.",
+          "Обсяг оперативної пам'яті має бути приблизно у 20 разів більшим за розмір стиснутого центрального файлу (не менше 16 ГБ). Якщо пам'яті менше — зверніться до ІТ щодо розширення.",
+          "Попросіть ІТ перевірити, чи правильно налаштований файл підкачки Windows."
+        ],
+        "en": [
+          "Restart Revit before memory-heavy tasks such as printing, rendering, exporting and upgrading models.",
+          "Close other memory-hungry programs and unneeded views in Revit.",
+          "Open only the worksets you need and unload linked models you don't need.",
+          "RAM should be about 20 times the compacted central file size (at least 16 GB); ask IT for an upgrade if it is less.",
+          "Ask IT to check that the Windows paging file size is optimized."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
+        { "title": "Revit Clinic (Autodesk support blog): A Journal File Story Part 3 - memory", "url": "https://web.archive.org/web/2016/http://revitclinic.typepad.com/my_weblog/2009/03/a-journal-file-story-part-3.html" },
+        { "title": "Journalysis wiki: JournalMemoryMetrics", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-ram-available-low",
+      "category": "memory",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "min_ram_available_mb",
+        "threshold": { "absolute_mb": 2048, "fraction_of_total": 0.10 },
+        "description": "Compute min_ram_avail_mb over all Delta VM 'RAM: Avail ... -> X MB' values and all 'RAM Statistics: X / Total' values in the session. Fire if min < 2048 MB OR min < 10% of total RAM. Report when it happened (block timestamp) and the nearest preceding Jrn.Command. Do not use VM Avail: on 64-bit it is the address space (~8 or ~128 TB) and is meaningless here."
+      },
+      "context": "Long sessions, large models, many links, rendering/printing",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Під час роботи закінчувалася оперативна пам'ять",
+        "en": "Free RAM ran low during the session"
+      },
+      "cause": {
+        "uk": "У якийсь момент сеансу вільної оперативної пам'яті на комп'ютері залишалося дуже мало. Через це Revit гальмує, а при подальшому навантаженні може «впасти».",
+        "en": "At some point free physical RAM on the machine became very low. Revit slows down and may crash under further load."
+      },
+      "fix": {
+        "uk": [
+          "Перезапустіть Revit, щоб звільнити пам'ять, особливо перед друком, експортом чи рендерингом.",
+          "Закрийте непотрібні види (Close Inactive Views) та інші програми.",
+          "Відкривайте лише потрібні робочі набори і вивантажуйте непотрібні зв'язки (Manage Links > Unload).",
+          "Якщо таке трапляється часто — перевірте з ІТ, чи достатньо оперативної пам'яті (рекомендовано від 16 ГБ і приблизно 20× розміру центрального файлу)."
+        ],
+        "en": [
+          "Restart Revit to free memory, especially before printing, exporting or rendering.",
+          "Close inactive views and other programs.",
+          "Open only needed worksets and unload unneeded links (Manage Links > Unload).",
+          "If this happens often, check with IT whether RAM is sufficient (16 GB or more, about 20x the central file size)."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
+        { "title": "Journalysis Journal.MinRAMAvailable (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-revit-peak-ram-share-high",
+      "category": "memory",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "peak_revit_ram_fraction_of_total",
+        "threshold": 0.8,
+        "description": "peak_revit_ram_mb = max(RAM Peak after '->' in Delta VM lines, <Peak> in 'RAM Statistics: ... <InUse>=InUse <Peak>=Peak'). total_ram_mb = max(Total in RAM Statistics) (fallback TotalVisibleMemorySize/1024 from OPERATING SYSTEM INFORMATION). Fire if peak_revit_ram_mb / total_ram_mb >= 0.8. Report both numbers in GB."
+      },
+      "context": "Large models, upgrades, exports",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Revit використав майже всю оперативну пам'ять комп'ютера",
+        "en": "Revit used almost all of the computer's RAM"
+      },
+      "cause": {
+        "uk": "У пікові моменти Revit займав 80% або більше всієї оперативної пам'яті. Модель (разом зі зв'язками) завелика для цього комп'ютера, або сеанс тривав дуже довго без перезапуску.",
+        "en": "At its peak Revit used 80% or more of all physical RAM. The model (with its links) is too large for this computer, or the session ran very long without a restart."
+      },
+      "fix": {
+        "uk": [
+          "Перезапускайте Revit під час довгої роботи та перед важкими операціями.",
+          "Відкривайте лише потрібні робочі набори і вивантажуйте непотрібні зв'язки.",
+          "Перевірте з ІТ обсяг пам'яті: рекомендовано щонайменше 16 ГБ і приблизно 20× розміру стиснутого центрального файлу."
+        ],
+        "en": [
+          "Restart Revit during long sessions and before heavy operations.",
+          "Open only needed worksets and unload unneeded links.",
+          "Check RAM with IT: at least 16 GB and about 20x the compacted central file size."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
+        { "title": "Journalysis Journal.MaxRAMPeak (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-total-ram-below-recommended",
+      "category": "memory",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "total_physical_ram_mb",
+        "threshold": 16384,
+        "description": "total_ram_mb = max(Total from 'RAM Statistics: <Avail> / <Total>'); fallback TotalVisibleMemorySize (KB)/1024 from OPERATING SYSTEM INFORMATION; last fallback Initial VM 'RAM: Avail X' + 'Used Y' (lower bound, report as approximate). Fire if total_ram_mb < 16384 * 0.97 (allow ~3% for reserved memory: a 16 GB machine reports ~16,1xx-16,3xx MB)."
+      },
+      "context": "Hardware check",
+      "versions": "all",
+      "title": {
+        "uk": "На комп'ютері менше рекомендованих 16 ГБ оперативної пам'яті",
+        "en": "The computer has less than the recommended 16 GB of RAM"
+      },
+      "cause": {
+        "uk": "Autodesk рекомендує щонайменше 16 ГБ оперативної пам'яті. Для більших і складніших моделей потрібно більше. З меншим обсягом Revit частіше гальмує і «падає».",
+        "en": "Autodesk recommends at least 16 GB of RAM, more for larger, complex models. With less memory Revit slows down and crashes more often."
+      },
+      "fix": {
+        "uk": [
+          "Зверніться до ІТ щодо збільшення оперативної пам'яті (орієнтир: 20× розміру стиснутого центрального файлу).",
+          "До того часу: відкривайте лише потрібні робочі набори, вивантажуйте непотрібні зв'язки і частіше перезапускайте Revit."
+        ],
+        "en": [
+          "Ask IT to add RAM (guideline: about 20x the compacted central file size).",
+          "Meanwhile, open only needed worksets, unload unneeded links and restart Revit more often."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-model-size-vs-ram",
+      "category": "memory",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "model_file_size_times_20_vs_total_ram",
+        "threshold": 20,
+        "description": "If a model file size is available (e.g. 'Fix Missing Element For <path>: File Size: <bytes>, Element Count: <n>' or a 'fileSizeOnOpen' value), compute required_mb = file_size_bytes / 1048576 * 20. Fire if required_mb > total_ram_mb. If no size line exists, do not fire (the size is not reliably logged; the analyzer may accept the size as user input instead)."
+      },
+      "context": "Opening large models",
+      "versions": "size lines seen only sporadically (R2020); unverified for other versions",
+      "title": {
+        "uk": "Модель завелика для оперативної пам'яті цього комп'ютера",
+        "en": "The model is too large for this computer's RAM"
+      },
+      "cause": {
+        "uk": "За рекомендацією Autodesk, оперативної пам'яті має бути приблизно у 20 разів більше за розмір стиснутого центрального файлу. Тут пам'яті менше.",
+        "en": "Autodesk recommends RAM of about 20 times the compacted central file size; this computer has less."
+      },
+      "fix": {
+        "uk": [
+          "Відкривайте лише потрібні робочі набори (Specify у вікні Open) і вивантажуйте непотрібні зв'язки.",
+          "Попросіть BIM-менеджера стиснути центральну модель (Compact Central Model) і почистити її (Purge Unused).",
+          "Зверніться до ІТ щодо збільшення оперативної пам'яті."
+        ],
+        "en": [
+          "Open only the worksets you need (Specify in the Open dialog) and unload unneeded links.",
+          "Ask your BIM manager to compact the central model (Compact Central Model) and purge unused content (Purge Unused).",
+          "Ask IT to add RAM."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies to improve performance (RAM ~20x central file size)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-memory-growth-long-session",
+      "category": "memory",
+      "severity": "low",
+      "match": {},
+      "metric": {
+        "type": "session_hours_and_ram_growth",
+        "threshold": { "session_hours": 8, "revit_ram_growth_mb": 8192 },
+        "description": "session_hours = (last timestamp - first timestamp). growth = last Revit RAM Used (Delta VM 'RAM: ... Used x -> Y MB' or RAM Statistics InUse) minus the first such value after the first model open. Fire if session_hours >= 8 AND growth >= 8192 MB. Suggests restarting Revit periodically."
+      },
+      "context": "All-day sessions without restart",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Revit довго працював без перезапуску і накопичив багато пам'яті",
+        "en": "Long session without restart: Revit's memory use kept growing"
+      },
+      "cause": {
+        "uk": "Сеанс тривав понад 8 годин, і за цей час Revit почав займати значно більше пам'яті. Revit не завжди звільняє пам'ять після закриття видів і моделей, тому з часом робота сповільнюється.",
+        "en": "The session lasted more than 8 hours and Revit's memory use grew a lot. Revit does not always release memory after closing views and models, so it slows down over time."
+      },
+      "fix": {
+        "uk": [
+          "Перезапускайте Revit кілька разів на день, а також перед друком, експортом і рендерингом.",
+          "Закривайте непотрібні види (Close Inactive Views)."
+        ],
+        "en": [
+          "Restart Revit a few times a day and before printing, exporting and rendering.",
+          "Close inactive views."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies (restart Revit before memory-heavy tasks)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-gdi-resources-near-limit",
+      "category": "graphics",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "min_gdi_available",
+        "threshold": 1000,
+        "description": "Parse 'GUI Resource Usage GDI: Avail <a>, Used <u>, User: Used <x>'. In all samples Avail + Used = 10000 (the default Windows per-process GDI handle limit). Fire if min(Avail) < 1000 (i.e. > 90% of GDI handles used). Report the peak Used and the nearest preceding command."
+      },
+      "context": "Many open views/windows, UI-heavy add-ins; R2017+ log this line after most memory lines",
+      "versions": "R2017-R2024",
+      "title": {
+        "uk": "Майже вичерпано графічні ресурси Windows (GDI)",
+        "en": "Windows graphics resources (GDI handles) nearly exhausted"
+      },
+      "cause": {
+        "uk": "Windows дозволяє одній програмі мати лише обмежену кількість графічних об'єктів інтерфейсу (близько 10 000). Revit майже досяг цієї межі, найчастіше через дуже багато відкритих видів або вікон чи через додаток із багатьма вікнами. Після цього вікна можуть промальовуватися неправильно, а Revit — «впасти».",
+        "en": "Windows allows each program only a limited number of UI graphics objects (about 10,000). Revit came close to that limit, usually because of many open views/windows or an add-in with many windows. Windows may then draw incorrectly and Revit may crash."
+      },
+      "fix": {
+        "uk": [
+          "Закривайте непотрібні види: вкладка View > Close Inactive Views.",
+          "Не тримайте відкритими багато діалогових вікон додатків одночасно.",
+          "Збережіть роботу і перезапустіть Revit."
+        ],
+        "en": [
+          "Close unneeded views: View tab > Close Inactive Views.",
+          "Avoid keeping many add-in windows open at the same time.",
+          "Save your work and restart Revit."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis wiki: JournalGUIResourceUsage", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-graphics-driver-not-certified",
+      "category": "graphics",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "hardware_support_flags",
+        "threshold": "any of: Can use hardware=n, SoftwareModeForced=y, DrvOlderThanTested=y, NotCertifiedEnv=y, FeatureLevelLow=y",
+        "description": "After 'START video card certification' / 'FINISH CanUseHardware' Revit writes a multi-line comment: 'Can use hardware=y', 'Hardware support flags:', 'DrvOlderThanTested=n', 'DrvNewerThanTested=n', 'CardIsNotListed=y', 'NotCertifiedEnv=n', 'SoftwareModeForced=n'. Also read 'VIDEO CARD ENVIRONMENT: CARD=\"...\" ... DRIVER=\"...\"' and 'Current driver version:' / 'Certified driver(s):'. Fire on the listed flags. CardIsNotListed=y alone is common for new cards: report it as info only. Also note 'Current Mode : ' not 'DirectX Hardware'."
+      },
+      "context": "Startup graphics check",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Драйвер відеокарти застарілий або графіка працює в програмному режимі",
+        "en": "Graphics driver is outdated or graphics run in software mode"
+      },
+      "cause": {
+        "uk": "Під час запуску Revit перевіряє відеокарту. Журнал показує, що драйвер старіший за перевірений Autodesk, або що апаратне прискорення графіки вимкнене. Через це можливі гальмування, неправильне відображення та аварії під час роботи з видами.",
+        "en": "Revit checks the graphics card at startup. The journal shows the driver is older than the one Autodesk tested, or hardware acceleration is off. This can cause slow or incorrect display and crashes in views."
+      },
+      "fix": {
+        "uk": [
+          "Попросіть ІТ оновити драйвер відеокарти до актуальної версії від виробника (NVIDIA/AMD/Intel).",
+          "Перевірте налаштування: File > Options > Hardware — чи увімкнено Use hardware acceleration.",
+          "Якщо на комп'ютері дві відеокарти (ноутбук) — переконайтеся, що Revit використовує потужнішу."
+        ],
+        "en": [
+          "Ask IT to update the graphics driver to a current version from the vendor (NVIDIA/AMD/Intel).",
+          "Check File > Options > Hardware: is Use hardware acceleration enabled?",
+          "On laptops with two GPUs, make sure Revit uses the dedicated one."
+        ]
+      },
+      "sources": [
+        { "title": "Real R2024 journal with hardware support flags (BrokawSkills)", "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt" },
+        { "title": "Real R2015 journal with hardware support flags (OTOY attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-outdated-build",
+      "category": "upgrade",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "build_age_days",
+        "threshold": 365,
+        "description": "Parse '' Build: YYYYMMDD_HHMM(x64)' (and '' Release: 2024.3.4' when present). build_date = YYYYMMDD. journal_date = date of 'started recording journal file'. Fire if journal_date - build_date > 365 days. Optional: keep a maintained table of latest known builds per year (Autodesk 'How to tie the Build number with the Revit update') and fire when the build is older than the latest update for that year. Report version year, Release and build."
+      },
+      "context": "Any session",
+      "versions": "all",
+      "title": {
+        "uk": "Встановлена застаріла версія оновлення Revit",
+        "en": "An outdated Revit update (build) is installed"
+      },
+      "cause": {
+        "uk": "Збірці (build) Revit, яка працювала в цьому сеансі, понад рік. Autodesk регулярно випускає оновлення, які виправляють відомі аварії та помилки.",
+        "en": "The Revit build used in this session is more than a year old. Autodesk regularly releases updates that fix known crashes and errors."
+      },
+      "fix": {
+        "uk": [
+          "Встановіть останнє оновлення вашої версії Revit через Autodesk Access (або попросіть ІТ).",
+          "Подбайте, щоб усі учасники команди, які працюють з однією центральною моделлю, мали однакове оновлення."
+        ],
+        "en": [
+          "Install the latest update for your Revit version via Autodesk Access (or ask IT).",
+          "Make sure everyone working on the same central model uses the same update."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (Update Revit)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" },
+        { "title": "Autodesk Help: Workshared Model Won't Synchronize (everyone on the latest build)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-model-saved-in-different-build",
+      "category": "worksharing",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "basicfileinfo_build_vs_running_build",
+        "threshold": "same year, different build",
+        "description": "Running build = header '' Build: X'. For each opened model, read '[Jrn.BasicFileInfo] ... Rvt.Attr.RevitBuildVersion: Autodesk Revit YYYY (Build: Z)' or '' N:< File was saved in Autodesk Revit YYYY (Build: Z)'. If YYYY equals the running year but Z != X, and Rvt.Attr.Worksharing is Central/Local/File-Based Central (or the path is CLD:/RSN:), fire: team members are on different updates. If YYYY is lower, that is an upgrade (metric-model-upgraded-on-open), not this rule."
+      },
+      "context": "Workshared models used by a team",
+      "versions": "R2016+ (BasicFileInfo present)",
+      "title": {
+        "uk": "Модель останній раз зберігали в іншому оновленні Revit",
+        "en": "The model was last saved with a different Revit update"
+      },
+      "cause": {
+        "uk": "Спільну модель останнього разу зберегли в Revit того самого року, але з іншим оновленням (build). Отже, учасники команди працюють на різних оновленнях, а це відома причина проблем із синхронізацією.",
+        "en": "The shared model was last saved with the same Revit year but a different update (build). Team members are on different updates, a known source of synchronization problems."
+      },
+      "fix": {
+        "uk": [
+          "Узгодьте з BIM-менеджером, щоб усі учасники команди встановили однакове (останнє) оновлення Revit."
+        ],
+        "en": [
+          "Agree with your BIM manager that all team members install the same (latest) Revit update."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Workshared Model Won't Synchronize (make sure everyone is on the latest build)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" },
+        { "title": "Journalysis WorksharingLog.AllSessionsUseSameBuild", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-model-upgraded-on-open",
+      "category": "upgrade",
+      "severity": "info",
+      "match": {},
+      "metric": {
+        "type": "basicfileinfo_year_lower_than_running_year",
+        "threshold": 1,
+        "description": "For each opened model, if the year in 'Rvt.Attr.RevitBuildVersion: Autodesk Revit YYYY' (or 'File was saved in Autodesk Revit YYYY') is lower than the running Revit year (Jrn.Directive \"Version\" first 4 chars / 'Autodesk Revit YYYY' header), the model was upgraded on open. Report the model (anonymized), from/to year and open duration (see metric-slow-model-open)."
+      },
+      "context": "Opening older-version models; upgrade is slow and memory-heavy",
+      "versions": "R2016+",
+      "title": {
+        "uk": "Модель із попередньої версії Revit була оновлена під час відкриття",
+        "en": "A model from an older Revit version was upgraded on open"
+      },
+      "cause": {
+        "uk": "Модель створена в старішій версії Revit і під час відкриття автоматично оновлювалася до поточної. Оновлення триває довго і потребує багато пам'яті. Якщо таку модель не зберегти, оновлення доведеться повторювати при кожному відкритті.",
+        "en": "The model was made in an older Revit version and was upgraded automatically on open. Upgrading is slow and memory-heavy, and it repeats on every open until the model is saved in the new version."
+      },
+      "fix": {
+        "uk": [
+          "Перезапустіть Revit перед оновленням великих моделей.",
+          "Узгодьте з BIM-менеджером, чи потрібно зберегти модель у новій версії. Спільні моделі (central) оновлює лише BIM-менеджер для всієї команди одночасно."
+        ],
+        "en": [
+          "Restart Revit before upgrading large models.",
+          "Agree with your BIM manager whether the model should be saved in the new version; workshared (central) models should be upgraded by the BIM manager for the whole team at once."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help (2020): Memory-based strategies (restart before upgrading models)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" },
+        { "title": "Journalysis LoadedModel.Version ('File was saved in')", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/LoadedModel.cs" }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "metric-slow-startup",
+      "category": "startup",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "startup_seconds",
+        "threshold": 120,
+        "description": "start = timestamp of 'started recording journal file'. end = block time of the first Jrn.Command with ID ID_REVIT_MODEL_BROWSER_OPEN (R2019+) or ID_STARTUP_PAGE (<=R2018), or the first ID_REVIT_FILE_OPEN / ID_FILE_MRU_FIRST if the session was started by opening a file; fallback '<-DesktopMFCApp::doStartupWarnings'. Fire if end - start > 120 s. Also report the slowest add-in group: the largest timestamp gaps between consecutive 'Starting External Application' / 'Starting External DB Application' messages and any startup BIG_GAP / elapsed-time lines (e.g. '13.081313 1:<<<wait for ...')."
+      },
+      "context": "Revit launch until Home/Start page",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Revit запускається дуже повільно",
+        "en": "Revit takes a very long time to start"
+      },
+      "cause": {
+        "uk": "Від запуску Revit до появи стартової сторінки минуло понад 2 хвилини. Найчастіше запуск сповільнюють сторонні додатки, що завантажуються разом із Revit, а також мережеві шляхи (бібліотеки, шаблони на сервері) чи ліцензування.",
+        "en": "More than 2 minutes passed from launch until the Home/start page. Most often third-party add-ins loading at startup, network paths (libraries, templates on a server) or licensing slow it down."
+      },
+      "fix": {
+        "uk": [
+          "Тимчасово вимкніть сторонні додатки (перемістіть їхні .addin файли з папки Addins) і порівняйте час запуску.",
+          "Перевірте з ІТ, чи доступні мережеві шляхи до бібліотек і шаблонів (File > Options > File Locations).",
+          "Встановіть останнє оновлення Revit."
+        ],
+        "en": [
+          "Temporarily disable third-party add-ins (move their .addin files out of the Addins folder) and compare startup time.",
+          "Check with IT that network paths for libraries and templates are reachable (File > Options > File Locations).",
+          "Install the latest Revit update."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis Journal.StartupTime (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
+        { "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (one computer: check add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-slow-model-open",
+      "category": "performance",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "model_open_seconds",
+        "threshold": 300,
+        "description": "For each open event (Jrn.Command ID_REVIT_FILE_OPEN / ID_APPMENU_PROJECT_OPEN / ID_FILE_MRU*, or Jrn.DropFiles) followed by Jrn.Data 'File Name'/'MRUFileName'/'Dropped File Name' (skip IDCANCEL): start = block time of the command; end = first timestamp after the comment line \"'***********************************************************\" (Journalysis 'Loaded' marker), else the first following user 'E event. Prefer explicit durations when present: SLOG '>Open' to '<Open' (+ '>WSConfig' to '<WSConfig'), elapsed lines '<<Open File' or 'BIG_GAP [Cloud]openOntoDesktop'. Fire if > 300 s. Do not count the time the user spends in the Open dialog (start at the Jrn.Data 'File Name' block if available)."
+      },
+      "context": "Opening models (local, central, cloud)",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Модель відкривається дуже довго",
+        "en": "The model takes a very long time to open"
+      },
+      "cause": {
+        "uk": "Відкриття моделі тривало понад 5 хвилин. Можливі причини: велика модель, багато зв'язаних файлів, повільне мережеве з'єднання з сервером або хмарою, оновлення моделі зі старішої версії.",
+        "en": "Opening the model took more than 5 minutes. Possible causes: a large model, many linked files, a slow network connection to the server or cloud, or an upgrade from an older version."
+      },
+      "fix": {
+        "uk": [
+          "У вікні Open виберіть Worksets > Specify і відкривайте лише потрібні робочі набори.",
+          "Вивантажуйте (Unload) непотрібні зв'язані моделі та CAD-файли.",
+          "Попросіть BIM-менеджера почистити (Purge Unused) і стиснути (Compact) центральну модель.",
+          "Якщо модель на сервері — перевірте з ІТ швидкість мережі."
+        ],
+        "en": [
+          "In the Open dialog choose Worksets > Specify and open only the worksets you need.",
+          "Unload linked models and CAD files you don't need.",
+          "Ask your BIM manager to purge unused content and compact the central model.",
+          "If the model is on a server, ask IT to check network speed."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis LoadedModelAnalyzer (open events and 'Loaded' marker)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedModelAnalyzer.cs" },
+        { "title": "Journalysis WorksharingSession.GetLoadDuration", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-long-sync",
+      "category": "worksharing",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "sync_with_central_seconds",
+        "threshold": 300,
+        "description": "Primary: SLOG events mirrored in the journal (':< SLOG $<session> <yyyy-mm-dd hh:mm:ss.mmm> <text>') or read from the central .slog file (UTF-16-LE): duration = time('<STC') - time('>STC') for each pair. Fallback without SLOG: start = block time of Jrn.Command with ID_FILE_SAVE_TO_MASTER or ID_FILE_SAVE_TO_MASTER_SHORTCUT (or Jrn.PushButton '... Synchronize with Central , Dialog_Revit_PartitionsSaveToCentral', 'OK, IDOK'); end = next 'E user-input timestamp. Fire if any sync > 300 s and < 900 s (>= 900 s is metric-very-long-sync). Report count, median and max sync duration."
+      },
+      "context": "Synchronize with Central",
+      "versions": "SLOG lines verified R2017-R2024; sync command IDs from CommandIds list",
+      "title": {
+        "uk": "Синхронізація з центральною моделлю триває довго",
+        "en": "Synchronize with Central takes a long time"
+      },
+      "cause": {
+        "uk": "Принаймні одна синхронізація (Synchronize with Central) тривала понад 5 хвилин. Можливі причини: повільна мережа до сервера, велика або «засмічена» модель, рідкі синхронізації з великою кількістю змін, одночасні синхронізації кількох колег.",
+        "en": "At least one Synchronize with Central took more than 5 minutes. Likely causes: a slow network to the server, a large or bloated model, infrequent syncs with many changes, or several colleagues syncing at once."
+      },
+      "fix": {
+        "uk": [
+          "Синхронізуйтеся частіше (наприклад, щогодини), щоб кожна синхронізація містила менше змін.",
+          "Перед синхронізацією закривайте непотрібні види.",
+          "Попросіть BIM-менеджера регулярно стискати центральну модель (Compact Central Model) і чистити її (Purge Unused).",
+          "Якщо проблема постійна — попросіть ІТ перевірити швидкість мережі до сервера з центральною моделлю."
+        ],
+        "en": [
+          "Synchronize more often (e.g. hourly) so each sync carries fewer changes.",
+          "Close unneeded views before synchronizing.",
+          "Ask your BIM manager to compact (Compact Central Model) and purge the central model regularly.",
+          "If the problem persists, ask IT to check the network speed to the central model's server."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis wiki: Worksharing Log Dictionary (STC = Synchronize with Central)", "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary" },
+        { "title": "Journalysis WorksharingSession.GetSyncEvents (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" },
+        { "title": "jeremytammik/tbc CommandIds.txt (ID_FILE_SAVE_TO_MASTER, ID_FILE_SAVE_TO_MASTER_SHORTCUT)", "url": "https://github.com/jeremytammik/tbc/blob/HEAD/a/zip/CommandIds.txt" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-very-long-sync",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "sync_with_central_seconds",
+        "threshold": 900,
+        "description": "Same computation as metric-long-sync. Fire if any single sync duration >= 900 s (15 min)."
+      },
+      "context": "Synchronize with Central",
+      "versions": "see metric-long-sync",
+      "title": {
+        "uk": "Синхронізація з центральною моделлю триває понад 15 хвилин",
+        "en": "Synchronize with Central took more than 15 minutes"
+      },
+      "cause": {
+        "uk": "Синхронізація була надзвичайно довгою. Таке зазвичай буває через проблеми з мережею чи сервером, дуже велику модель або пошкоджені елементи чи сімейства в моделі.",
+        "en": "A sync was extremely long. This usually points to network/server problems, a very large model, or damaged elements/families in the model."
+      },
+      "fix": {
+        "uk": [
+          "Повідомте BIM-менеджеру час і тривалість синхронізації.",
+          "Попросіть BIM-менеджера відкрити модель з позначкою Audit та стиснути її (Compact Central Model).",
+          "Попросіть ІТ перевірити мережу та сервер з центральною моделлю.",
+          "Синхронізуйтеся частіше, щоб зменшити обсяг змін за раз."
+        ],
+        "en": [
+          "Report the sync time and duration to your BIM manager.",
+          "Ask your BIM manager to open the model with Audit and compact it (Compact Central Model).",
+          "Ask IT to check the network and the server hosting the central model.",
+          "Synchronize more often to reduce the size of each sync."
+        ]
+      },
+      "sources": [
+        { "title": "Autodesk Help: Workshared Model Won't Synchronize (audit, check journal for corrupt families)", "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Troubleshooting/files/GUID-E1275900-5B11-4D6C-BAAE-A8626E948954.htm" },
+        { "title": "Journalysis WorksharingSession.GetSyncEvents (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-sync-aborted-or-unfinished",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "sync_without_end",
+        "threshold": 1,
+        "description": "Within SLOG events for one session id: a '>STC' with no following '<STC' before the end of the file, or the info event '.STC:RL:LockRoot RW gaveUp' (Journalysis WasAborted) inside an STC. Fire on the first occurrence. If the journal also ended abnormally, report 'Revit crashed during Synchronize with Central'."
+      },
+      "context": "Synchronize with Central interrupted",
+      "versions": "SLOG grammar from Journalysis; in-journal SLOG lines verified R2017-R2024",
+      "title": {
+        "uk": "Синхронізацію з центральною моделлю перервано або не завершено",
+        "en": "Synchronize with Central was aborted or never finished"
+      },
+      "cause": {
+        "uk": "Синхронізація почалася, але не завершилася: Revit не зміг заблокувати центральну модель (вона була зайнята іншими), або Revit закрився посеред синхронізації. Ваші останні зміни могли не потрапити в центральну модель.",
+        "en": "A sync started but did not finish: Revit could not lock the central model (it was busy), or Revit closed in the middle of the sync. Your latest changes may not have reached the central model."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте свою локальну копію і повторіть Synchronize with Central.",
+          "Якщо центральна модель була зайнята — зачекайте кілька хвилин і спробуйте знову.",
+          "Перевірте у Worksharing Monitor або в колег, чи ваші зміни з'явилися в центральній моделі."
+        ],
+        "en": [
+          "Open your local copy and run Synchronize with Central again.",
+          "If the central model was busy, wait a few minutes and try again.",
+          "Check (with colleagues or Worksharing Monitor) that your changes appear in the central model."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis SyncEvent.WasAborted (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" },
+        { "title": "Journalysis wiki: Worksharing Log Dictionary", "url": "https://github.com/andydandy74/Journalysis/wiki/Worksharing-Log-Dictionary" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-sync-many-reload-latest",
+      "category": "worksharing",
+      "severity": "low",
+      "match": {},
+      "metric": {
+        "type": "reload_latest_count_per_sync",
+        "threshold": 3,
+        "description": "Per SLOG '>STC'...'<STC' pair, count '>STC:RL:Read' events (Journalysis ReloadLatestCount). Fire if any sync has >= 3: Revit had to reload others' changes several times during one sync, which suggests heavy concurrent syncing by the team."
+      },
+      "context": "Busy central model",
+      "versions": "SLOG grammar from Journalysis",
+      "title": {
+        "uk": "Під час синхронізації Revit кілька разів довантажував зміни колег",
+        "en": "During one sync Revit had to reload colleagues' changes several times"
+      },
+      "cause": {
+        "uk": "Поки ви синхронізувалися, колеги теж надсилали свої зміни, тож Revit кілька разів довантажував нові дані. Через це синхронізація подовжується.",
+        "en": "While you were syncing, colleagues were also syncing, so Revit had to reload newer data several times. This makes the sync longer."
+      },
+      "fix": {
+        "uk": [
+          "Перед синхронізацією виконайте Reload Latest, щоб отримати зміни колег заздалегідь.",
+          "Домовтеся в команді не синхронізуватися всім одночасно (наприклад, перед обідом чи в кінці дня)."
+        ],
+        "en": [
+          "Run Reload Latest before syncing to fetch colleagues' changes first.",
+          "Agree in the team not to sync all at the same moment (e.g. right before lunch or the end of day)."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis SyncEvent.ReloadLatestCount (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/nodes/3.x/python/WorksharingLog.ByPath.py" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-slow-local-file-creation",
+      "category": "worksharing",
+      "severity": "low",
+      "match": {},
+      "metric": {
+        "type": "create_local_seconds",
+        "threshold": 300,
+        "description": "Pair 'createNewLocal: starting to create a new local file from \"<central>\".' with the next 'createNewLocal: finished creating the new local file from \"<central>\".' and use the block timestamps of both. Fire if duration > 300 s. If 'starting' has no 'finished' before an abnormal end, report it as 'crashed while creating local file'."
+      },
+      "context": "Opening a central model (Create New Local)",
+      "versions": "verified R2020; other versions assumed",
+      "title": {
+        "uk": "Створення локальної копії моделі триває дуже довго",
+        "en": "Creating the local copy of the central model takes very long"
+      },
+      "cause": {
+        "uk": "Під час відкриття центральної моделі Revit копіює її на ваш комп'ютер (локальна копія). Тут це тривало понад 5 хвилин, зазвичай через великий розмір моделі або повільну мережу.",
+        "en": "When you open a central model, Revit copies it to your computer (local file). Here this took more than 5 minutes, usually because of model size or a slow network."
+      },
+      "fix": {
+        "uk": [
+          "Попросіть ІТ перевірити швидкість мережі до сервера з центральною моделлю.",
+          "Попросіть BIM-менеджера стиснути центральну модель (Compact Central Model)."
+        ],
+        "en": [
+          "Ask IT to check network speed to the server hosting the central model.",
+          "Ask your BIM manager to compact the central model (Compact Central Model)."
+        ]
+      },
+      "sources": [
+        { "title": "Real journal excerpts with createNewLocal lines (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-addin-failed-to-start",
+      "category": "addin",
+      "severity": "high",
+      "match": {
+        "any": ["API_ERROR { Starting External Application", "API_ERROR { Starting External DB Application", "Revit cannot run the external application"],
+        "regex": ["API_ERROR \\{ Starting External (DB )?Application: ([^,]+),"]
+      },
+      "metric": {
+        "type": "failed_addin_starts",
+        "threshold": 1,
+        "description": "Collect every 'API_ERROR { Starting External Application: <Name>, Class: <Class>, Vendor : <VendorId>(<desc>), Assembly: <path>, Assembly Version: <v> }' (and the DB variant), plus 'TaskDialog \"Revit cannot run the external application \"<Name>\"...'. Group by add-in name. Report name, vendor and assembly file name (path anonymized). Count failures across journals to see if it repeats every startup."
+      },
+      "context": "Revit startup, add-in loading",
+      "versions": "verified R2024; format of API_SUCCESS equivalents verified R2016-R2024",
+      "title": {
+        "uk": "Додаток (add-in) не зміг запуститися",
+        "en": "An add-in failed to start"
+      },
+      "cause": {
+        "uk": "Під час запуску Revit не зміг завантажити один зі сторонніх додатків. Найчастіші причини: додаток не сумісний з цією версією Revit, пошкоджено його файли, бракує потрібних файлів, або файл налаштувань (.addin) вказує на неправильний шлях.",
+        "en": "Revit could not start one of the third-party add-ins during launch. Typical reasons: the add-in is not compatible with this Revit version, its files are damaged or missing, or its .addin manifest points to a wrong path."
+      },
+      "fix": {
+        "uk": [
+          "Перевстановіть додаток, обравши версію саме для вашого року Revit.",
+          "Зверніться до розробника додатка (назва виробника вказана в повідомленні).",
+          "Якщо додаток не потрібен — попросіть ІТ вимкнути його (прибрати .addin файл з папки Addins)."
+        ],
+        "en": [
+          "Reinstall the add-in using the build made for your Revit year.",
+          "Contact the add-in vendor (vendor name is shown in the message).",
+          "If you don't need the add-in, ask IT to disable it (remove its .addin file from the Addins folder)."
+        ]
+      },
+      "sources": [
+        { "title": "Real R2024 journal excerpt: API_ERROR Starting External Application + TaskDialog (bringfire/bim-agent-lab)", "url": "https://github.com/bringfire/bim-agent-lab/blob/HEAD/projects/revit-readiness/docs/verification/host-diagnostic-startup-evidence/repeated-startup-journal.txt" },
+        { "title": "Journalysis LoadedAssemblyAnalyzer (parsing of Starting External Application)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-addin-managed-exceptions",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": ["Managed exception caught from external API application", "was thrown from a handler of", "An external service execution throws"]
+      },
+      "metric": {
+        "type": "addin_exception_count_by_application",
+        "threshold": 1,
+        "description": "Extract the application name from \"Managed exception caught from external API application '<App>' in method '<Method>' Exception type: '<System.X>,'\" and from \"... was thrown from a handler of <Event> event. The API event handler was registered by application <App> (<guid>)\". Count per application. Fire when count >= 1; raise severity to high if count >= 5 or if the session ended abnormally within 5 minutes of the last such exception. Ignore 'mscorlib'/'RhinoCommon'-style library names when a more specific add-in name occurs in the same block."
+      },
+      "context": "Add-in commands and event handlers (Idling, DocumentChanged, DocumentOpened...)",
+      "versions": "verified R2019-R2021; assumed later",
+      "title": {
+        "uk": "У додатку (add-in) виникали внутрішні помилки",
+        "en": "An add-in raised internal errors (exceptions)"
+      },
+      "cause": {
+        "uk": "Журнал зафіксував помилки всередині стороннього додатка. Revit зазвичай їх перехоплює, але такі збої можуть скасовувати дії додатка, спотворювати результат або призводити до аварійного закриття.",
+        "en": "The journal recorded errors inside a third-party add-in. Revit usually catches them, but they can cancel the add-in's actions, produce wrong results or lead to crashes."
+      },
+      "fix": {
+        "uk": [
+          "Оновіть додаток до останньої версії для вашого року Revit.",
+          "Повідомте розробника додатка: передайте назву помилки з журналу.",
+          "Якщо Revit «падає» — тимчасово вимкніть цей додаток і перевірте, чи проблема зникла."
+        ],
+        "en": [
+          "Update the add-in to the latest version for your Revit year.",
+          "Report the error text from the journal to the add-in vendor.",
+          "If Revit crashes, temporarily disable that add-in and check whether the problem disappears."
+        ]
+      },
+      "sources": [
+        { "title": "Real journal excerpts with managed exceptions (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" },
+        { "title": "Journalysis RecordedExceptionAnalyzer (exception patterns)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/RecordedExceptionAnalyzer.cs" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-addin-command-before-crash",
+      "category": "addin",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "addin_activity_before_abnormal_end",
+        "threshold": { "last_user_actions": 3, "seconds": 120 },
+        "description": "Only when metric-journal-no-normal-exit fires. Look at the last 3 user actions (Jrn.* after 'E timestamps) before the end. Fire if one of them is Jrn.RibbonEvent \"Execute external command:<ctrl>:<Class>\", Jrn.AddInEvent, or a Jrn.Command with an add-in/Dynamo ID (e.g. ID_VISUAL_PROGRAMMING_DYNAMO), AND it occurred within 120 s of the last timestamp, OR an 'API External Command Time' / managed add-in exception is among the last 50 lines. Report the add-in class/name (from the RibbonEvent text or the matching 'Starting External Application' line)."
+      },
+      "context": "Crash while an add-in command was running",
+      "versions": "verified R2015 (OTOY), R2017, R2019 (Dynamo)",
+      "title": {
+        "uk": "Аварія сталася під час роботи додатка (add-in)",
+        "en": "The crash happened while an add-in was running"
+      },
+      "cause": {
+        "uk": "Безпосередньо перед аварійним закриттям запускалася команда стороннього додатка (або Dynamo). Найімовірніше, саме вона спричинила аварію.",
+        "en": "Right before Revit closed abnormally, a third-party add-in (or Dynamo) command was running. It is the most likely cause of the crash."
+      },
+      "fix": {
+        "uk": [
+          "Оновіть цей додаток до останньої версії для вашого року Revit.",
+          "Тимчасово вимкніть додаток і перевірте, чи аварії припинилися.",
+          "Повідомте розробника додатка, передавши йому журнал."
+        ],
+        "en": [
+          "Update this add-in to the latest version for your Revit year.",
+          "Temporarily disable the add-in and check whether the crashes stop.",
+          "Report it to the add-in vendor and send them the journal."
+        ]
+      },
+      "sources": [
+        { "title": "Real R2015 crash journal: crash right after 'Execute external command' (OTOY attachment)", "url": "https://render.otoy.com/forum/download/file.php?id=38838" },
+        { "title": "Real R2019 excerpt: Dynamo AddInEvent then ExceptionCode (DynamoRevit issue #2066)", "url": "https://github.com/DynamoDS/DynamoRevit/issues/2066" },
+        { "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-addin-slow-command",
+      "category": "addin",
+      "severity": "low",
+      "match": {
+        "regex": ["^\\s*'\\s*(\\d+\\.\\d+)!*\\s+\\d+:(?:!!!BIG_GAP\\s+|<+)API External Command Time"]
+      },
+      "metric": {
+        "type": "external_command_seconds",
+        "threshold": 120,
+        "description": "Parse elapsed-time lines \"' <seconds>[!!!] <depth>:<<API External Command Time\" or \"... :!!!BIG_GAP API External Command Time\". Attribute each to the nearest preceding Jrn.RibbonEvent \"Execute external command:<ctrl>:<Class>\". Fire if any single run > 120 s. Report per add-in class: runs, total and max seconds. Note: modeless/interactive add-ins (e.g. a window kept open) can legitimately show long times."
+      },
+      "context": "Add-in command execution time",
+      "versions": "verified R2017-R2024",
+      "title": {
+        "uk": "Команда додатка (add-in) виконувалася дуже довго",
+        "en": "An add-in command ran for a very long time"
+      },
+      "cause": {
+        "uk": "Одна з команд стороннього додатка працювала понад 2 хвилини, і весь цей час Revit був зайнятий. Це може бути нормою для важких операцій (пакетний експорт, перевірки), але може свідчити й про неефективний додаток.",
+        "en": "An add-in command ran for more than 2 minutes, keeping Revit busy. This can be normal for heavy tasks (batch export, checks) but may indicate an inefficient add-in."
+      },
+      "fix": {
+        "uk": [
+          "Перевірте, чи це очікувано для цієї команди (наприклад, пакетний експорт).",
+          "Якщо ні — оновіть додаток або повідомте його розробника, указавши тривалість із журналу."
+        ],
+        "en": [
+          "Check whether this is expected for that command (e.g. batch export).",
+          "If not, update the add-in or report the duration from the journal to its vendor."
+        ]
+      },
+      "sources": [
+        { "title": "Real journal excerpts with 'API External Command Time' (rhino.inside-revit issue #248)", "url": "https://github.com/mcneel/rhino.inside-revit/issues/248" },
+        { "title": "Real R2017 excerpt with BIG_GAP API External Command Time (revitpythonshell issue #43)", "url": "https://github.com/architecture-building-systems/revitpythonshell/issues/43" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-addin-inventory",
+      "category": "addin",
+      "severity": "info",
+      "match": {},
+      "metric": {
+        "type": "third_party_addin_count",
+        "threshold": 15,
+        "description": "Collect all 'Starting External Application:' / 'Starting External DB Application:' (R2016+) and 'API External Application added:' (R2015) messages. Vendor = token before '(' after 'Vendor : ' (or 'VendorId: '). Third-party = Vendor not in {ADSK, adsk, RPCA, BIM360} and assembly path not under 'C:\\Program Files\\Autodesk\\'. Always report the list (name, vendor, version, API_SUCCESS/API_ERROR). Fire (info) if third-party count > 15. Do NOT treat 'API_ERROR { : Assembly version conflict in some references in ...' as a failure: it also appears for Autodesk's own add-ins."
+      },
+      "context": "Startup add-in load",
+      "versions": "R2015-R2024",
+      "title": {
+        "uk": "Завантажено багато сторонніх додатків (add-ins)",
+        "en": "Many third-party add-ins are loaded"
+      },
+      "cause": {
+        "uk": "Разом із Revit завантажується понад 15 сторонніх додатків. Кожен із них сповільнює запуск, займає пам'ять і збільшує ризик конфліктів та аварій.",
+        "en": "More than 15 third-party add-ins load with Revit. Each one adds startup time and memory and increases the risk of conflicts and crashes."
+      },
+      "fix": {
+        "uk": [
+          "Разом з ІТ або BIM-менеджером перегляньте список і вимкніть додатки, якими ви не користуєтеся.",
+          "Оновіть потрібні додатки до версій для вашого року Revit."
+        ],
+        "en": [
+          "Review the list with IT or your BIM manager and disable add-ins you don't use.",
+          "Update the add-ins you need to versions made for your Revit year."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis LoadedAssemblyAnalyzer (inventory of loaded assemblies)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs" },
+        { "title": "Autodesk Help: Fatal/Unrecoverable Error (one computer: Revit add-ins)", "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-long-unresponsive-gap",
+      "category": "performance",
+      "severity": "low",
+      "match": {},
+      "metric": {
+        "type": "max_gap_between_timestamps_during_operation_seconds",
+        "threshold": 600,
+        "description": "Walk consecutive timestamp lines. A 'busy gap' is an interval where the previous record is NOT waiting for user input (i.e. the interval does not start right after a 'E user event followed only by idle/memory lines) and > 600 s passes without any new timestamp. Practical approximation: gaps > 600 s whose following line is not an 'E user-input event. Report the operation before the gap (last Jrn.Command / elapsed-time line). Elapsed-time lines with BIG_GAP > 600 s count directly."
+      },
+      "context": "Revit 'Not Responding' periods",
+      "versions": "all (heuristic)",
+      "title": {
+        "uk": "Revit довго «зависав» під час операції",
+        "en": "Revit was busy (unresponsive) for a long time"
+      },
+      "cause": {
+        "uk": "Понад 10 хвилин Revit виконував якусь операцію і не реагував на дії користувача. Зазвичай причиною є важка операція (відкриття, друк, експорт, оновлення моделі) або очікування мережі.",
+        "en": "For more than 10 minutes Revit was busy with an operation and not responding to input. Usually this is a heavy operation (open, print, export, upgrade) or waiting for the network."
+      },
+      "fix": {
+        "uk": [
+          "Перевірте, яка команда виконувалася перед паузою (вказано у звіті).",
+          "Для друку та експорту великих наборів аркушів розбивайте їх на менші частини і перезапускайте Revit перед цим."
+        ],
+        "en": [
+          "Check which command ran before the pause (shown in the report).",
+          "For printing/exporting large sheet sets, split them into smaller batches and restart Revit beforehand."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis wiki: JournalTimeStamp (measure time between events)", "url": "https://github.com/andydandy74/Journalysis/wiki/JournalLine-types" },
+        { "title": "Autodesk Help (2020): Memory-based strategies (restart before printing/exporting)", "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm" }
+      ],
+      "confidence": "community"
+    },
+    {
+      "id": "metric-journal-playback-session",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "any": ["started journal file playback", "finished journal file playback"],
+        "regex": ["stopped at line .* journal file playback"]
+      },
+      "metric": {
+        "type": "playback_state",
+        "threshold": 1,
+        "description": "If a timestamp description starts with 'started journal file playback' the session was driven by a journal script (automation, batch tool), not a person. If 'stopped at line ... journal file playback' appears, the playback was interrupted. Use this to exclude automated sessions from user statistics (startup time, crash counts) or report them separately."
+      },
+      "context": "Batch processing / automation tools",
+      "versions": "verified R2024 (started/finished); 'stopped at line' from Journalysis",
+      "title": {
+        "uk": "Сеанс керувався автоматичним сценарієм (journal playback)",
+        "en": "The session was run by an automation script (journal playback)"
+      },
+      "cause": {
+        "uk": "Цей сеанс Revit запустила автоматизація (пакетна обробка, скрипт), а не людина. Його результати не варто враховувати в статистиці роботи користувача.",
+        "en": "This Revit session was started by automation (batch processing, a script), not by a person, so it should not count in user statistics."
+      },
+      "fix": {
+        "uk": [
+          "Нічого робити не потрібно. Якщо відтворення перервалося (stopped at line), повідомте відповідального за автоматизацію."
+        ],
+        "en": [
+          "No action needed. If playback was interrupted ('stopped at line'), tell the person responsible for the automation."
+        ]
+      },
+      "sources": [
+        { "title": "Journalysis Journal.IsInPlaybackMode / WasPlaybackInterrupted (source)", "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs" },
+        { "title": "Real R2024 playback journal (BrokawSkills)", "url": "https://github.com/DarickBrokaw/BrokawSkills/blob/HEAD/skills/revit-dynamo-start/assets/journal.0001.txt" }
+      ],
+      "confidence": "community"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Real journal files contain usernames, paths and server names — never commit them
+*.txt
+!knowledge-base/**/*.txt
+samples/
+journals/
+
+# macOS
+.DS_Store
