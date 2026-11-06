@@ -125,6 +125,7 @@ public sealed class DayGroup(DateOnly date) : Observable
 /// <summary>One running Revit on the start screen, refreshed by the tray agent every few seconds.</summary>
 public sealed class LiveCardView(Core.Live.LiveStatus s, DateTime now)
 {
+    public string JournalPath => s.JournalPath;
     public string Title => s.Responding == false ? $"Revit {s.Version} is not responding" : $"Revit {s.Version} is running";
     public string StatusKey => s.Responding == false || s.Sync.Contains("FAILED", StringComparison.Ordinal) ? "crash"
         : s.Busy is not null ? "running" : "ok";

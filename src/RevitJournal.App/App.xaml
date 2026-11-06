@@ -1,36 +1,26 @@
 <Application x:Class="RevitJournal.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:local="clr-namespace:RevitJournal.App"
              ShutdownMode="OnExplicitShutdown">
   <Application.Resources>
-    <local:SeverityBrushConverter x:Key="SeverityBrush" />
-    <local:StatusBrushConverter x:Key="StatusBrush" />
-    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ui:ThemesDictionary Theme="Light" />
+        <ui:ControlsDictionary />
+        <ResourceDictionary Source="/Theme.xaml" />
+      </ResourceDictionary.MergedDictionaries>
 
-    <SolidColorBrush x:Key="Ink" Color="#1F2328" />
-    <SolidColorBrush x:Key="Muted" Color="#656D76" />
-    <SolidColorBrush x:Key="Line" Color="#D8DEE4" />
-    <SolidColorBrush x:Key="Panel" Color="#F6F8FA" />
-    <SolidColorBrush x:Key="Accent" Color="#0969DA" />
+      <local:SeverityBrushConverter x:Key="SeverityBrush" />
+      <local:StatusBrushConverter x:Key="StatusBrush" />
+      <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-    <Style TargetType="TextBlock">
-      <Setter Property="Foreground" Value="{StaticResource Ink}" />
-      <Setter Property="TextWrapping" Value="Wrap" />
-    </Style>
-
-    <Style x:Key="ToolbarButton" TargetType="Button">
-      <Setter Property="Padding" Value="12,5" />
-      <Setter Property="Margin" Value="0,0,8,0" />
-      <Setter Property="Background" Value="White" />
-      <Setter Property="BorderBrush" Value="{StaticResource Line}" />
-    </Style>
-
-    <Style x:Key="SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-      <Setter Property="FontSize" Value="12" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{StaticResource Muted}" />
-      <Setter Property="Margin" Value="0,18,0,6" />
-    </Style>
+      <!-- Manrope everywhere, as in the FlexiData Configurator. Only the font is set globally: colors come
+           from the window by inheritance, so the library's controls keep their own. -->
+      <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+      </Style>
+    </ResourceDictionary>
   </Application.Resources>
 </Application>

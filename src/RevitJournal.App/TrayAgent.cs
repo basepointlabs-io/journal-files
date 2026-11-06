@@ -44,7 +44,7 @@ public sealed class TrayAgent : IDisposable
         _icon = new Forms.NotifyIcon
         {
             Icon = MakeIcon(),
-            Text = "Revit Journal Analyzer — watching Revit",
+            Text = $"Revit Journal Analyzer {AppInfo.Version} — watching Revit",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -116,21 +116,12 @@ public sealed class TrayAgent : IDisposable
         _autostart.Checked = Settings.StartsWithWindows;
     }
 
-    /// <summary>A small blue "R" badge, drawn at runtime so the app needs no icon file.</summary>
+    /// <summary>The app's own icon (Icons\app.ico, the "Rj" tile), so the tray matches the title bar and the exe.</summary>
     private static Drawing.Icon MakeIcon()
     {
-        using var bmp = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            using var blue = new Drawing.SolidBrush(Drawing.Color.FromArgb(9, 105, 218));
-            g.FillEllipse(blue, 1, 1, 30, 30);
-            using var font = new Drawing.Font("Segoe UI", 15, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel);
-            var size = g.MeasureString("R", font);
-            g.DrawString("R", font, Drawing.Brushes.White, (32 - size.Width) / 2, (32 - size.Height) / 2);
-        }
-        return Drawing.Icon.FromHandle(bmp.GetHicon());
+        var info = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Icons/app.ico"));
+        using var stream = info.Stream;
+        return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
     }
 
     public void Dispose()

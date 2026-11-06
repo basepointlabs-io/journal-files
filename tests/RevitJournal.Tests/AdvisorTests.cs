@@ -41,6 +41,21 @@ public class AdvisorTests
     }
 
     [Fact]
+    public void Another_window_syncing_fine_counts_only_on_the_same_computer()
+    {
+        AnalysisResult Failing(string folder) => Session(Path.Combine(folder, "journal.0116.txt"), false, Fixtures.Header, Fixtures.FailedCloudSync);
+        AnalysisResult Fine(string folder) => Session(Path.Combine(folder, "journal.0117.txt"), false,
+            Fixtures.Header.Replace("09:24:38.631", "09:42:54.810"), Fixtures.GoodSync.Replace("11:4", "11:1"));
+
+        var samePc = Advisor.Diagnose(S("wont-sync"), [Failing("pc1"), Fine("pc1")], Now);
+        Assert.Contains(samePc.Facts, f => f.StartsWith("Another Revit window synchronized"));
+
+        // A journal someone sent from another computer must not be compared with this computer's sessions.
+        var otherPc = Advisor.Diagnose(S("wont-sync"), [Failing("from-colleague"), Fine("pc1")], Now);
+        Assert.DoesNotContain(otherPc.Facts, f => f.StartsWith("Another Revit window synchronized"));
+    }
+
+    [Fact]
     public void Crash_answer_explains_the_last_abnormal_session_and_hint_points_to_it()
     {
         var crash = Session("journal.0001.txt", false, Fixtures.Header, """

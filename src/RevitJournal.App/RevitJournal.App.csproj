@@ -13,8 +13,23 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ApplicationIcon>Icons\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\RevitJournal.Core\RevitJournal.Core.csproj" />
+    <!-- The FlexiData Configurator's UI library, same version, so both BasePoint Labs apps look alike. -->
+    <PackageReference Include="WPF-UI" Version="3.1.1" />
+  </ItemGroup>
+
+  <!-- Manrope (SIL Open Font License, Fonts\Manrope-OFL.txt) and the logo, embedded. -->
+  <ItemGroup>
+    <Resource Include="Fonts\Manrope-Regular.ttf" />
+    <Resource Include="Fonts\Manrope-SemiBold.ttf" />
+    <Content Include="Fonts\Manrope-OFL.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Resource Include="Icons\logo.png" />
+    <Resource Include="Icons\app.ico" />
   </ItemGroup>
 
   <!-- Keep WinForms/System.Drawing out of the global usings so WPF names (Application, Button, Clipboard...) stay unambiguous. -->

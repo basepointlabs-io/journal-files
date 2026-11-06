@@ -134,8 +134,11 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
         // Another Revit window syncing fine at the same time rules out the network and the cloud service.
         if (failed > 0 && syncs.FirstOrDefault(x => x.Finished && !x.Succeeded) is { } firstFail)
         {
+            // Only journals from the same folder are the same computer; an opened file may come from someone else's PC.
+            string? folder = Path.GetDirectoryName(session.Session.FilePath);
             var otherOk = sessions
-                .Where(r => !ReferenceEquals(r, session))
+                .Where(r => !ReferenceEquals(r, session)
+                            && string.Equals(Path.GetDirectoryName(r.Session.FilePath), folder, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(r => r.Session.Syncs.Where(x => x.Succeeded && x.Start >= firstFail.Start.AddHours(-1) && x.Start <= syncs[^1].Start.AddHours(1))
                     .Select(x => (r, x)))
                 .OrderBy(p => p.x.Start)

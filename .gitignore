@@ -1,6 +1,7 @@
 # Real journal files contain usernames, paths and server names — never commit them
 *.txt
 !knowledge-base/**/*.txt
+!src/**/Fonts/*.txt
 samples/
 journals/
 

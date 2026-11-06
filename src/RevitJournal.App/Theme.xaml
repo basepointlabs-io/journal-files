@@ -1,0 +1,247 @@
+<!--
+  The BasePoint Labs look, taken from the FlexiData Configurator (Resources/FluentTheme.xaml there):
+  a gray ground, white cards on it, Manrope, cobalt for the one primary action, 2 px corners and
+  two distances only, 4 between controls side by side and 8 for everything else.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+  <FontFamily x:Key="AppFontFamily">pack://application:,,,/Fonts/#Manrope, Segoe UI Variable, Segoe UI</FontFamily>
+
+  <!-- Palette (FluentTheme.xaml, light) -->
+  <SolidColorBrush x:Key="Ground" Color="#EAEDF2" />
+  <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="Line" Color="#ECEDF0" />
+  <SolidColorBrush x:Key="GroundStroke" Color="#D5D9DF" />
+  <SolidColorBrush x:Key="Ink" Color="#2A2E35" />
+  <SolidColorBrush x:Key="Muted" Color="#5C6370" />
+  <SolidColorBrush x:Key="Hint" Color="#8C939E" />
+  <SolidColorBrush x:Key="Accent" Color="#2457D6" />
+  <SolidColorBrush x:Key="AccentHover" Color="#1F4CC0" />
+  <SolidColorBrush x:Key="AccentPressed" Color="#1B44A8" />
+  <SolidColorBrush x:Key="Selected" Color="#D4E1FA" />
+  <SolidColorBrush x:Key="HoverFill" Color="#0A000000" />
+  <SolidColorBrush x:Key="PressFill" Color="#14000000" />
+  <SolidColorBrush x:Key="Panel" Color="#F5F7FA" />
+  <SolidColorBrush x:Key="LinkInk" Color="#2F5B8C" />
+  <SolidColorBrush x:Key="BrandMarkInk" Color="#2A2E35" />
+  <SolidColorBrush x:Key="BrandMarkDisc" Color="#033CBF" />
+
+  <Style x:Key="SectionTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource Hint}" />
+    <Setter Property="Margin" Value="0,20,0,8" />
+  </Style>
+
+  <!-- A button standing on the ground or in a card: clear, hairline, 2 corners. -->
+  <Style x:Key="GroundButton" TargetType="Button">
+    <Setter Property="Height" Value="44" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource GroundStroke}" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="1" CornerRadius="2" SnapsToDevicePixels="True" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="border" Property="Background" Value="{StaticResource HoverFill}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="border" Property="Background" Value="{StaticResource PressFill}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="border" Property="Opacity" Value="0.4" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="ToolbarButton" TargetType="Button" BasedOn="{StaticResource GroundButton}">
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Margin" Value="0,0,4,0" />
+  </Style>
+
+  <!-- The one primary action: cobalt with white ink, a step darker on hover and press. -->
+  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource GroundButton}">
+    <Setter Property="Background" Value="{StaticResource Accent}" />
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="1" CornerRadius="2" SnapsToDevicePixels="True" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentHover}" />
+              <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentHover}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentPressed}" />
+              <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentPressed}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Window buttons drawn as the 36 squares beside them (FluentTheme.xaml CaptionButton). -->
+  <Style x:Key="CaptionButton" TargetType="Button">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Margin" Value="4,0,0,0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource GroundStroke}" />
+    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+    <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="1" CornerRadius="2" SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{StaticResource HoverFill}" />
+      </Trigger>
+      <Trigger Property="IsPressed" Value="True">
+        <Setter Property="Background" Value="{StaticResource PressFill}" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="CaptionCloseButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="#C42B1C" />
+        <Setter Property="BorderBrush" Value="#C42B1C" />
+        <Setter Property="Foreground" Value="White" />
+      </Trigger>
+      <Trigger Property="IsPressed" Value="True">
+        <Setter Property="Background" Value="#B3271C" />
+        <Setter Property="BorderBrush" Value="#B3271C" />
+        <Setter Property="Foreground" Value="White" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <!-- A row in a list: title and gray subtitle; light blue when selected (the Configurator's operation list). -->
+  <Style x:Key="ListRow" TargetType="ListBoxItem">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <Border x:Name="row" Background="Transparent" CornerRadius="2" SnapsToDevicePixels="True">
+            <ContentPresenter />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="row" Property="Background" Value="{StaticResource HoverFill}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="row" Property="Background" Value="{StaticResource Selected}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- A sidebar entry that behaves like a list row: Checked = the page shown. -->
+  <Style x:Key="NavRow" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="16,10" SnapsToDevicePixels="True">
+            <ContentPresenter />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="row" Property="Background" Value="{StaticResource HoverFill}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="row" Property="Background" Value="{StaticResource Selected}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Expander without the library's own card: a chevron and the header, the content under it. -->
+  <Style x:Key="PlainExpander" TargetType="Expander">
+    <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Expander">
+          <DockPanel>
+            <ToggleButton DockPanel.Dock="Top" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                          Cursor="Hand" Focusable="False">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border x:Name="hdr" Background="Transparent" Padding="{Binding Padding, RelativeSource={RelativeSource AncestorType=Expander}}">
+                    <DockPanel>
+                      <ui:SymbolIcon x:Name="chev" DockPanel.Dock="Left" Symbol="ChevronRight16" FontSize="14" Margin="0,0,10,0"
+                                     VerticalAlignment="Center" Foreground="{StaticResource Muted}" />
+                      <ContentPresenter Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                        ContentTemplate="{Binding HeaderTemplate, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                        VerticalAlignment="Center" />
+                    </DockPanel>
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                      <Setter TargetName="chev" Property="Symbol" Value="ChevronDown16" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter TargetName="hdr" Property="Background" Value="{StaticResource HoverFill}" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <ContentPresenter x:Name="body" Visibility="Collapsed" Margin="{TemplateBinding Padding}" />
+          </DockPanel>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsExpanded" Value="True">
+              <Setter TargetName="body" Property="Visibility" Value="Visible" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- The BasePoint Labs mark (docs/brand/basepointlabs-mark.svg): four bands around a half disc. -->
+  <DrawingImage x:Key="BasePointLabsMark">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="{StaticResource BrandMarkInk}"
+                         Geometry="M576,674 A290,290 0 0 1 1156,674 L1060,674 A194,194 0 0 0 672,674 Z M384,674 A482,482 0 0 1 1207,333 L1139,401 A386,386 0 0 0 480,674 Z M192,674 A674,674 0 0 1 866,0 L866,96 A578,578 0 0 0 288,674 Z M0,674 A866,866 0 0 1 254,62 L322,130 A770,770 0 0 0 96,674 Z" />
+        <GeometryDrawing Brush="{StaticResource BrandMarkDisc}" Geometry="M770,674 A96,96 0 0 1 962,674 Z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+</ResourceDictionary>

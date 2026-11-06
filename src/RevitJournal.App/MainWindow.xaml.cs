@@ -14,7 +14,7 @@ using RevitJournal.Core.Symptoms;
 
 namespace RevitJournal.App;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly Analyzer _analyzer = Analyzer.CreateDefault();
     private readonly SymptomAdvisor _advisor;
@@ -29,6 +29,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        VersionText.Text = AppInfo.Version;
+        Title = $"Revit Journal Analyzer {AppInfo.Version}";
         _advisor = SymptomAdvisor.CreateDefault(_analyzer.Rules);
         SymptomCards.ItemsSource = _advisor.Symptoms.Select(s => new SymptomCard(s)).ToList();
 
@@ -66,7 +68,11 @@ public partial class MainWindow : Window
         _agent = agent;
         agent.OpenRequested += BringToFront;
         agent.AlertClicked += async alert => await OpenAlertAsync(alert);
-        agent.StatusChanged += status => LiveCards.ItemsSource = status.Select(s => new LiveCardView(s, DateTime.Now)).ToList();
+        agent.StatusChanged += status =>
+        {
+            LiveCards.ItemsSource = status.Select(s => new LiveCardView(s, DateTime.Now)).ToList();
+            LiveTitle.Visibility = status.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        };
         agent.ExitRequested += () => _exiting = true;
         // Keep the hint and the history in step with what just happened (a crash, a failed sync).
         agent.AlertsRaised += async alerts =>
@@ -129,6 +135,27 @@ public partial class MainWindow : Window
             p.Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
         if (page != AnswerPage)
             _shownSymptom = null;
+        HistoryNav.IsChecked = page == HistoryPage;
+        HistoryActions.Visibility = page == HistoryPage ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // ---- window buttons (drawn as squares in the title bar, as in the FlexiData Configurator) ------------
+
+    private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximize(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        MaximizeIcon.Symbol = WindowState == WindowState.Maximized ? Wpf.Ui.Controls.SymbolRegular.SquareMultiple24 : Wpf.Ui.Controls.SymbolRegular.Square24;
+    }
+
+    private void OnCloseWindow(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>A running Revit in the sidebar opens its live journal in History.</summary>
+    private async void OnLiveCardClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is LiveCardView card)
+            await OpenExternalAsync(card.JournalPath);
     }
 
     private void OnHome(object sender, RoutedEventArgs e) => ShowPage(HomePage);
@@ -266,6 +293,7 @@ public partial class MainWindow : Window
                 });
             int problems = _items.Count(i => i.StatusKey is "crash" or "warning");
             StatusLine.Text = $"{_items.Count} journals · {problems} with problems or abnormal endings";
+            HistorySubtitle.Text = $"{_items.Count} sessions on this computer";
             UpdateHints();
             _analyzed.TrySetResult();
         }
