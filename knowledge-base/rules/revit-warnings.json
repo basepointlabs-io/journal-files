@@ -1,0 +1,322 @@
+{
+  "source": "Common Revit warnings seen in real journals",
+  "collected": "2026-11-06",
+  "rules": [
+    {
+      "id": "warning-group-changed-outside-edit",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "FailureId: IDS_ATOM_VIOLATION_WHEN_ONE_PLACED_INSTANCE",
+          "A group has been changed outside group edit mode"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "A group was changed outside Edit Group",
+        "uk": "Групу змінено поза режимом редагування"
+      },
+      "cause": {
+        "en": "An element inside a model group was modified without entering Edit Group. Revit allowed it because the group type has only one instance, but such changes are easy to lose and slow down large models when repeated thousands of times (often by an add-in or copy/paste).",
+        "uk": "Елемент усередині групи змінили без входу в Edit Group. Revit дозволив це, бо в типу групи лише один екземпляр, але такі зміни легко втратити, а тисячі повторів (часто через add-in або копіювання) сповільнюють модель."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Edit grouped elements only through Modify | Model Groups > Edit Group.",
+          "If a group has a single instance and is not reused, ungroup it (Modify | Model Groups > Ungroup)."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Змінюйте елементи груп лише через Modify | Model Groups > Edit Group.",
+          "Якщо група має один екземпляр і не використовується повторно, розгрупуйте її (Ungroup)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-not-enclosed-region",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "FailureId: String_RoomAreaPlan_RoomNotEnclosed",
+          "is not in a properly enclosed region"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "Rooms, spaces or areas are not enclosed",
+        "uk": "Приміщення, простори або площі не замкнені"
+      },
+      "cause": {
+        "en": "Revit cannot find closed boundaries for some rooms, MEP spaces or areas, so their area and volume are not calculated and schedules show 'Not Enclosed'.",
+        "uk": "Revit не знаходить замкнених меж для деяких приміщень, просторів або площ, тому їхня площа й об'єм не рахуються, а специфікації показують «Not Enclosed»."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Close the gap: add Room Separation Lines (Architecture > Room Separator) or Space Separators, or set the walls in that area to Room Bounding.",
+          "Delete rooms/spaces that are no longer needed instead of leaving them unplaced or not enclosed."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Закрийте розрив: додайте Room Separation Lines (Architecture > Room Separator) або Space Separators чи увімкніть Room Bounding для стін.",
+          "Видаліть непотрібні приміщення/простори замість того, щоб залишати їх незамкненими."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-datum-scope-box",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "FailureId: String_Essentials_ScopeboxWrongpos",
+          "can not be associated with the specified Scope Box"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "A level or grid does not reach its scope box",
+        "uk": "Рівень або вісь не перетинає свій Scope Box"
+      },
+      "cause": {
+        "en": "A grid or level is assigned to a scope box it does not intersect, so Revit cannot limit its extents to that box.",
+        "uk": "Вісь або рівень прив'язані до Scope Box, який вони не перетинають, тому Revit не може обмежити їх цією рамкою."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Select the highlighted grid/level and in Properties set Scope Box to the correct box or to None.",
+          "Or extend the grid/level so it crosses the scope box."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Виділіть підсвічену вісь/рівень і в Properties задайте правильний Scope Box або None.",
+          "Або подовжте вісь/рівень, щоб вона перетинала рамку."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-walls-overlap",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "FailureId: String_Essentials_WallsOverlap",
+          "Highlighted walls overlap"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "Walls overlap",
+        "uk": "Стіни накладаються"
+      },
+      "cause": {
+        "en": "Two walls occupy the same place. Revit may ignore one of them when it computes room boundaries, and quantities are counted twice.",
+        "uk": "Дві стіни займають те саме місце. Revit може ігнорувати одну з них при розрахунку меж приміщень, а кількості рахуються двічі."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Delete the duplicate wall, or use Modify > Cut Geometry to embed one wall in the other if both are needed."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Видаліть дублікат стіни або застосуйте Modify > Cut Geometry, якщо потрібні обидві."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-duplicate-mark",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "FailureId: String_Revit_DuplicateValue",
+          "Elements have duplicate \"Mark\" values",
+          "Elements have duplicate \"Type Mark\" values",
+          "duplizierte \"Nummer\"-Werte",
+          "duplizierte \"Kennzeichen\"-Werte"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "Elements have duplicate Mark / Number values",
+        "uk": "Елементи мають однакові значення Mark / Number"
+      },
+      "cause": {
+        "en": "Several elements share the same Mark, Type Mark or Number, so tags and schedules are ambiguous.",
+        "uk": "Кілька елементів мають однакові Mark, Type Mark або Number, тому марки й специфікації неоднозначні."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Make a schedule sorted by Mark (or Number) to see all duplicates at once and renumber them there."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Створіть специфікацію, відсортовану за Mark (або Number), щоб побачити всі дублікати й перенумерувати їх там."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-elements-need-disconnect",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "FailureId: IDS_RBS_ELEMENTS_ARE_DISCONNECTED",
+          "Elements need to be disconnected"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "MEP elements need to be disconnected",
+        "uk": "MEP-елементи потрібно роз'єднати"
+      },
+      "cause": {
+        "en": "Revit could not keep two connected MEP elements together after a change (for example a fitting no longer fits after a move), so the connection must be broken.",
+        "uk": "Після зміни Revit не може зберегти з'єднання двох MEP-елементів (наприклад, фітинг більше не підходить після переміщення), тому з'єднання треба розірвати."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "In the warning dialog choose Disconnect Elements, then reconnect them deliberately (draw from the connector or use Trim/Extend).",
+          "If it happens while dragging a duct or pipe end, delete the segment and draw it again instead of dragging."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "У вікні попередження оберіть Disconnect Elements, а потім з'єднайте їх свідомо (креслення від коннектора або Trim/Extend).",
+          "Якщо це стається при перетягуванні кінця повітропроводу чи труби, видаліть сегмент і накресліть заново."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-identical-instances",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "FailureId: String_Essentials_DuplicateInstancesSamePlace",
+          "There are identical instances in the same place"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "Duplicate elements in the same place",
+        "uk": "Дублікати елементів в одному місці"
+      },
+      "cause": {
+        "en": "Two identical elements sit exactly on top of each other. They are counted twice in schedules and make the model heavier.",
+        "uk": "Два однакові елементи лежать точно один на одному. Вони рахуються двічі в специфікаціях і обтяжують модель."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "In Manage > Warnings tick one element of each pair and delete it (after Show, press Delete)."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "У Manage > Warnings відмітьте один елемент з кожної пари й видаліть його (після Show натисніть Delete)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "warning-family-error-auto-resolved",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "regex": [
+          "An error occurred in family \"[^\"]+\" and was automatically resolved"
+        ]
+      },
+      "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "A family had an error that Revit fixed automatically",
+        "uk": "Сім'я містила помилку, яку Revit виправив автоматично"
+      },
+      "cause": {
+        "en": "Revit found an error inside a family while loading or regenerating it and fixed it, but the result may differ from what the family author intended.",
+        "uk": "Revit знайшов помилку всередині сім'ї під час завантаження або регенерації і виправив її, але результат може відрізнятися від задуму автора сім'ї."
+      },
+      "fix": {
+        "en": [
+          "Manage tab > Inquiry > Review Warnings: find this message, expand it, tick the elements and click Show to zoom to them (Export saves the whole list).",
+          "Open the family named in the message (Edit Family), check it, save it and load it back into the project.",
+          "Tell the family's author or your BIM manager so the library version is fixed."
+        ],
+        "uk": [
+          "Manage > Inquiry > Review Warnings: знайдіть це повідомлення, розгорніть, відмітьте елементи й натисніть Show, щоб наблизитись до них (Export зберігає весь список).",
+          "Відкрийте сім'ю з повідомлення (Edit Family), перевірте, збережіть і завантажте назад у проєкт.",
+          "Повідомте автора сім'ї або BIM-менеджера, щоб виправили версію в бібліотеці."
+        ]
+      },
+      "sources": [
+        {
+          "title": "NOVEDGE: Revit warning review for model quality (Manage > Inquiry > Review Warnings)",
+          "url": "https://novedge.com/blogs/design-news/revit-tip-revit-warning-review-for-model-quality-and-coordination"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    }
+  ]
+}

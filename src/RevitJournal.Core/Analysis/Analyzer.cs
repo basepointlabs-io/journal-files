@@ -49,6 +49,22 @@ public sealed class Analyzer(RuleSet rules)
             }
         }
 
+        var crash = status == SessionStatus.EndedAbnormally ? CrashContext.Build(session) : null;
+        if (crash is not null)
+        {
+            // With an element or a drag we can say exactly what to do; otherwise the context still tells where it happened.
+            string id = crash.HasElement || crash.Drag is not null ? "context-crash-while-editing" : "metric-journal-no-normal-exit";
+            if (GetOrAdd(byId, id) is { } f)
+            {
+                f.Facts.InsertRange(0, crash.Describe());
+                f.Steps.AddRange(crash.Steps());
+                f.HitCount = Math.Max(f.HitCount, 1);
+            }
+        }
+        AddOrphans(session, byId);
+        if (byId.TryGetValue("metric-sync-failed", out var syncFailed))
+            syncFailed.Steps.AddRange(SyncAdvice.Steps(session));
+
         var findings = MergeRelated(byId);
         var lastActions = session.UserActions.TakeLast(10).ToList();
 
@@ -60,7 +76,31 @@ public sealed class Analyzer(RuleSet rules)
             Summary = Summarize(session, status),
             Findings = findings,
             LastActions = lastActions,
+            Context = crash,
         };
+    }
+
+    /// <summary>Tags and families whose host in a linked model was deleted, grouped by link, with their element ids.</summary>
+    private void AddOrphans(JournalSession session, Dictionary<string, Finding> byId)
+    {
+        if (session.Orphans.Count == 0 || GetOrAdd(byId, "observed-orphaned-hosted-on-link") is not { } f)
+            return;
+        f.Steps.Add("Collaborate tab > Reconcile Hosting lists all orphaned tags and elements: right-click one and choose Pick Host, or delete it.");
+        foreach (var link in session.Orphans.GroupBy(o => o.LinkId))
+        {
+            var ids = link.Select(o => o.ElementId).Distinct().ToList();
+            f.HitCount += ids.Count;
+            f.Facts.Add($"{ids.Count} tag(s)/families lost their host in the link with id {link.Key}.");
+            const int perStep = 40;
+            for (int i = 0; i < ids.Count; i += perStep)
+            {
+                var chunk = ids.Skip(i).Take(perStep);
+                f.Steps.Add($"To select them directly: Manage tab > Inquiry > Select by ID, paste: {string.Join("; ", chunk)}"
+                            + (ids.Count > perStep ? $"  (part {i / perStep + 1} of {(ids.Count + perStep - 1) / perStep})" : ""));
+            }
+        }
+        f.Steps.Add("With a tag or element selected: click Pick New Host on the ribbon and pick the new host in the link, or delete it if it is no longer needed. Pin elements first so they do not move.");
+        f.Steps.Add("If many elements are affected after a link update, ask the author of the linked model whether those elements were deleted on purpose before you delete the tags.");
     }
 
     private Finding? GetOrAdd(Dictionary<string, Finding> byId, string id)

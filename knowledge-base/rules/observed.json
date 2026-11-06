@@ -134,6 +134,90 @@
       ],
       "confidence": "community",
       "related": []
+    },
+    {
+      "id": "context-crash-while-editing",
+      "category": "crash",
+      "severity": "critical",
+      "match": {},
+      "metric": {
+        "type": "crash_context",
+        "threshold": 1,
+        "description": "When the session ended abnormally, take the last view (Jrn.Directive WindowSize/ProjToPage, [Jrn.Activate]), the last 'SEL RESULT', the last 'Candidates' pick (element id) and snap target, the last dragged control (Jrn.Data \"Control\") and the contextual tabs ('CT [...]') from the 5 minutes before the end. The app generates element-specific steps (Select by ID, what not to repeat, system size)."
+      },
+      "context": "Seen in Revit 2025: crash right after dragging the end of a duct (RbsSingleCurveEndControl) onto another element.",
+      "title": {
+        "uk": "Revit впав під час редагування конкретного елемента",
+        "en": "Revit stopped while you were editing a specific element"
+      },
+      "cause": {
+        "uk": "Журнал показує, що саме ви робили в останні секунди: модель, вид, виділений елемент і дію. Найімовірніше, саме ця дія з цим елементом спричинила падіння.",
+        "en": "The journal shows what you were doing in the last seconds: the model, the view, the selected element and the action. Most likely this action on this element caused the crash."
+      },
+      "fix": {
+        "uk": [
+          "Відкрийте модель і знайдіть елемент через Manage > Select by ID.",
+          "Не повторюйте ту саму дію з цим елементом; видаліть і накресліть його заново.",
+          "Якщо падіння повторюється на тому самому елементі, відкрийте модель з Audit."
+        ],
+        "en": [
+          "Open the model and find the element with Manage > Select by ID.",
+          "Do not repeat the same action on this element; delete it and draw it again.",
+          "If Revit stops again on the same element, open the model with Audit."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Revit journal format reference (this project)",
+          "url": "https://github.com/basepointlabs-io/journal-files/blob/main/knowledge-base/notes/journal-format.md"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "observed-orphaned-hosted-on-link",
+      "category": "link-import",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "orphaned_hosted_elements",
+        "threshold": 1,
+        "description": "Collect 'A hosting element no longer exists in the link. Dependent family or tag <id> on link <linkId>.' lines; group distinct element ids by link instance id and give Select by ID lists."
+      },
+      "context": "Logged when a linked model is loaded or reloaded and elements that tags or face-hosted families depend on were deleted in it.",
+      "title": {
+        "uk": "Марки або сім'ї втратили основу в лінкованій моделі",
+        "en": "Tags or families lost their host in a linked model"
+      },
+      "cause": {
+        "uk": "У лінкованій моделі видалили елементи, до яких були прив'язані ваші марки або сім'ї. Такі марки стають «осиротілими», а сім'ї залишаються без основи і можуть зміщуватись або давати попередження.",
+        "en": "Elements in a linked model that your tags or families were attached to have been deleted. Such tags become orphaned and the families lose their host; they may move or cause warnings."
+      },
+      "fix": {
+        "uk": [
+          "Виділіть ці елементи через Manage > Select by ID (список ID нижче).",
+          "Скористайтеся Collaborate > Reconcile Hosting, щоб переглянути їх, а потім Pick New Host або видаліть кожен.",
+          "Якщо уражено багато елементів, уточніть в автора лінку, чи видалення було навмисним."
+        ],
+        "en": [
+          "Select these elements with Manage > Select by ID (ids below).",
+          "Use Collaborate > Reconcile Hosting to review them, then Pick New Host or delete each one.",
+          "If many elements are affected, ask the author of the linked model whether the deletion was intentional."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help 2025: Review Orphaned Elements from Linked Models",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Collaborate/files/GUID-CE73C639-A93D-4388-9885-ECA5806551C2.htm"
+        },
+        {
+          "title": "Autodesk Help 2025: Rehost Orphaned Elements",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/RevitLT-Collaborate/files/GUID-5CDA6F9C-A5FD-4B4F-9C10-0BE8FCE2753C.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": []
     }
   ]
 }

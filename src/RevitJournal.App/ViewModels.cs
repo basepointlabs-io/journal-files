@@ -185,6 +185,10 @@ public sealed class FindingView(Finding f, bool expanded)
     public bool IsExpanded { get; set; } = expanded;
     public IReadOnlyList<string> Facts => f.Facts;
     public bool HasFacts => f.Facts.Count > 0;
+    /// <summary>Steps written for this case (element ids, model names), when the analysis could produce them.</summary>
+    public IReadOnlyList<string> CaseSteps { get; } = [.. f.Steps.Select((s, i) => $"{i + 1}.  {s}")];
+    public bool HasCaseSteps => f.Steps.Count > 0;
+    public string StepsTitle => f.Steps.Count > 0 ? "General advice" : "What to do";
     public IReadOnlyList<string> Steps { get; } = [.. f.Rule.Fix.En.Select((s, i) => $"{i + 1}.  {s}")];
     public bool HasEvidence => f.Evidence.Count > 0;
     public string EvidenceTitle => $"Journal lines ({f.HitCount} match{(f.HitCount == 1 ? "" : "es")})";

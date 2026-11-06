@@ -34,7 +34,14 @@ public static class TextReport
                 sb.AppendLine($"   Why: {f.Rule.Cause.En}");
                 foreach (string fact in f.Facts)
                     sb.AppendLine($"   • {fact}");
-                sb.AppendLine("   What to do:");
+                if (f.Steps.Count > 0)
+                {
+                    sb.AppendLine("   What to do in your case:");
+                    int own = 1;
+                    foreach (string s in f.Steps)
+                        sb.AppendLine($"     {own++}) {s}");
+                }
+                sb.AppendLine(f.Steps.Count > 0 ? "   General advice:" : "   What to do:");
                 int step = 1;
                 foreach (string s in f.Rule.Fix.En)
                     sb.AppendLine($"     {step++}) {s}");

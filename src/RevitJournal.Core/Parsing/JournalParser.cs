@@ -25,6 +25,16 @@ public static partial class JournalParser
     [GeneratedRegex(@"^\s*'Id : (\S+)")] private static partial Regex DialogIdRegex();
     [GeneratedRegex(@"SLOG \$(\w+) (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) ([<>.])(STC|Open)(\S*)")] private static partial Regex SlogRegex();
     [GeneratedRegex(@"createNewLocal: (starting|finished) .*?from ""(.+?)""")] private static partial Regex CreateLocalRegex();
+    [GeneratedRegex(@"SEL RESULT:\s*(.*?)""\s*(?:&|$)")] private static partial Regex SelectionRegex();
+    [GeneratedRegex(@"""Control""\s*,\s*""(\w+)""")] private static partial Regex ControlRegex();
+    [GeneratedRegex(@"""(?:WindowSize|ProjToPage)""\s*,\s*""\[(.+?)\]""\s*,\s*""(.+?)""")] private static partial Regex ViewDirectiveRegex();
+    [GeneratedRegex(@"\[Jrn\.Activate\] Rvt\.Attr\.DocumentExpression: ""\[(.+?)\]"" Rvt\.Attr\.ViewTitleExpression: (.+?)\s*$")] private static partial Regex ActivateRegex();
+    [GeneratedRegex(@"(?<![\w.+-])(\d{5,10})(?=[-\s\)\]]|$)")] private static partial Regex ElementIdRegex();
+    [GeneratedRegex(@"^\s*'CT \[(.+?)\]:")] private static partial Regex ContextTabRegex();
+    [GeneratedRegex(@"^\s*'\s*\d+:<\s*(?:Error: )?(.+?)\s*$")] private static partial Regex LoggedMessageRegex();
+    [GeneratedRegex(@"Dependent family or tag (\d+) on link (\d+)")] private static partial Regex OrphanRegex();
+    [GeneratedRegex(@"\{([0-9a-fA-F-]{36})\}([^""\\{}]+?\.(?:rvt|rfa))")] private static partial Regex CloudDocRegex();
+
     // Revit's own elapsed-time lines; depth 1 is a whole user-level operation. Sub-steps (2:<<<...) are skipped.
     [GeneratedRegex(@"^\s*'\s+(\d+\.\d+)!*\s+1:<<(?!<)(.+?)\s*$")] private static partial Regex TopLevelTimingRegex();
     [GeneratedRegex(@"(API_SUCCESS|API_ERROR) \{ Starting External (?:DB )?Application: (.+?), Class: .+?, Vendor : ([^(,]*)\(([^)]*)\)")]
@@ -46,6 +56,7 @@ public static partial class JournalParser
         string? pendingDialogText = null;
         var openSyncs = new Dictionary<string, SyncAttempt>();
         var openOpens = new Dictionary<string, TimedOperation>();
+        bool expectMessage = false;
         var seenModels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < lines.Count; i++)
@@ -110,11 +121,19 @@ public static partial class JournalParser
                 }
                 else if (UiEventRegex().Match(logical) is { Success: true } ui)
                     s.UserActions.Add(new UserAction(n, ts, ui.Groups[1].Value, ui.Groups[2].Value.Trim(), null));
+                else if (logical.Contains("SEL RESULT", StringComparison.Ordinal) && SelectionRegex().Match(logical) is { Success: true } sel)
+                    s.Interactions.Add(new Interaction(n, ts, InteractionKind.Selection, sel.Groups[1].Value.Replace("\"\"", "\"").Trim(), []));
+                else if (ControlRegex().Match(logical) is { Success: true } ctl)
+                    s.Interactions.Add(new Interaction(n, ts, InteractionKind.Drag, ctl.Groups[1].Value, []));
+                else if (ViewDirectiveRegex().Match(logical) is { Success: true } vd)
+                    AddView(s, n, ts, vd.Groups[2].Value, vd.Groups[1].Value);
                 continue; // a joined line has no other content to inspect
             }
 
             if (line.Contains("[Jrn.CloseRevitMainFrame]", StringComparison.Ordinal))
                 s.ExitRequestedAt ??= ts;
+
+            ParseContext(s, line, n, ts, ref expectMessage);
 
             if (line.Contains("TaskDialog \"", StringComparison.Ordinal) && TaskDialogTextRegex().Match(line) is { Success: true } td)
                 pendingDialogText = td.Groups[1].Value;
@@ -172,6 +191,50 @@ public static partial class JournalParser
         }
 
         return s;
+    }
+
+    /// <summary>Context lines in comments: active view, element picks, contextual tabs, posted warnings, orphaned hosts.</summary>
+    private static void ParseContext(JournalSession s, string line, int n, DateTime? ts, ref bool expectMessage)
+    {
+        if (expectMessage)
+        {
+            expectMessage = false;
+            if (LoggedMessageRegex().Match(line) is { Success: true } msg)
+                s.PostedMessages.Add(new LineRef(n, ts, msg.Groups[1].Value));
+        }
+        if (line.Contains("Error posted:", StringComparison.Ordinal) || line.Contains("Error dialog data for transaction", StringComparison.Ordinal))
+        {
+            expectMessage = true;
+            return;
+        }
+        if (line.Contains("Candidates (curIdx", StringComparison.Ordinal))
+        {
+            int colon = line.IndexOf("):", StringComparison.Ordinal);
+            string rest = colon >= 0 ? line[(colon + 2)..].TrimStart() : line;
+            var ids = ElementIdRegex().Matches(rest).Select(m => long.Parse(m.Groups[1].ValueSpan, CultureInfo.InvariantCulture)).Distinct().Take(6).ToList();
+            if (ids.Count > 0)
+                s.Interactions.Add(new Interaction(n, ts, InteractionKind.Pick, rest, ids,
+                    rest.StartsWith("Combo[Snap(", StringComparison.Ordinal) || rest.StartsWith("Snap(", StringComparison.Ordinal) ? "snap" : null));
+        }
+        else if (line.Contains("'CT [", StringComparison.Ordinal) && ContextTabRegex().Match(line) is { Success: true } tab)
+        {
+            if (s.Interactions.LastOrDefault(i => i.Kind == InteractionKind.Tab)?.Text != tab.Groups[1].Value)
+                s.Interactions.Add(new Interaction(n, ts, InteractionKind.Tab, tab.Groups[1].Value, []));
+        }
+        else if (line.Contains("[Jrn.Activate]", StringComparison.Ordinal) && ActivateRegex().Match(line) is { Success: true } act)
+            AddView(s, n, ts, act.Groups[2].Value, act.Groups[1].Value);
+        else if (line.Contains("ModelPath", StringComparison.Ordinal) && CloudDocRegex().Match(line) is { Success: true } doc)
+            s.DocumentNames.TryAdd(doc.Groups[1].Value + ".rvt", doc.Groups[2].Value);
+        else if (line.Contains("Dependent family or tag", StringComparison.Ordinal) && OrphanRegex().Match(line) is { Success: true } o)
+            s.Orphans.Add(new OrphanedHosted(n, long.Parse(o.Groups[1].ValueSpan, CultureInfo.InvariantCulture), long.Parse(o.Groups[2].ValueSpan, CultureInfo.InvariantCulture)));
+    }
+
+    /// <summary>Records a view only when it differs from the previous one (views are redrawn constantly).</summary>
+    private static void AddView(JournalSession s, int n, DateTime? ts, string view, string document)
+    {
+        var last = s.Interactions.LastOrDefault(i => i.Kind == InteractionKind.View);
+        if (last?.Text != view || last.Detail != document)
+            s.Interactions.Add(new Interaction(n, ts, InteractionKind.View, view, [], document));
     }
 
     private static bool TrySlogTime(Match slog, out DateTime time) =>

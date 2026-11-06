@@ -15,7 +15,7 @@
           "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "category": {
             "enum": ["crash", "serious-error", "memory", "addin", "graphics", "worksharing", "cloud",
-                     "link-import", "file-corruption", "performance", "startup", "upgrade", "printing-export", "other"]
+                     "link-import", "file-corruption", "performance", "startup", "upgrade", "printing-export", "model-warnings", "other"]
           },
           "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
           "match": {

@@ -87,6 +87,17 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
         else if (crash.Session.Syncs.Count == 0 && crash.Session.Models.Any(m => m.Worksharing is { Length: > 0 } w && w != "Not enabled"))
             d.Facts.Add("No Synchronize with Central in this session: check your local file for unsynchronized work.");
 
+        // The same element in several crashes is the strongest hint there is.
+        if (crash.Context is { } ctx)
+        {
+            foreach (long id in ctx.ElementIds)
+            {
+                var others = sessions.Where(r => !ReferenceEquals(r, crash) && r.Context?.ElementIds.Contains(id) == true).ToList();
+                if (others.Count > 0)
+                    d.Facts.Add($"Element {id} was also involved when Revit stopped {string.Join(", ", others.Select(o => Fmt.When(o.Session.LastTimestamp!.Value, now)))}. It is very likely the cause.");
+            }
+        }
+
         if (History.RepeatedCrashes(rules, sessions) is { } repeated)
             d.Findings.Add(repeated);
         AddFindings(d, crash, symptom);
@@ -117,6 +128,22 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
             d.Facts.Add($"Model: {Fmt.FileName(model.Path)}" + (model.Worksharing is { Length: > 0 } w ? $" ({w})." : "."));
         if (syncs.LastOrDefault(x => x.Succeeded) is { } ok)
             d.Facts.Add($"Last successful sync: {Fmt.Time(ok.End)}, took {Fmt.Duration(ok.Duration!.Value)}.");
+        else if (failed > 0)
+            d.Facts.Add("No sync succeeded in this session.");
+
+        // Another Revit window syncing fine at the same time rules out the network and the cloud service.
+        if (failed > 0 && syncs.FirstOrDefault(x => x.Finished && !x.Succeeded) is { } firstFail)
+        {
+            var otherOk = sessions
+                .Where(r => !ReferenceEquals(r, session))
+                .SelectMany(r => r.Session.Syncs.Where(x => x.Succeeded && x.Start >= firstFail.Start.AddHours(-1) && x.Start <= syncs[^1].Start.AddHours(1))
+                    .Select(x => (r, x)))
+                .OrderBy(p => p.x.Start)
+                .FirstOrDefault();
+            if (otherOk.r is { } other)
+                d.Facts.Add($"Another Revit window synchronized {(other.Session.Models.FirstOrDefault() is { } m ? Fmt.FileName(m.Path) : "a model")} " +
+                            $"successfully at {Fmt.Time(otherOk.x.End)}: the network and the cloud service work, so the problem is inside the Revit window with this model. Restarting Revit is the first thing to try.");
+        }
         AddFindings(d, session, symptom);
         return d;
     }

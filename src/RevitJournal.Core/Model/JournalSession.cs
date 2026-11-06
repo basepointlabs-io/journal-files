@@ -41,6 +41,18 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     public List<ModelInfo> Models { get; } = [];
     public List<LineRef> Exceptions { get; } = [];
 
+    /// <summary>What the user was looking at and touching: views, selections, element picks, drags, contextual tabs.</summary>
+    public List<Interaction> Interactions { get; } = [];
+    /// <summary>Warnings and errors Revit posted ("Error posted:" and error-dialog text).</summary>
+    public List<LineRef> PostedMessages { get; } = [];
+    /// <summary>Tags/families whose host element was deleted in a linked model.</summary>
+    public List<OrphanedHosted> Orphans { get; } = [];
+    /// <summary>Cloud models appear in view directives as "[&lt;guid&gt;.rvt]"; this maps the guid file to the model name.</summary>
+    public Dictionary<string, string> DocumentNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public string DocumentName(string? token) =>
+        token is null ? "" : DocumentNames.TryGetValue(token, out var name) ? name : token;
+
     public TimeSpan? Duration => Start is { } s && LastTimestamp is { } e ? e - s : null;
 
     /// <summary>Total physical RAM of the machine in MB, from 'RAM Statistics' lines.</summary>
@@ -77,6 +89,27 @@ public sealed class SyncAttempt
     public bool Succeeded => Finished && !GaveUp && Errors.Count == 0;
     public TimeSpan? Duration => End - Start;
 }
+
+public enum InteractionKind
+{
+    /// <summary>Active view changed or was redrawn: Text = view title, Detail = document token.</summary>
+    View,
+    /// <summary>"SEL RESULT: ..." — Text = what is selected ("workset : Category : Family : Type" or "N items").</summary>
+    Selection,
+    /// <summary>Elements under the cursor on a click ("Candidates ..."); Ids[0] is the one Revit picked.</summary>
+    Pick,
+    /// <summary>A grip or control the user dragged (Text = control name, e.g. RbsSingleCurveEndControl).</summary>
+    Drag,
+    /// <summary>A contextual ribbon tab was built (Text = tab name, e.g. "Modify | Ducts").</summary>
+    Tab,
+}
+
+public sealed record Interaction(int Line, DateTime? Time, InteractionKind Kind, string Text, IReadOnlyList<long> Ids, string? Detail = null)
+{
+    public bool IsSnap => Detail == "snap";
+}
+
+public sealed record OrphanedHosted(int Line, long ElementId, long LinkId);
 
 /// <summary>An operation with a start and (if it completed) an end in the journal.</summary>
 public sealed class TimedOperation

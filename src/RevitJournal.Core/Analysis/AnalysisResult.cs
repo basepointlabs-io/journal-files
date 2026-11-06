@@ -25,6 +25,9 @@ public sealed class Finding
     public List<LineRef> Evidence { get; } = [];
     public List<string> Facts { get; } = [];
 
+    /// <summary>Steps written for this exact case (element ids, model, view); shown before the rule's general fix.</summary>
+    public List<string> Steps { get; } = [];
+
     /// <summary>Rules from other sources that matched the same text; shown together with this one.</summary>
     public List<Rule> AlsoMatched { get; } = [];
 
@@ -47,6 +50,9 @@ public sealed class AnalysisResult
     public required IReadOnlyList<string> Summary { get; init; }
     public required IReadOnlyList<Finding> Findings { get; init; }
     public required IReadOnlyList<UserAction> LastActions { get; init; }
+
+    /// <summary>What the user was doing when the session ended abnormally; null otherwise.</summary>
+    public CrashContext? Context { get; init; }
 
     public Severity? WorstSeverity => Findings.Count == 0 ? null : Findings.Max(f => f.Severity);
 }

@@ -39,7 +39,21 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
 
-              <TextBlock Text="What to do" FontWeight="SemiBold" Margin="0,12,0,4" />
+              <StackPanel Visibility="{Binding HasCaseSteps, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="What to do in your case" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource Accent}" />
+                <Border Background="#F3F8FF" CornerRadius="4" Padding="10,6">
+                  <ItemsControl ItemsSource="{Binding CaseSteps}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <TextBox Text="{Binding Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                 TextWrapping="Wrap" Margin="0,2" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Border>
+              </StackPanel>
+
+              <TextBlock Text="{Binding StepsTitle}" FontWeight="SemiBold" Margin="0,12,0,4" />
               <ItemsControl ItemsSource="{Binding Steps}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
