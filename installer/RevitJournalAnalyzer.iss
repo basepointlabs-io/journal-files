@@ -1,5 +1,5 @@
-﻿; Inno Setup script for Revit Journal Analyzer, in the same style as the FlexiData installer:
-; per-user (no admin rights), BasePointLabs as publisher, English / Ukrainian / German wizard.
+; Inno Setup script for Revit Journal Analyzer, in the same style as the FlexiData installer:
+; per-user (no admin rights), BasePointLabs as publisher. English only, like the app.
 ;
 ; Built by .github/workflows/build.yml:
 ;   iscc /DAppVersion=0.3.0 installer\RevitJournalAnalyzer.iss
@@ -40,16 +40,9 @@ WizardStyle=modern
 
 [Languages]
 Name: "English"; MessagesFile: "compiler:Default.isl"
-Name: "Ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
-Name: "German"; MessagesFile: "compiler:Languages\German.isl"
-
-[CustomMessages]
-English.StartWithWindows=Start with Windows and watch Revit in the background
-Ukrainian.StartWithWindows=Запускати з Windows і стежити за Revit у фоні
-German.StartWithWindows=Mit Windows starten und Revit im Hintergrund überwachen
 
 [Tasks]
-Name: "startup"; Description: "{cm:StartWithWindows}"
+Name: "startup"; Description: "Start with Windows and watch Revit in the background"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
