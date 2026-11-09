@@ -65,7 +65,7 @@ public sealed class LiveTests : IDisposable
     {
         var now = new DateTime(2026, 11, 5, 11, 30, 0);
         var procs = new FakeProcesses();
-        using var monitor = new LiveMonitor(Analyzer, _root, procs, () => now);
+        using var monitor = new LiveMonitor(Analyzer, _root, procs, () => now, () => []);
 
         // Revit already had a failed sync before the monitor started: that is history, not news.
         Write(string.Join("\n", Fixtures.Lines(Fixtures.Header, Fixtures.FailedCloudSync)) + "\n");
@@ -93,17 +93,69 @@ public sealed class LiveTests : IDisposable
         Assert.Empty(monitor.Tick());
 
         // Revit disappears without writing its shutdown lines.
+        // The monitor waits a few seconds for Windows to record a crash before it judges the ending.
         CloseRevit();
+        Assert.Empty(monitor.Tick());
+        Assert.Empty(monitor.Status);
+        now = now.AddSeconds(15);
         var crash = Assert.Single(monitor.Tick());
         Assert.Equal(LiveAlertKind.Crashed, crash.Kind);
-        Assert.Empty(monitor.Status);
+        Assert.Equal("Revit 2025 closed unexpectedly", crash.Title);   // no proof of a crash was given
+        // The final analysis is handed over once, for the window to show without reading the file again.
+        Assert.Equal(SessionStatus.EndedAbnormally, monitor.Results[_journal].Status);
+        Assert.Empty(monitor.Tick());
+        Assert.Empty(monitor.Results);
+    }
+
+    [Fact]
+    public void Live_results_follow_the_journal_and_use_frozen_copies()
+    {
+        var now = new DateTime(2026, 11, 5, 11, 30, 0);
+        using var monitor = new LiveMonitor(Analyzer, _root, new FakeProcesses(), () => now, () => []);
+        Write(string.Join("\n", Fixtures.Lines(Fixtures.Header)) + "\n");
+        monitor.Tick();
+        var first = monitor.Results[_journal];
+        Assert.Equal(SessionStatus.Running, first.Status);
+        monitor.Tick();
+        Assert.Same(first, monitor.Results[_journal]);                 // nothing new: not analyzed again
+
+        Write(string.Join("\n", Fixtures.Lines(Fixtures.GoodSync)) + "\n");
+        monitor.Tick();
+        var second = monitor.Results[_journal];
+        Assert.NotSame(first, second);
+        Assert.Single(second.Session.Syncs);
+        Assert.Empty(first.Session.Syncs);                             // the earlier result did not change under the reader
+        Assert.True(second.Session.Tail.Count <= RevitJournal.Core.Model.JournalSession.TailSize);
+    }
+
+    [Fact]
+    public void Not_responding_goes_to_the_journal_of_the_process_that_started_with_it()
+    {
+        var now = new DateTime(2026, 11, 5, 12, 0, 0);
+        var procs = new TwoProcesses();
+        using var monitor = new LiveMonitor(Analyzer, _root, procs, () => now, () => []);
+
+        // Two Revit 2025 windows: one started at 09:24:38 (Fixtures.Header), the other at 11:00:00.
+        Write(string.Join("\n", Fixtures.Lines(Fixtures.Header)) + "\n");
+        string second = Path.Combine(Path.GetDirectoryName(_journal)!, "journal.0002.txt");
+        using var other = new FileStream(second, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+        other.Write(Encoding.Latin1.GetBytes(string.Join("\r\n", Fixtures.Lines(Fixtures.Header.Replace("09:24:38.631", "11:00:00.000"))) + "\r\n"));
+        other.Flush();
+        monitor.Tick();
+
+        procs.LateOneResponding = false;                               // the window started at 11:00 hangs
+        monitor.Tick();
+        now = now.AddSeconds(70);
+        var alert = Assert.Single(monitor.Tick());
+        Assert.Equal(LiveAlertKind.NotResponding, alert.Kind);
+        Assert.Equal(second, alert.JournalPath);
     }
 
     [Fact]
     public void Closing_revit_normally_raises_nothing()
     {
         var now = new DateTime(2026, 11, 5, 16, 0, 0);
-        using var monitor = new LiveMonitor(Analyzer, _root, new FakeProcesses(), () => now);
+        using var monitor = new LiveMonitor(Analyzer, _root, new FakeProcesses(), () => now, () => []);
         Write(string.Join("\n", Fixtures.Lines(Fixtures.Header)) + "\n");
         monitor.Tick();
         Write(string.Join("\n", Fixtures.Lines(Fixtures.ExitRequested, Fixtures.NormalEnd)) + "\n");
@@ -120,6 +172,16 @@ public sealed class LiveTests : IDisposable
     private sealed class FakeProcesses : IRevitProcesses
     {
         public bool Responding { get; set; } = true;
-        public IReadOnlyList<RevitProcess> List() => [new RevitProcess(1, "2025", Responding)];
+        public IReadOnlyList<RevitProcess> List() => [new RevitProcess(1, "2025", Responding, new DateTime(2026, 11, 5, 9, 24, 30))];
+    }
+
+    private sealed class TwoProcesses : IRevitProcesses
+    {
+        public bool LateOneResponding { get; set; } = true;
+        public IReadOnlyList<RevitProcess> List() =>
+        [
+            new RevitProcess(1, "2025", true, new DateTime(2026, 11, 5, 9, 24, 30)),
+            new RevitProcess(2, "2025", LateOneResponding, new DateTime(2026, 11, 5, 10, 59, 52)),
+        ];
     }
 }

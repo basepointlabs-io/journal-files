@@ -7,7 +7,7 @@ namespace RevitJournal.Core.Analysis;
 /// <summary>Turns a parsed journal into findings and a plain-English summary.</summary>
 public sealed class Analyzer(RuleSet rules)
 {
-    private static readonly HashSet<string> SessionEndRules = ["metric-journal-no-normal-exit", "metric-shutdown-incomplete"];
+    private static readonly HashSet<string> SessionEndRules = ["metric-journal-no-normal-exit", "metric-shutdown-incomplete", "metric-crash-dump-present"];
 
     private readonly RuleMatcher _matcher = new(rules);
 
@@ -18,13 +18,14 @@ public sealed class Analyzer(RuleSet rules)
     /// <summary>The compiled text rules, shared with live parsers so they match lines as they arrive.</summary>
     public RuleMatcher Matcher => _matcher;
 
-    /// <summary>Thread-safe; the journal text is released afterwards to keep memory low.</summary>
+    /// <summary>Thread-safe. One streaming pass: the journal text is never held in memory as a whole.</summary>
     public AnalysisResult AnalyzeFile(string path)
     {
         var context = AnalysisContext.ForFile(path);
-        var result = Analyze(JournalParser.Parse(path), context);
-        result.Session.ReleaseLines();
-        return result;
+        var parser = new JournalParser(path, _matcher);
+        foreach (string line in JournalReader.EnumerateLines(path))
+            parser.Feed(line);
+        return Analyze(parser.Session, context);
     }
 
     public AnalysisResult Analyze(JournalSession session, AnalysisContext context)
@@ -52,6 +53,17 @@ public sealed class Analyzer(RuleSet rules)
             }
         }
 
+        // A journal without shutdown lines is only a proven crash with a dump, a crash record or a Windows event.
+        var (endKind, endEvidence) = status == SessionStatus.EndedAbnormally
+            ? CrashEvidence.Find(session, context)
+            : (EndKind.None, new List<string>());
+        var endSeverity = endKind switch { EndKind.Crash => Severity.Critical, EndKind.Hang => Severity.High, _ => Severity.Medium };
+        if (byId.TryGetValue("metric-journal-no-normal-exit", out var noExit))
+        {
+            noExit.Severity = endSeverity;
+            noExit.Facts.AddRange(endEvidence);
+        }
+
         var crash = status == SessionStatus.EndedAbnormally ? CrashContext.Build(session) : null;
         if (crash is not null)
         {
@@ -62,6 +74,9 @@ public sealed class Analyzer(RuleSet rules)
                 f.Facts.InsertRange(0, crash.Describe());
                 f.Steps.AddRange(crash.Steps());
                 f.HitCount = Math.Max(f.HitCount, 1);
+                f.Severity = endSeverity;
+                if (endKind == EndKind.Unconfirmed && id == "context-crash-while-editing")
+                    f.Facts.Insert(0, "Not confirmed as a crash: this is only the last activity recorded before the journal ends.");
             }
         }
         AddOrphans(session, byId);
@@ -75,11 +90,13 @@ public sealed class Analyzer(RuleSet rules)
         {
             Session = session,
             Status = status,
-            Headline = Headline(status, findings),
-            Summary = Summarize(session, status),
+            Headline = Headline(status, endKind, findings),
+            Summary = Summarize(session, status, endKind, context),
             Findings = findings,
             LastActions = lastActions,
             Context = crash,
+            EndKind = endKind,
+            EndEvidence = endEvidence,
         };
     }
 
@@ -154,9 +171,10 @@ public sealed class Analyzer(RuleSet rules)
             .ThenByDescending(f => f.HitCount)];
     }
 
-    private static string Headline(SessionStatus status, List<Finding> findings)
+    private static string Headline(SessionStatus status, EndKind endKind, List<Finding> findings)
     {
-        var top = findings.FirstOrDefault(f => f.Severity >= Severity.High);
+        // A specific problem makes a better headline than "how the session ended".
+        var top = findings.FirstOrDefault(f => f.Severity >= Severity.High && !SessionEndRules.Contains(f.Rule.Id));
         if (top is not null)
             return top.Rule.Title.En;
         return status switch
@@ -164,11 +182,16 @@ public sealed class Analyzer(RuleSet rules)
             SessionStatus.Running => "Revit is running; no serious problems recorded so far",
             SessionStatus.ClosedNormally => "Revit closed normally; no serious problems found",
             SessionStatus.ShutdownIncomplete => "Revit did not finish shutting down after you closed it",
-            _ => "Revit did not close normally",
+            _ => endKind switch
+            {
+                EndKind.Crash => "Revit crashed",
+                EndKind.Hang => "Revit stopped responding and was closed",
+                _ => "Revit closed without a shutdown record (no crash found)",
+            },
         };
     }
 
-    private static List<string> Summarize(JournalSession s, SessionStatus status)
+    private static List<string> Summarize(JournalSession s, SessionStatus status, EndKind endKind, AnalysisContext context)
     {
         var lines = new List<string>();
 
@@ -183,7 +206,13 @@ public sealed class Analyzer(RuleSet rules)
             SessionStatus.Running => $"Revit still has this journal open: the session is running or Revit is not responding. Last recorded activity: {Fmt.Time(s.LastTimestamp)}.",
             SessionStatus.ClosedNormally => "Revit was closed normally.",
             SessionStatus.ShutdownIncomplete => $"You closed Revit at {Fmt.Time(s.ExitRequestedAt)}, but it stopped before finishing its shutdown (the journal ends at {Fmt.Time(s.LastTimestamp)}).",
-            _ => $"Revit did not close normally: the journal stops at {Fmt.Time(s.LastTimestamp)} (crash, freeze or forced close).",
+            _ => endKind switch
+            {
+                EndKind.Crash => $"Revit crashed: the journal stops at {Fmt.Time(s.LastTimestamp)}.",
+                EndKind.Hang => $"Revit stopped responding and was closed: the journal stops at {Fmt.Time(s.LastTimestamp)}.",
+                _ when !context.IsLocal => $"The journal stops at {Fmt.Time(s.LastTimestamp)} without shutdown lines and without a crash record. If the file was copied while Revit was running, nothing went wrong at that moment.",
+                _ => $"Revit closed without its shutdown lines at {Fmt.Time(s.LastTimestamp)}, with no crash record: most likely it was closed forcibly (Task Manager, Windows shutdown, power loss).",
+            },
         });
 
         if (s.Models.Count > 0)

@@ -8,7 +8,7 @@ public static class History
     public const int CrashThreshold = 3;
     public static readonly TimeSpan Window = TimeSpan.FromDays(7);
 
-    /// <summary>metric-repeated-crashes: 3+ sessions that ended abnormally within the 7 days before the newest one.</summary>
+    /// <summary>metric-repeated-crashes: 3+ confirmed crashes within the 7 days before the newest session. Forced closes do not count.</summary>
     public static Finding? RepeatedCrashes(RuleSet rules, IEnumerable<AnalysisResult> results)
     {
         if (rules["metric-repeated-crashes"] is not { } rule)
@@ -19,14 +19,14 @@ public static class History
             return null;
         DateTime newest = all.Max(r => r.Session.Start!.Value);
         var crashes = all
-            .Where(r => r.Status == SessionStatus.EndedAbnormally && newest - r.Session.Start!.Value <= Window)
+            .Where(r => r.EndKind == EndKind.Crash && newest - r.Session.Start!.Value <= Window)
             .OrderBy(r => r.Session.Start)
             .ToList();
         if (crashes.Count < CrashThreshold)
             return null;
 
         var finding = new Finding { Rule = rule, Severity = rule.Severity, HitCount = crashes.Count };
-        finding.Facts.Add($"Revit ended abnormally {crashes.Count} times between {Fmt.Stamp(crashes[0].Session.Start)} and {Fmt.Stamp(crashes[^1].Session.Start)}.");
+        finding.Facts.Add($"Revit crashed {crashes.Count} times (each confirmed by a dump, a crash record or a Windows event) between {Fmt.Stamp(crashes[0].Session.Start)} and {Fmt.Stamp(crashes[^1].Session.Start)}.");
 
         // A shared model or add-in among the crashes is the most useful hint.
         var models = crashes

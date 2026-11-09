@@ -108,7 +108,7 @@ foreach (var j in journals)
             SessionStatus.Running => "running",
             SessionStatus.ClosedNormally => "closed",
             SessionStatus.ShutdownIncomplete => "exit-hung",
-            _ => "ABNORMAL",
+            _ => r.EndKind switch { EndKind.Crash => "CRASH", EndKind.Hang => "HANG", _ => "no-shutdown" },
         };
         Console.WriteLine($"{j.RevitVersion,-6} {j.Name,-18} {status,-10} {r.WorstSeverity?.ToString() ?? "-",-9} {r.Findings.Count,3}  {r.Headline}");
     }

@@ -34,6 +34,8 @@
                   <TextBlock Text="{Binding SeverityText}" Foreground="White" FontSize="10" FontWeight="SemiBold" TextWrapping="NoWrap" />
                 </Border>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Confidence}" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center"
+                           Margin="12,1,0,0" TextWrapping="NoWrap" />
               </StackPanel>
             </Expander.Header>
 

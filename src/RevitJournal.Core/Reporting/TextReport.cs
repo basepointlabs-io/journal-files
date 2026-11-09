@@ -30,7 +30,7 @@ public static class TextReport
             foreach (var f in r.Findings)
             {
                 sb.AppendLine();
-                sb.AppendLine($"{i++}. [{f.Severity.ToString().ToUpperInvariant()}] {f.Rule.Title.En}");
+                sb.AppendLine($"{i++}. [{f.Severity.ToString().ToUpperInvariant()}] {f.Rule.Title.En}  ({ConfidenceChip(f.Rule)})");
                 sb.AppendLine($"   Why: {f.Rule.Cause.En}");
                 foreach (string fact in f.Facts)
                     sb.AppendLine($"   • {fact}");
@@ -66,6 +66,19 @@ public static class TextReport
 
         return sb.ToString();
     }
+
+    /// <summary>
+    /// Short trust label for a finding. Computed rules state what was measured in the journal; text rules are as
+    /// reliable as their source.
+    /// </summary>
+    public static string ConfidenceChip(Rule rule) => rule.Metric is not null && rule.Confidence != Confidence.Official
+        ? (rule.Id.StartsWith("context-", StringComparison.Ordinal) ? "From the journal · cause not proven" : "Measured in the journal")
+        : rule.Confidence switch
+        {
+            Confidence.Official => "Autodesk documentation",
+            Confidence.CommunityVerified => "Confirmed by the community",
+            _ => "Unconfirmed community report",
+        };
 
     public static string ConfidenceLabel(Confidence c) => c switch
     {

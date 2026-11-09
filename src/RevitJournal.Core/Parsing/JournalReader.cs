@@ -7,15 +7,16 @@ public static class JournalReader
 {
     static JournalReader() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public static string[] ReadLines(string path)
+    public static string[] ReadLines(string path) => [.. EnumerateLines(path)];
+
+    /// <summary>Reads line by line without holding the whole journal in memory.</summary>
+    public static IEnumerable<string> EnumerateLines(string path)
     {
         // Revit keeps the journal of a running session open for writing, so allow shared access.
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16);
         using var reader = new StreamReader(stream, Encoding.GetEncoding(1252), detectEncodingFromByteOrderMarks: true);
-        var lines = new List<string>();
         while (reader.ReadLine() is { } line)
-            lines.Add(line);
-        return [.. lines];
+            yield return line;
     }
 
     /// <summary>

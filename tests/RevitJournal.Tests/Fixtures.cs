@@ -54,6 +54,12 @@ internal static class Fixtures
         ' 0:< Unregistering all external services.
         """;
 
+    /// <summary>What Revit writes when it catches its own crash; turns "no shutdown lines" into a proven crash.</summary>
+    public const string CrashRecord = """
+        ' 0:< Exception occurred 
+        ' 0:< ExceptionCode=0xc0000005 ExceptionFlags=0x00000000 ExceptionAddress=0x0000000000000000 
+        """;
+
     public const string NormalEnd = """
         'C 05-Nov-2026 16:05:02.590;  <-desktop ExitNativeInstance
         'C 05-Nov-2026 16:05:02.592;  finished recording journal file

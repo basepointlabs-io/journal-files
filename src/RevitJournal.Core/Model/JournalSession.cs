@@ -5,20 +5,50 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
 {
     public string FilePath { get; } = filePath;
 
-    private int? _releasedLineCount;
+    /// <summary>How many of the last lines are kept as text. Journals are tens of MB; the analysis only needs the end.</summary>
+    public const int TailSize = 200;
 
-    /// <summary>The raw lines (grows while a live journal is followed); empty after <see cref="ReleaseLines"/>.</summary>
-    public IReadOnlyList<string> Lines { get; private set; } = lines;
-    public int LineCount => _releasedLineCount ?? Lines.Count;
+    /// <summary>The whole text, only when the session was parsed from lines already in memory (tests); otherwise empty.</summary>
+    public IReadOnlyList<string> Lines { get; } = lines;
 
-    /// <summary>Text-rule matches collected while parsing (live journals); null when the analyzer should match itself.</summary>
+    /// <summary>Number of lines parsed so far.</summary>
+    public int LineCount { get; internal set; }
+
+    internal Queue<string> TailQueue { get; private set; } = new();
+
+    /// <summary>The last <see cref="TailSize"/> lines; Tail[^1] is line number <see cref="LineCount"/>.</summary>
+    public IReadOnlyList<string> Tail => [.. TailQueue];
+
+    /// <summary>Text-rule matches collected while parsing; null when the analyzer should match <see cref="Lines"/> itself.</summary>
     public Dictionary<string, List<LineRef>>? RuleHits { get; internal set; }
 
-    /// <summary>Journals are tens of MB; drop the text once analysis has extracted what the report needs.</summary>
-    public void ReleaseLines()
+    /// <summary>Journal lines that record a crash Revit handled itself ("ExceptionCode=", unrecoverable error, "program terminated").</summary>
+    public List<LineRef> FatalMarkers { get; } = [];
+
+    /// <summary>
+    /// A copy that no longer changes, for handing a live session to another thread. Sync attempts and timed operations
+    /// are cloned because the parser completes them later; everything else is immutable records in copied lists.
+    /// </summary>
+    public JournalSession Snapshot()
     {
-        _releasedLineCount = Lines.Count;
-        Lines = [];
+        var c = new JournalSession(FilePath, [])
+        {
+            LineCount = LineCount, TailQueue = new Queue<string>(TailQueue),
+            Release = Release, Build = Build, BuildDate = BuildDate, UserName = UserName, MachineName = MachineName,
+            Start = Start, LastTimestamp = LastTimestamp, EndedNormally = EndedNormally, ExitRequestedAt = ExitRequestedAt,
+            IsPlayback = IsPlayback,
+            RuleHits = RuleHits?.ToDictionary(kv => kv.Key, kv => kv.Value.ToList(), StringComparer.Ordinal),
+        };
+        c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
+        c.Dialogs.AddRange(Dialogs); c.LongOperations.AddRange(LongOperations); c.AddIns.AddRange(AddIns); c.Models.AddRange(Models);
+        c.Exceptions.AddRange(Exceptions); c.Interactions.AddRange(Interactions); c.PostedMessages.AddRange(PostedMessages);
+        c.Orphans.AddRange(Orphans); c.FatalMarkers.AddRange(FatalMarkers);
+        c.Syncs.AddRange(Syncs.Select(s => s.Clone()));
+        c.Opens.AddRange(Opens.Select(o => o.Clone()));
+        c.LocalCopies.AddRange(LocalCopies.Select(o => o.Clone()));
+        foreach (var (k, v) in DocumentNames)
+            c.DocumentNames[k] = v;
+        return c;
     }
 
     public string? Release { get; set; }
@@ -97,6 +127,13 @@ public sealed class SyncAttempt
     public bool Finished => End is not null;
     public bool Succeeded => Finished && !GaveUp && Errors.Count == 0;
     public TimeSpan? Duration => End - Start;
+
+    public SyncAttempt Clone()
+    {
+        var c = new SyncAttempt { StartLine = StartLine, Start = Start, EndLine = EndLine, End = End, ReloadLatestCount = ReloadLatestCount, GaveUp = GaveUp };
+        c.Errors.AddRange(Errors);
+        return c;
+    }
 }
 
 public enum InteractionKind
@@ -131,6 +168,8 @@ public sealed class TimedOperation
 
     public bool Finished => End is not null;
     public TimeSpan? Duration => End - Start;
+
+    public TimedOperation Clone() => new() { StartLine = StartLine, Start = Start, Name = Name, EndLine = EndLine, End = End };
 }
 
 public sealed record AddIn(int Line, string Name, string VendorId, string Vendor, bool Failed)

@@ -147,12 +147,12 @@
       },
       "context": "Seen in Revit 2025: crash right after dragging the end of a duct (RbsSingleCurveEndControl) onto another element.",
       "title": {
-        "uk": "Revit впав під час редагування конкретного елемента",
+        "uk": "Revit зупинився, коли ви редагували конкретний елемент",
         "en": "Revit stopped while you were editing a specific element"
       },
       "cause": {
-        "uk": "Журнал показує, що саме ви робили в останні секунди: модель, вид, виділений елемент і дію. Найімовірніше, саме ця дія з цим елементом спричинила падіння.",
-        "en": "The journal shows what you were doing in the last seconds: the model, the view, the selected element and the action. Most likely this action on this element caused the crash."
+        "uk": "Журнал показує, що саме ви робили в останні секунди: модель, вид, виділений елемент і дію. Це збіг у часі, а не доведена причина, але перевіряти варто саме з цього елемента й цієї дії.",
+        "en": "The journal shows what you were doing in the last seconds: the model, the view, the selected element and the action. That is a coincidence in time, not a proven cause, but this element and this action are the first thing to check."
       },
       "fix": {
         "uk": [

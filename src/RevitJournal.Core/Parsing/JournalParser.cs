@@ -48,7 +48,6 @@ public sealed partial class JournalParser
 
     private static readonly string[] FailureDialogMarkers = ["Could_Not", "Fail", "Error", "Cannot", "Unable"];
 
-    private readonly List<string> _lines = [];
     private readonly RuleMatcher? _matcher;
     private DateTime? _ts;
     private string? _pendingDialogText;
@@ -59,10 +58,11 @@ public sealed partial class JournalParser
     private System.Text.StringBuilder? _jrn;  // a "Jrn.* _" statement still waiting for its continuation lines
     private int _jrnLine;
 
-    public JournalParser(string path, RuleMatcher? matcher = null)
+    /// <param name="lines">The full text when it is already in memory; it is then exposed as <see cref="JournalSession.Lines"/>.</param>
+    public JournalParser(string path, RuleMatcher? matcher = null, IReadOnlyList<string>? lines = null)
     {
         _matcher = matcher;
-        Session = new JournalSession(path, _lines);
+        Session = new JournalSession(path, lines ?? []);
         if (matcher is not null)
             Session.RuleHits = new(StringComparer.Ordinal);
     }
@@ -73,7 +73,7 @@ public sealed partial class JournalParser
 
     public static JournalSession Parse(string path, IReadOnlyList<string> lines)
     {
-        var parser = new JournalParser(path);
+        var parser = new JournalParser(path, null, lines);
         foreach (string line in lines)
             parser.Feed(line);
         return parser.Session;
@@ -82,9 +82,11 @@ public sealed partial class JournalParser
     /// <summary>Processes the next physical line of the journal.</summary>
     public void Feed(string line)
     {
-        _lines.Add(line);
-        int n = _lines.Count;
         var s = Session;
+        int n = ++s.LineCount;
+        s.TailQueue.Enqueue(line);
+        if (s.TailQueue.Count > JournalSession.TailSize)
+            s.TailQueue.Dequeue();
 
         if (_jrn is not null)
         {
@@ -198,10 +200,15 @@ public sealed partial class JournalParser
             }
         }
 
+        if (line.Contains("IDS_UNRECOVERABLE_ERROR", StringComparison.Ordinal) || line.Contains("program terminated", StringComparison.Ordinal))
+            s.FatalMarkers.Add(new LineRef(n, _ts, line.Trim()));
+
         if (line.Contains("Exception", StringComparison.Ordinal) && ExceptionRegex().IsMatch(line))
         {
             var ex = new LineRef(n, _ts, line.Trim());
             s.Exceptions.Add(ex);
+            if (line.Contains("ExceptionCode=", StringComparison.Ordinal) || line.Contains("Exception occurred", StringComparison.Ordinal))
+                s.FatalMarkers.Add(ex);
             foreach (var sync in _openSyncs.Values)
                 sync.Errors.Add(ex);
         }

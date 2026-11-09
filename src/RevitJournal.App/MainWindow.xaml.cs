@@ -61,6 +61,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     // ---- live monitoring (tray agent) --------------------------------------------------------------------
 
     private TrayAgent? _agent;
+    private readonly HashSet<string> _livePaths = new(StringComparer.OrdinalIgnoreCase);
     private bool _exiting;
 
     public void AttachAgent(TrayAgent agent)
@@ -74,6 +75,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             LiveTitle.Visibility = status.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         };
         agent.ExitRequested += () => _exiting = true;
+        agent.ResultsChanged += ApplyLiveResults;
         // Keep the hint and the history in step with what just happened (a crash, a failed sync).
         agent.AlertsRaised += async alerts =>
         {
@@ -101,6 +103,43 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 settings.Save();
             }
         };
+    }
+
+    /// <summary>
+    /// Running sessions are analyzed by the tray agent, which follows their journals line by line; the window shows
+    /// those results instead of parsing a growing journal again.
+    /// </summary>
+    private void ApplyLiveResults(IReadOnlyDictionary<string, AnalysisResult> results)
+    {
+        foreach (var (path, result) in results)
+        {
+            var item = _items.FirstOrDefault(i => string.Equals(i.File.Path, path, StringComparison.OrdinalIgnoreCase));
+            var info = new FileInfo(path);
+            if (!info.Exists)
+                continue;
+            if (item is null)
+            {
+                // A Revit session that started after the list was built.
+                string folder = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(path)) ?? "");
+                string version = folder.StartsWith("Autodesk Revit ", StringComparison.OrdinalIgnoreCase) ? folder["Autodesk Revit ".Length..] : "";
+                item = new JournalItem(new JournalFile(path, version, 0, info.LastWriteTime, info.Length));
+                Add(item);
+                if (VersionPicker.Items.Count == 0)
+                    FillVersions();
+            }
+            if (ReferenceEquals(item.Result, result))
+                continue;
+            // Remember the size this result stands for, so the periodic check does not read the file again.
+            item.Refresh(item.File with { LastWrite = info.LastWriteTime, SizeBytes = info.Length });
+            item.Result = result;
+            item.Error = null;
+            if (result.Status == SessionStatus.Running)
+                _livePaths.Add(path);
+            else
+                _livePaths.Remove(path);
+            if (ReferenceEquals(Sessions.SelectedItem, item))
+                ShowReport(item);
+        }
     }
 
     public void BringToFront()
@@ -291,8 +330,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                     int n = Interlocked.Increment(ref done);
                     await Dispatcher.InvokeAsync(() => StatusLine.Text = $"Checked {n} of {pending.Count} journals");
                 });
-            int problems = _items.Count(i => i.StatusKey is "crash" or "warning");
-            StatusLine.Text = $"{_items.Count} journals · {problems} with problems or abnormal endings";
+            int crashes = _items.Count(i => i.StatusKey == "crash");
+            int problems = _items.Count(i => i.StatusKey is "warning" or "abnormal");
+            StatusLine.Text = $"{_items.Count} journals · {crashes} crashed · {problems} with problems";
             UpdateHints();
             _analyzed.TrySetResult();
         }
@@ -339,14 +379,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
-    /// <summary>Re-analyzes journals that Revit is still writing, so a running or hung session stays current.</summary>
+    /// <summary>Re-analyzes journals whose file changed on disk (e.g. one opened by hand and replaced).</summary>
     private async Task RefreshChangedAsync()
     {
         foreach (var item in _items.ToList())
         {
+            // Journals of running sessions come from the tray agent (ApplyLiveResults).
+            if (_livePaths.Contains(item.File.Path))
+                continue;
             var info = new FileInfo(item.File.Path);
-            if (!info.Exists || (info.LastWriteTime == item.File.LastWrite && info.Length == item.File.SizeBytes
-                                 && item.Result?.Status != SessionStatus.Running))
+            if (!info.Exists || (info.LastWriteTime == item.File.LastWrite && info.Length == item.File.SizeBytes))
                 continue;
             item.Refresh(item.File with { LastWrite = info.LastWriteTime, SizeBytes = info.Length });
             await AnalyzeAsync(item);

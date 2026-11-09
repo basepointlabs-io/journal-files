@@ -23,6 +23,8 @@ public sealed class TrayAgent : IDisposable
     public event Action? OpenRequested;
     public event Action<LiveAlert>? AlertClicked;
     public event Action<IReadOnlyList<LiveStatus>>? StatusChanged;
+    /// <summary>Fresh analyses of running sessions (and, once, of sessions that just ended), built by the monitor.</summary>
+    public event Action<IReadOnlyDictionary<string, AnalysisResult>>? ResultsChanged;
     /// <summary>Every alert, including those not shown as the notification of the round.</summary>
     public event Action<IReadOnlyList<LiveAlert>>? AlertsRaised;
     public event Action? ExitRequested;
@@ -80,6 +82,7 @@ public sealed class TrayAgent : IDisposable
         {
             var alerts = await Task.Run(_monitor.Tick);
             StatusChanged?.Invoke(_monitor.Status);
+            ResultsChanged?.Invoke(_monitor.Results);
             if (alerts.Count > 0)
                 AlertsRaised?.Invoke(alerts);
             // Windows shows one notification at a time: show the most serious of this round.

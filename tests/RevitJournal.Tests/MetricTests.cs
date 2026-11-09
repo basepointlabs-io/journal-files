@@ -76,7 +76,7 @@ public class MetricTests
         AnalysisResult Crash(int day) => Analyze($"""
             ' Release: 2025.4.2
             'C {day:00}-Nov-2026 09:00:00.000;  started recording journal file
-            """);
+            """, Fixtures.CrashRecord);
 
         Assert.Null(History.RepeatedCrashes(Analyzer.Rules, [Crash(1), Crash(2)]));
         Assert.Null(History.RepeatedCrashes(Analyzer.Rules, [Crash(1), Crash(2), Crash(20)])); // 1 and 2 are outside the week before the 20th

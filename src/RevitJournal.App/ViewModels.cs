@@ -46,7 +46,8 @@ public sealed class JournalItem(JournalFile file) : Observable
         SessionStatus.Running => "running",
         SessionStatus.ClosedNormally => Result.WorstSeverity >= Severity.High ? "warning" : "ok",
         SessionStatus.ShutdownIncomplete => Result.WorstSeverity >= Severity.High ? "warning" : "exit",
-        SessionStatus.EndedAbnormally => "crash",
+        // Red only for a proven crash; a session that merely lacks its shutdown lines is a warning.
+        SessionStatus.EndedAbnormally => Result.EndKind == EndKind.Crash ? "crash" : "abnormal",
         _ => "pending",
     };
 
@@ -56,7 +57,8 @@ public sealed class JournalItem(JournalFile file) : Observable
         "ok" => "Closed normally",
         "warning" => "Problems found",
         "exit" => "Did not finish closing",
-        "crash" => "Ended abnormally",
+        "crash" => "Crashed",
+        "abnormal" => Result?.EndKind == EndKind.Hang ? "Stopped responding and was closed" : "Closed without shutdown record",
         "error" => "Could not read",
         _ => "Analyzing…",
     };
@@ -73,7 +75,7 @@ public sealed class JournalItem(JournalFile file) : Observable
 public sealed class DayGroup(DateOnly date) : Observable
 {
     // Worst first: the day takes the status of its most serious session.
-    private static readonly string[] Precedence = ["crash", "error", "warning", "running", "exit", "pending", "ok"];
+    private static readonly string[] Precedence = ["crash", "error", "abnormal", "warning", "running", "exit", "pending", "ok"];
 
     private string _statusKey = "pending";
     private string _summary = "";
@@ -107,16 +109,19 @@ public sealed class DayGroup(DateOnly date) : Observable
         StatusKey = Precedence.FirstOrDefault(keys.Contains) ?? "pending";
 
         int crashes = keys.Count(k => k is "crash" or "error");
+        int abnormal = keys.Count(k => k == "abnormal");
         int problems = keys.Count(k => k == "warning");
         int running = keys.Count(k => k == "running");
         var parts = new List<string> { Items.Count == 1 ? "1 session" : $"{Items.Count} sessions" };
         if (crashes > 0)
-            parts.Add($"{crashes} ended abnormally");
+            parts.Add($"{crashes} crashed");
+        if (abnormal > 0)
+            parts.Add($"{abnormal} closed without shutdown");
         if (problems > 0)
             parts.Add($"{problems} with problems");
         if (running > 0)
             parts.Add($"{running} running");
-        if (crashes + problems + running == 0 && !keys.Contains("pending"))
+        if (crashes + abnormal + problems + running == 0 && !keys.Contains("pending"))
             parts.Add("all OK");
         Summary = string.Join(" · ", parts);
     }
@@ -210,6 +215,8 @@ public sealed class FindingView(Finding f, bool expanded)
     public string EvidenceTitle => $"Journal lines ({f.HitCount} match{(f.HitCount == 1 ? "" : "es")})";
     public string Evidence => string.Join(Environment.NewLine,
         f.Evidence.Select(e => $"{e.Line,7}  {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 220)}"));
+    /// <summary>How far to trust this finding, shown in the card header.</summary>
+    public string Confidence => TextReport.ConfidenceChip(f.Rule);
     public string Source => $"Source: {TextReport.ConfidenceLabel(f.Rule.Confidence)}"
                             + (f.Rule.Sources.Count > 0 ? $" — {f.Rule.Sources[0].Title}" : "");
     public string? SourceUrl => f.Rule.Sources.FirstOrDefault()?.Url;

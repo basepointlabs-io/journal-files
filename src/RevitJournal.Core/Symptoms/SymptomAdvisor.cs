@@ -46,8 +46,11 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
         var recent = results.Where(r => r.Session.LastTimestamp is { } t && now - t < TimeSpan.FromHours(24))
             .OrderByDescending(r => r.Session.LastTimestamp).ToList();
 
-        if (recent.FirstOrDefault(r => r.Status == SessionStatus.EndedAbnormally) is { } crash && Find("last-abnormal-end") is { } c)
-            return new Hint(c, crash, $"Revit closed unexpectedly {Fmt.When(crash.Session.LastTimestamp!.Value, now)}.");
+        // Only proven crashes and hangs: a forced close (Task Manager, Windows shutdown) is not news to the user.
+        if (recent.FirstOrDefault(r => r.EndKind is EndKind.Crash or EndKind.Hang) is { } crash && Find("last-abnormal-end") is { } c)
+            return new Hint(c, crash, crash.EndKind == EndKind.Crash
+                ? $"Revit crashed {Fmt.When(crash.Session.LastTimestamp!.Value, now)}."
+                : $"Revit stopped responding and was closed {Fmt.When(crash.Session.LastTimestamp!.Value, now)}.");
 
         if (recent.FirstOrDefault(r => r.Session.Syncs.Any(x => x.Finished && !x.Succeeded)) is { } sync && Find("last-sync") is { } s)
         {
@@ -62,7 +65,9 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
 
     private Diagnosis Crashed(Symptom symptom, List<AnalysisResult> sessions, DateTime now)
     {
-        var crash = sessions.FirstOrDefault(r => r.Status == SessionStatus.EndedAbnormally);
+        // The newest proven crash or hang; a session that merely lacks its shutdown lines only when there is nothing better.
+        var crash = sessions.FirstOrDefault(r => r.EndKind is EndKind.Crash or EndKind.Hang)
+                    ?? sessions.FirstOrDefault(r => r.Status == SessionStatus.EndedAbnormally);
         if (crash is null)
         {
             var closing = sessions.FirstOrDefault();
@@ -76,8 +81,14 @@ public sealed class SymptomAdvisor(RuleSet rules, IReadOnlyList<Symptom> symptom
         {
             Symptom = symptom,
             Session = crash,
-            Headline = $"{Version(crash)} stopped unexpectedly {Fmt.When(crash.Session.LastTimestamp!.Value, now)}",
+            Headline = crash.EndKind switch
+            {
+                EndKind.Crash => $"{Version(crash)} crashed {Fmt.When(crash.Session.LastTimestamp!.Value, now)}",
+                EndKind.Hang => $"{Version(crash)} stopped responding and was closed {Fmt.When(crash.Session.LastTimestamp!.Value, now)}",
+                _ => $"No crash is recorded. {Version(crash)} closed without its shutdown lines {Fmt.When(crash.Session.LastTimestamp!.Value, now)}",
+            },
         };
+        d.Facts.AddRange(crash.EndEvidence);
         if (crash.Session.Models.LastOrDefault() is { } model)
             d.Facts.Add($"Open model: {Fmt.FileName(model.Path)}.");
         if (crash.Session.UserActions.LastOrDefault(IsUserCommand) is { } last)

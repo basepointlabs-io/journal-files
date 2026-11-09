@@ -11,6 +11,11 @@
     <EmbeddedResource Include="..\..\knowledge-base\symptoms.json" LogicalName="symptoms.json" />
   </ItemGroup>
 
+  <!-- Reads Revit.exe crash events from the Windows Application event log (Windows only; guarded at run time). -->
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="RevitJournal.Tests" />
   </ItemGroup>

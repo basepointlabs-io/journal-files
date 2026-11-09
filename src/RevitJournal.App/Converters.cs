@@ -41,7 +41,7 @@ public sealed class StatusBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as string) switch
     {
         "crash" or "error" => Palette.Red,
-        "warning" => Palette.Orange,
+        "warning" or "abnormal" => Palette.Orange,
         "exit" => Palette.Amber,
         "running" => Palette.Blue,
         "ok" => Palette.Green,

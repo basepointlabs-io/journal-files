@@ -10,17 +10,17 @@
       "metric": {
         "type": "session_end_state",
         "threshold": "no 'finished recording journal file' AND journal is not the active one",
-        "description": "Set ended_properly = true if any timestamp line ('C/'E/'H) has the description 'finished recording journal file'. If it is false and the journal is not the currently active one (a newer journal.NNNN.txt exists in the same folder, or the file mtime is more than 10 minutes old), the session ended abnormally. Skip *.worker*.log files. Then classify the end from the last 200 lines: 'ExceptionCode=' or 'Exception occurred' or 'unhandledExceptionFilter' = crash; 'IDS_UNRECOVERABLE_ERROR' or 'A fatal error has occurred' or 'program terminated' = fatal error; none of these = process killed / power loss / hang ended by user."
+        "description": "Set ended_properly = true if any timestamp line ('C/'E/'H) has the description 'finished recording journal file'. If it is false and the journal is not the currently active one (a newer journal.NNNN.txt exists in the same folder, or the file mtime is more than 10 minutes old), the session ended abnormally. Skip *.worker*.log files. Then classify the end from the last 200 lines: 'ExceptionCode=' or 'Exception occurred' or 'unhandledExceptionFilter' = crash; 'IDS_UNRECOVERABLE_ERROR' or 'A fatal error has occurred' or 'program terminated' = fatal error; none of these = process killed / power loss / hang ended by user. Severity depends on proof: critical with a .dmp file, a journal crash record (ExceptionCode=, IDS_UNRECOVERABLE_ERROR, 'program terminated' in the last 400 lines) or a Windows 'Application Error' event for Revit.exe; high with an 'Application Hang' event; medium without any (forced close, or a copy of a running session)."
       },
       "context": "Any session. The normal end is '<-desktop ExitNativeInstance' followed by 'finished recording journal file'.",
       "versions": "2010-2024 verified; 2025-2026 assumed",
       "title": {
-        "uk": "Revit закрився аварійно (сеанс не завершився нормально)",
-        "en": "Revit did not close normally (abnormal end of session)"
+        "uk": "Revit завершився без нормального закриття",
+        "en": "Revit did not shut down normally"
       },
       "cause": {
-        "uk": "У журналі немає запису про нормальне закриття програми. Отже, Revit «впав», його закрили примусово через Диспетчер завдань, або комп'ютер вимкнувся. Те, що ви робили безпосередньо перед цим, найімовірніше пов'язане з проблемою.",
-        "en": "The journal has no normal-shutdown record. Revit crashed, was killed (e.g. via Task Manager), or the computer lost power. The last actions recorded before the end are the most likely trigger."
+        "uk": "У журналі немає запису про нормальне завершення. Факти нижче показують, чи падіння підтверджене (дамп, запис про падіння в журналі, подія Windows), чи Revit найімовірніше закрили примусово.",
+        "en": "The journal has no normal-shutdown record. The facts below say whether a crash is proven (crash dump, crash record in the journal, Windows event) or Revit was most likely closed forcibly."
       },
       "fix": {
         "uk": [
@@ -146,7 +146,7 @@
       "metric": {
         "type": "abnormal_end_count_in_window",
         "threshold": 3,
-        "description": "Folder-level: count journals (main journals only, not worker logs) that ended abnormally (metric-journal-no-normal-exit) and whose start timestamp falls within the 7 days before the newest journal. Fire when the count is >= 3. Group them by last active model (LastSavePath) and by last add-in command to suggest a common factor."
+        "description": "Folder-level: count sessions whose crash is proven (see metric-journal-no-normal-exit) and whose start falls within the 7 days before the newest journal. Fire when the count is >= 3. Forced closes do not count. Group by last active model and by last add-in command to suggest a common factor."
       },
       "context": "Several journals analyzed together",
       "versions": "all",
@@ -155,8 +155,8 @@
         "en": "Revit crashed repeatedly during the last week"
       },
       "cause": {
-        "uk": "Три або більше сеансів за 7 днів завершилися аварійно. Причина, найімовірніше, постійна: конкретна модель, додаток, драйвер відеокарти або застаріла версія Revit.",
-        "en": "Three or more sessions in 7 days ended abnormally. The cause is probably persistent: a specific model, add-in, graphics driver or an outdated Revit build."
+        "uk": "Три або більше підтверджених падінь за 7 днів. Причина, ймовірно, постійна: конкретна модель, add-in, драйвер відеокарти або застаріла версія Revit.",
+        "en": "Three or more confirmed crashes in 7 days. The cause is probably persistent: a specific model, add-in, graphics driver or an outdated Revit build."
       },
       "fix": {
         "uk": [

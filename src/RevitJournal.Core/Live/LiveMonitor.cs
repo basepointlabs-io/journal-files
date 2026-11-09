@@ -14,7 +14,7 @@ public sealed record LiveStatus(
     string Version, string JournalPath, string? Model, DateTime? LastActivity, bool? Responding,
     string Sync, int? FreeRamMb, int? TotalRamMb, string? Busy);
 
-public sealed record RevitProcess(int Id, string Version, bool Responding);
+public sealed record RevitProcess(int Id, string Version, bool Responding, DateTime StartTime);
 
 /// <summary>Running Revit.exe processes; replaced in tests.</summary>
 public interface IRevitProcesses
@@ -34,7 +34,7 @@ public sealed class WindowsRevitProcesses : IRevitProcesses
                 // ...\Autodesk\Revit 2025\Revit.exe -> "2025"
                 string dir = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(p.MainModule?.FileName) ?? "");
                 string version = dir.StartsWith("Revit ", StringComparison.OrdinalIgnoreCase) ? dir[6..] : "";
-                result.Add(new RevitProcess(p.Id, version, p.Responding));
+                result.Add(new RevitProcess(p.Id, version, p.Responding, p.StartTime));
             }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
             {
@@ -53,15 +53,18 @@ public sealed class WindowsRevitProcesses : IRevitProcesses
 /// Watches the journals of every running Revit and raises alerts when something goes wrong, while it happens.
 /// Call <see cref="Tick"/> every few seconds from one thread.
 /// </summary>
-public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitProcesses? processes = null, Func<DateTime>? clock = null) : IDisposable
+public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitProcesses? processes = null, Func<DateTime>? clock = null,
+    Func<IReadOnlyList<WindowsCrashEvent>>? crashEvents = null) : IDisposable
 {
     public static readonly TimeSpan SyncLongAfter = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan NotRespondingAfter = TimeSpan.FromMinutes(1);
     public static readonly TimeSpan LowMemoryRepeat = TimeSpan.FromMinutes(30);
+    public static readonly TimeSpan CrashEventDelay = TimeSpan.FromSeconds(10);
 
     private readonly string _root = root ?? JournalLocator.DefaultRoot;
     private readonly IRevitProcesses _processes = processes ?? new WindowsRevitProcesses();
     private readonly Func<DateTime> _now = clock ?? (() => DateTime.Now);
+    private readonly Func<IReadOnlyList<WindowsCrashEvent>> _crashEvents = crashEvents ?? (() => WindowsCrashLog.Recent(fresh: true));
     private readonly Dictionary<string, Tracked> _tracked = new(StringComparer.OrdinalIgnoreCase);
 
     private sealed class Tracked(LiveJournal journal, string version)
@@ -75,9 +78,20 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         public DateTime? NotRespondingSince;
         public bool NotRespondingAlerted;
         public bool? Responding;
+        public int AnalyzedLines = -1;
+        public bool? AnalyzedResponding;
+        public AnalysisResult? Result;
+        public DateTime? ReleasedAt;
     }
 
     public IReadOnlyList<LiveStatus> Status { get; private set; } = [];
+
+    /// <summary>
+    /// Journal path → up-to-date analysis of every followed session, plus (once) the final analysis of sessions that
+    /// ended during the last <see cref="Tick"/>. Each result is built on a frozen copy, so other threads may read it.
+    /// The app shows these instead of parsing a running journal again.
+    /// </summary>
+    public IReadOnlyDictionary<string, AnalysisResult> Results { get; private set; } = new Dictionary<string, AnalysisResult>();
 
     public List<LiveAlert> Tick()
     {
@@ -86,23 +100,46 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         AttachRunningJournals();
         var procs = _processes.List();
 
+        var results = new Dictionary<string, AnalysisResult>(StringComparer.OrdinalIgnoreCase);
         foreach (var (path, t) in _tracked.ToList())
         {
             t.Journal.Poll();
             if (JournalReader.IsBeingWritten(path))
             {
                 CheckRunning(t, procs, now, alerts);
+                // Analyze again only when something changed; the snapshot keeps readers off the live session.
+                var s = t.Journal.Session;
+                if (t.Result is null || s.LineCount != t.AnalyzedLines || t.Responding != t.AnalyzedResponding)
+                {
+                    t.Result = analyzer.Analyze(s.Snapshot(), new AnalysisContext(IsBeingWritten: true, DumpFiles: []));
+                    t.AnalyzedLines = s.LineCount;
+                    t.AnalyzedResponding = t.Responding;
+                }
+                results[path] = t.Result;
                 continue;
             }
             // Revit released the journal: the session is over.
             t.Journal.Poll();
-            if (EndedAbnormally(t) is { } crash)
+            // After a crash Windows needs a few seconds to write its event; wait for it before judging how it ended.
+            t.ReleasedAt ??= now;
+            var ended = t.Journal.Session;
+            if (!ended.EndedNormally && ended.ExitRequestedAt is null && now - t.ReleasedAt < CrashEventDelay)
+            {
+                if (t.Result is not null)
+                    results[path] = t.Result;
+                continue;
+            }
+            var final = analyzer.Analyze(t.Journal.Session.Snapshot(),
+                AnalysisContext.ForFile(path) with { IsBeingWritten = false, IsLocal = true, CrashEvents = _crashEvents() });
+            results[path] = final;
+            if (EndedAbnormally(t, final) is { } crash)
                 alerts.Add(crash);
             t.Journal.Dispose();
             _tracked.Remove(path);
         }
 
-        Status = [.. _tracked.Values.Select(t => StatusOf(t, now))];
+        Results = results;
+        Status = [.. _tracked.Values.Where(t => t.ReleasedAt is null).Select(t => StatusOf(t, now))];
         return alerts;
     }
 
@@ -179,10 +216,8 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         }
         t.DialogsSeen = s.Dialogs.Count;
 
-        // "Not responding" comes from Windows; with several Revit windows of one version, the newest journal gets it.
-        var proc = procs.FirstOrDefault(p => p.Version == t.Version);
-        bool newestOfVersion = !_tracked.Values.Any(o => o != t && o.Version == t.Version && o.Journal.LastGrowth > t.Journal.LastGrowth);
-        t.Responding = proc is null || !newestOfVersion ? null : proc.Responding;
+        // "Not responding" comes from Windows, per process.
+        t.Responding = ProcessOf(t, procs)?.Responding;
         if (t.Responding == false)
         {
             t.NotRespondingSince ??= now;
@@ -202,17 +237,39 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         }
     }
 
-    private LiveAlert? EndedAbnormally(Tracked t)
+    /// <summary>
+    /// The Revit process that writes this journal: Revit starts the journal within seconds of starting itself, so with
+    /// several windows of one version each journal belongs to the process whose start time is closest to its first line.
+    /// </summary>
+    private RevitProcess? ProcessOf(Tracked t, IReadOnlyList<RevitProcess> procs)
     {
-        var s = t.Journal.Session;
-        if (s.EndedNormally || s.ExitRequestedAt is not null)
+        var sameVersion = procs.Where(p => p.Version == t.Version).ToList();
+        var journals = _tracked.Values.Where(o => o.Version == t.Version && o.Journal.Session.Start is not null).ToList();
+        if (sameVersion.Count <= 1 && journals.Count <= 1 || t.Journal.Session.Start is not { } start)
+            return sameVersion.FirstOrDefault();
+
+        static double Distance(RevitProcess p, DateTime journalStart) => Math.Abs((p.StartTime - journalStart).TotalSeconds);
+        // Each process goes to the journal that started closest to it; this journal takes the nearest of its own.
+        return sameVersion
+            .Where(p => journals.MinBy(o => Distance(p, o.Journal.Session.Start!.Value)) == t)
+            .MinBy(p => Distance(p, start));
+    }
+
+    private LiveAlert? EndedAbnormally(Tracked t, AnalysisResult result)
+    {
+        if (result.Status != SessionStatus.EndedAbnormally)
             return null;
-        var result = analyzer.Analyze(s, AnalysisContext.ForFile(t.Journal.Path) with { IsBeingWritten = false });
         string what = result.Context?.Describe().FirstOrDefault(f => f.StartsWith("You were dragging", StringComparison.Ordinal))
                       ?? result.Context?.Describe().FirstOrDefault()
                       ?? "";
-        return new LiveAlert(LiveAlertKind.Crashed, $"Revit {t.Version} closed unexpectedly",
-            $"At {Fmt.Time(s.LastTimestamp)}. {what} Click here to see what to do.".Replace("  ", " "),
+        string title = result.EndKind switch
+        {
+            EndKind.Crash => $"Revit {t.Version} crashed",
+            EndKind.Hang => $"Revit {t.Version} stopped responding and was closed",
+            _ => $"Revit {t.Version} closed unexpectedly",
+        };
+        return new LiveAlert(LiveAlertKind.Crashed, title,
+            $"At {Fmt.Time(result.Session.LastTimestamp)}. {what} Click here to see what to do.".Replace("  ", " "),
             t.Journal.Path, "crashed", _now());
     }
 

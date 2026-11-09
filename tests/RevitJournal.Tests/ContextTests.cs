@@ -34,7 +34,7 @@ public class ContextTests
     [Fact]
     public void Crash_while_dragging_a_duct_end_names_the_duct_the_target_the_view_and_the_model()
     {
-        var r = Analyzer.Analyze(JournalParser.Parse("j", Fixtures.Lines(Fixtures.Header, DuctDragThenStop)), Closed);
+        var r = Analyzer.Analyze(JournalParser.Parse("j", Fixtures.Lines(Fixtures.Header, DuctDragThenStop, Fixtures.CrashRecord)), Closed);
 
         var ctx = r.Context!;
         Assert.Equal("Tower_MEP.rvt", ctx.Model);

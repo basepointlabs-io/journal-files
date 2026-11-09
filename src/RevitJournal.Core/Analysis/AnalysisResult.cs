@@ -54,12 +54,24 @@ public sealed class AnalysisResult
     /// <summary>What the user was doing when the session ended abnormally; null otherwise.</summary>
     public CrashContext? Context { get; init; }
 
+    /// <summary>For an abnormal end: whether a crash or a hang is proven, or neither.</summary>
+    public EndKind EndKind { get; init; }
+
+    /// <summary>The proof behind <see cref="EndKind"/> (dump file, journal crash record, Windows event), or why there is none.</summary>
+    public IReadOnlyList<string> EndEvidence { get; init; } = [];
+
     public Severity? WorstSeverity => Findings.Count == 0 ? null : Findings.Max(f => f.Severity);
 }
 
-/// <summary>Facts about the journal that live outside its text (file system state).</summary>
+/// <summary>Facts about the journal that live outside its text (file system state, the Windows event log).</summary>
 public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> DumpFiles)
 {
+    /// <summary>Revit.exe crash and hang events Windows recorded on this computer.</summary>
+    public IReadOnlyList<WindowsCrashEvent> CrashEvents { get; init; } = [];
+
+    /// <summary>The journal lies in this computer's own Revit journal folder, not a copy sent from elsewhere.</summary>
+    public bool IsLocal { get; init; } = true;
+
     public static AnalysisContext ForFile(string journalPath)
     {
         string dir = Path.GetDirectoryName(journalPath) ?? ".";
@@ -67,6 +79,12 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
         var dumps = Directory.Exists(dir)
             ? Directory.EnumerateFiles(dir, stem + "*.dmp").ToList()
             : [];
-        return new AnalysisContext(File.Exists(journalPath) && Parsing.JournalReader.IsBeingWritten(journalPath), dumps);
+        bool local = Path.GetFullPath(journalPath).StartsWith(JournalLocator.DefaultRoot, StringComparison.OrdinalIgnoreCase);
+        return new AnalysisContext(File.Exists(journalPath) && Parsing.JournalReader.IsBeingWritten(journalPath), dumps)
+        {
+            IsLocal = local,
+            // Events of this computer say nothing about a journal that came from another one.
+            CrashEvents = local ? WindowsCrashLog.Recent() : [],
+        };
     }
 }

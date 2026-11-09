@@ -21,7 +21,7 @@ internal static class Metrics
         {
             if (status != SessionStatus.ShutdownIncomplete)
                 return null;
-            string last = s.Lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))?.Trim() ?? "";
+            string last = s.Tail.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))?.Trim() ?? "";
             return
             [
                 $"Close was requested at {Fmt.Time(s.ExitRequestedAt)}; the journal ends at {Fmt.Time(s.LastTimestamp)}.",
@@ -37,7 +37,7 @@ internal static class Metrics
         {
             if (status != SessionStatus.EndedAbnormally || s.Ram.Count == 0)
                 return null;
-            var last = s.Ram.LastOrDefault(r => r.Line > s.Lines.Count - 200);
+            var last = s.Ram.LastOrDefault(r => r.Line > s.LineCount - 200);
             if (last is null || !IsLow(last.AvailableMb, s.TotalRamMb, 1024, 0.05))
                 return null;
             return [$"Free RAM at the end of the journal: {Fmt.Mb(last.AvailableMb)}{OfTotal(s)} ({Fmt.Time(last.Time)})."];
@@ -171,14 +171,14 @@ internal static class Metrics
                 .ToList();
             var facts = recent.Select(a => $"Add-in command \"{AddInCommand(a)}\" was started at {Fmt.Time(a.Time)}, " +
                                            $"{Fmt.Duration(end - a.Time!.Value)} before the journal ends.").ToList();
-            int tail = Math.Max(0, s.Lines.Count - 50);
-            for (int i = tail; i < s.Lines.Count; i++)
+            var tail = s.Tail;
+            for (int i = Math.Max(0, tail.Count - 50); i < tail.Count; i++)
             {
-                string l = s.Lines[i];
+                string l = tail[i];
                 if (l.Contains("Managed exception caught from external API application", StringComparison.Ordinal)
                     || (l.Contains("API_ERROR", StringComparison.Ordinal) && l.Contains("exception", StringComparison.OrdinalIgnoreCase)))
                 {
-                    facts.Add($"An add-in error was logged just before the end (line {i + 1}): {Fmt.Trim(l.Trim(), 160)}");
+                    facts.Add($"An add-in error was logged just before the end (line {s.LineCount - tail.Count + i + 1}): {Fmt.Trim(l.Trim(), 160)}");
                     break;
                 }
             }
