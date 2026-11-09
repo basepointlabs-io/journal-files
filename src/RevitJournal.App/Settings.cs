@@ -11,6 +11,9 @@ public sealed class Settings
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RevitJournalAnalyzer");
     private static readonly string FilePath = Path.Combine(Folder, "settings.json");
 
+    /// <summary>Where analysis results of finished sessions are kept between starts.</summary>
+    public static string CacheFolder => Path.Combine(Folder, "cache");
+
     /// <summary>The tray hint ("still watching in the background") is shown once.</summary>
     public bool TrayHintShown { get; set; }
 

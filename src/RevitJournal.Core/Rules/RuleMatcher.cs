@@ -43,7 +43,7 @@ public sealed class RuleMatcher
     }
 
     /// <summary>Adds the rules that match one line (1-based <paramref name="lineNumber"/>) to <paramref name="hits"/>.</summary>
-    public void MatchLine(string line, int lineNumber, DateTime? time, Dictionary<string, List<LineRef>> hits)
+    public void MatchLine(string line, int lineNumber, DateTime? time, Dictionary<string, List<LineRef>> hits, string? source = null)
     {
         foreach (var c in _rules)
         {
@@ -51,7 +51,7 @@ public sealed class RuleMatcher
                 continue;
             if (!hits.TryGetValue(c.Rule.Id, out var list))
                 hits[c.Rule.Id] = list = [];
-            list.Add(new LineRef(lineNumber, time, line.Trim()));
+            list.Add(new LineRef(lineNumber, time, line.Trim(), source));
         }
     }
 

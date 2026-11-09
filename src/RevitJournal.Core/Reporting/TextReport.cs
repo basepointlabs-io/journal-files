@@ -49,7 +49,7 @@ public static class TextReport
                 {
                     sb.AppendLine($"   Journal lines ({f.HitCount} match{(f.HitCount == 1 ? "" : "es")}):");
                     foreach (var e in f.Evidence)
-                        sb.AppendLine($"     {e.Line,7} {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 160)}");
+                        sb.AppendLine($"     {e.Where,7} {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 160)}");
                 }
                 sb.AppendLine($"   Source: {ConfidenceLabel(f.Rule.Confidence)} ({f.Rule.Id})"
                               + (f.AlsoMatched.Count > 0 ? $"; also: {string.Join(", ", f.AlsoMatched.Select(a => a.Id))}" : ""));

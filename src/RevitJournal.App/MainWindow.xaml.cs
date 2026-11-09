@@ -17,6 +17,7 @@ namespace RevitJournal.App;
 public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly Analyzer _analyzer = Analyzer.CreateDefault();
+    private bool _rereadAll;
     private readonly SymptomAdvisor _advisor;
     private readonly ObservableCollection<JournalItem> _items = [];
     private readonly Dictionary<DateOnly, DayGroup> _days = [];
@@ -40,9 +41,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(JournalItem.Day)));
         view.Filter = o => o is JournalItem i && MatchesVersion(i);
 
+        // Finished sessions are analyzed once and then read from %LOCALAPPDATA%\RevitJournalAnalyzer\cache.
+        _analyzer.Cache = new AnalysisCache(Settings.CacheFolder, _analyzer.Rules);
+
         Loaded += async (_, _) =>
         {
             await ReloadAsync();
+            _ = Task.Run(() => _analyzer.Cache.Prune());
             // "Open with" / drag onto the exe: analyze the given journals first.
             string[] args = Environment.GetCommandLineArgs()[1..];
             foreach (string path in args.Where(File.Exists))
@@ -364,7 +369,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         try
         {
-            var result = await Task.Run(() => _analyzer.AnalyzeFile(item.File.Path));
+            bool fresh = _rereadAll;
+            var result = await Task.Run(() => _analyzer.AnalyzeFile(item.File.Path, useCache: !fresh));
             await Dispatcher.InvokeAsync(() =>
             {
                 item.Result = result;
@@ -456,7 +462,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         foreach (var item in _items)
             item.Result = null;
-        await ReloadAsync();
+        // Refresh means "read the journals again", not "show the stored results again".
+        _rereadAll = true;
+        try
+        {
+            await ReloadAsync();
+        }
+        finally
+        {
+            _rereadAll = false;
+        }
     }
 
     private async void OnOpenFile(object sender, RoutedEventArgs e)

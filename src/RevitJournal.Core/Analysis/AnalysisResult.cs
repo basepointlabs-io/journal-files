@@ -72,6 +72,12 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
     /// <summary>The journal lies in this computer's own Revit journal folder, not a copy sent from elsewhere.</summary>
     public bool IsLocal { get; init; } = true;
 
+    /// <summary>
+    /// journal.NNNN.workerK.log files next to the journal: the logs of RevitWorker.exe, the helper process Revit
+    /// starts for background work. Same line format as the journal.
+    /// </summary>
+    public IReadOnlyList<string> WorkerLogs { get; init; } = [];
+
     public static AnalysisContext ForFile(string journalPath)
     {
         string dir = Path.GetDirectoryName(journalPath) ?? ".";
@@ -80,8 +86,12 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
             ? Directory.EnumerateFiles(dir, stem + "*.dmp").ToList()
             : [];
         bool local = Path.GetFullPath(journalPath).StartsWith(JournalLocator.DefaultRoot, StringComparison.OrdinalIgnoreCase);
+        var workers = Directory.Exists(dir)
+            ? Directory.EnumerateFiles(dir, stem + ".worker*.log").Order(StringComparer.OrdinalIgnoreCase).ToList()
+            : [];
         return new AnalysisContext(File.Exists(journalPath) && Parsing.JournalReader.IsBeingWritten(journalPath), dumps)
         {
+            WorkerLogs = workers,
             IsLocal = local,
             // Events of this computer say nothing about a journal that came from another one.
             CrashEvents = local ? WindowsCrashLog.Recent() : [],

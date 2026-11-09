@@ -214,7 +214,7 @@ public sealed class FindingView(Finding f, bool expanded)
     public bool HasEvidence => f.Evidence.Count > 0;
     public string EvidenceTitle => $"Journal lines ({f.HitCount} match{(f.HitCount == 1 ? "" : "es")})";
     public string Evidence => string.Join(Environment.NewLine,
-        f.Evidence.Select(e => $"{e.Line,7}  {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 220)}"));
+        f.Evidence.Select(e => $"{e.Where,7}  {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 220)}"));
     /// <summary>How far to trust this finding, shown in the card header.</summary>
     public string Confidence => TextReport.ConfidenceChip(f.Rule);
     public string Source => $"Source: {TextReport.ConfidenceLabel(f.Rule.Confidence)}"

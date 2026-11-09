@@ -11,18 +11,20 @@ public sealed class CrashContext
     /// <summary>Interactions further back than this before the end are not "what you were doing".</summary>
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(5);
 
-    public string? Model { get; private init; }
-    public string? View { get; private init; }
-    public string? Selection { get; private init; }
-    public string? Tab { get; private init; }
-    public string? Drag { get; private init; }
-    public long? ElementId { get; private init; }
-    public long? SnapTargetId { get; private init; }
-    public bool InSystem { get; private init; }
-    public UserAction? LastCommand { get; private init; }
-    public DateTime? At { get; private init; }
+    public string? Model { get; init; }
+    public string? View { get; init; }
+    public string? Selection { get; init; }
+    public string? Tab { get; init; }
+    public string? Drag { get; init; }
+    public long? ElementId { get; init; }
+    public long? SnapTargetId { get; init; }
+    public bool InSystem { get; init; }
+    public UserAction? LastCommand { get; init; }
+    public DateTime? At { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public IEnumerable<long> ElementIds => new[] { ElementId, SnapTargetId }.OfType<long>().Distinct();
+    [System.Text.Json.Serialization.JsonIgnore]
     public bool HasElement => ElementId is not null;
 
     /// <summary>Builds the context at the end of the session (or before <paramref name="endLine"/>); null when nothing useful was recorded.</summary>

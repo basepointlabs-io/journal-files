@@ -14,6 +14,9 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     /// <summary>Number of lines parsed so far.</summary>
     public int LineCount { get; internal set; }
 
+    /// <summary>Lines read from the session's worker logs (0 when there are none).</summary>
+    public int WorkerLogLines { get; internal set; }
+
     internal Queue<string> TailQueue { get; private set; } = new();
 
     /// <summary>The last <see cref="TailSize"/> lines; Tail[^1] is line number <see cref="LineCount"/>.</summary>
@@ -33,7 +36,7 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     {
         var c = new JournalSession(FilePath, [])
         {
-            LineCount = LineCount, TailQueue = new Queue<string>(TailQueue),
+            LineCount = LineCount, WorkerLogLines = WorkerLogLines, TailQueue = new Queue<string>(TailQueue),
             Release = Release, Build = Build, BuildDate = BuildDate, UserName = UserName, MachineName = MachineName,
             Start = Start, LastTimestamp = LastTimestamp, EndedNormally = EndedNormally, ExitRequestedAt = ExitRequestedAt,
             IsPlayback = IsPlayback,
@@ -99,7 +102,12 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
 }
 
 /// <summary>A pointer back to a line in the journal (1-based), with the time of the block it belongs to.</summary>
-public sealed record LineRef(int Line, DateTime? Time, string Text);
+/// <param name="Source">Null for the journal itself; "worker1" for a line of journal.NNNN.worker1.log.</param>
+public sealed record LineRef(int Line, DateTime? Time, string Text, string? Source = null)
+{
+    /// <summary>"44184", or "worker1:211" for a line of a worker log.</summary>
+    public string Where => Source is null ? Line.ToString(System.Globalization.CultureInfo.InvariantCulture) : $"{Source}:{Line}";
+}
 
 /// <summary>Machine-wide free RAM and Revit's own usage at one point in time.</summary>
 public sealed record RamSample(int Line, DateTime? Time, int AvailableMb, int? TotalMb, int? RevitUsedMb, int? RevitPeakMb);

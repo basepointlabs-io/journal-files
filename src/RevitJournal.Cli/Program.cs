@@ -14,6 +14,9 @@ if (args.Length == 0)
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 var analyzer = Analyzer.CreateDefault();
+// --cache <folder>: keep results on disk like the app does (off by default, so rule work always reads the journals).
+if (Array.IndexOf(args, "--cache") is int ci and >= 0 && ci + 1 < args.Length)
+    analyzer.Cache = new AnalysisCache(args[ci + 1], analyzer.Rules);
 string target = args[0];
 
 if (File.Exists(target))
@@ -123,5 +126,6 @@ if (History.RepeatedCrashes(analyzer.Rules, results) is { } repeated)
     foreach (string fact in repeated.Facts)
         Console.WriteLine($"  • {fact}");
 }
-Console.WriteLine($"\n{journals.Count} journals in {total.Elapsed.TotalSeconds:F1} s");
+Console.WriteLine($"\n{journals.Count} journals in {total.Elapsed.TotalSeconds:F1} s"
+                  + (analyzer.Cache is { } cache ? $" ({cache.Hits} from cache)" : ""));
 return 0;

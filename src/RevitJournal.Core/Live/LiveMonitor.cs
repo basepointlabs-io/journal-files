@@ -129,8 +129,10 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
                     results[path] = t.Result;
                 continue;
             }
-            var final = analyzer.Analyze(t.Journal.Session.Snapshot(),
-                AnalysisContext.ForFile(path) with { IsBeingWritten = false, IsLocal = true, CrashEvents = _crashEvents() });
+            var finalContext = AnalysisContext.ForFile(path) with { IsBeingWritten = false, IsLocal = true, CrashEvents = _crashEvents() };
+            var finished = t.Journal.Session.Snapshot();
+            analyzer.AddWorkerLogHits(finished, finalContext);
+            var final = analyzer.Analyze(finished, finalContext);
             results[path] = final;
             if (EndedAbnormally(t, final) is { } crash)
                 alerts.Add(crash);

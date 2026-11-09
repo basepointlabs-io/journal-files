@@ -18,14 +18,61 @@ public sealed class Analyzer(RuleSet rules)
     /// <summary>The compiled text rules, shared with live parsers so they match lines as they arrive.</summary>
     public RuleMatcher Matcher => _matcher;
 
+    /// <summary>
+    /// Results of finished sessions kept on disk, so a journal is read once and not on every start. Null (the
+    /// default) analyzes every time.
+    /// </summary>
+    public AnalysisCache? Cache { get; set; }
+
     /// <summary>Thread-safe. One streaming pass: the journal text is never held in memory as a whole.</summary>
-    public AnalysisResult AnalyzeFile(string path)
+    /// <param name="useCache">False reads the journal again even when a cached result exists (the result is stored anew).</param>
+    public AnalysisResult AnalyzeFile(string path, bool useCache = true)
     {
+        // A journal Revit is still writing changes every second: never cached.
+        bool running = File.Exists(path) && JournalReader.IsBeingWritten(path);
+        if (useCache && !running && Cache?.TryGet(path) is { } cached)
+            return cached;
+
         var context = AnalysisContext.ForFile(path);
         var parser = new JournalParser(path, _matcher);
         foreach (string line in JournalReader.EnumerateLines(path))
             parser.Feed(line);
-        return Analyze(parser.Session, context);
+        AddWorkerLogHits(parser.Session, context);
+        var result = Analyze(parser.Session, context);
+        return Cache is not null && !context.IsBeingWritten ? Cache.Put(path, result) : result;
+    }
+
+    /// <summary>
+    /// Runs the text rules over the worker logs of the session and adds the matches to the journal's own, marked with
+    /// their source ("worker1"). Only rules are matched: session facts (syncs, memory, commands) come from the journal.
+    /// </summary>
+    public void AddWorkerLogHits(JournalSession session, AnalysisContext context)
+    {
+        if (session.RuleHits is not { } hits)
+            return;
+        foreach (string log in context.WorkerLogs)
+        {
+            // journal.0116.worker1.log -> "worker1"
+            string name = Path.GetFileNameWithoutExtension(log);
+            string source = name[(name.LastIndexOf('.') + 1)..];
+            try
+            {
+                DateTime? time = null;
+                int n = 0;
+                foreach (string line in JournalReader.EnumerateLines(log))
+                {
+                    n++;
+                    if (JournalTimestamp.TryParse(line, out var t))
+                        time = t;
+                    _matcher.MatchLine(line, n, time, hits, source);
+                }
+                session.WorkerLogLines += n;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // A worker log that cannot be read does not stop the analysis of the journal.
+            }
+        }
     }
 
     public AnalysisResult Analyze(JournalSession session, AnalysisContext context)
@@ -242,6 +289,9 @@ public sealed class Analyzer(RuleSet rules)
             int failedAddIns = s.AddIns.Count(a => a.Failed);
             lines.Add($"Add-ins started: {s.AddIns.Count} ({third} third-party" + (failedAddIns > 0 ? $", {failedAddIns} failed" : "") + ").");
         }
+
+        if (s.WorkerLogLines > 0)
+            lines.Add($"The worker log (RevitWorker) of this session was checked as well: {s.WorkerLogLines.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} lines.");
 
         return lines;
     }
