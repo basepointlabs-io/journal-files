@@ -36,6 +36,19 @@ public sealed class SeverityBrushConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
+/// <summary>Fill of a meter: the accent blue while fine, orange or red when the value is a problem.</summary>
+public sealed class MeterBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as string) switch
+    {
+        "crash" => Palette.Red,
+        "warning" => Palette.Orange,
+        _ => Palette.Blue,
+    };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
 public sealed class StatusBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as string) switch

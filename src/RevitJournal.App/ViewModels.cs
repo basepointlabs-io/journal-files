@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
+using RevitJournal.Core.Live;
 using RevitJournal.Core.Reporting;
 using RevitJournal.Core.Rules;
 using RevitJournal.Core.Symptoms;
@@ -221,3 +222,102 @@ public sealed class FindingView(Finding f, bool expanded)
                             + (f.Rule.Sources.Count > 0 ? $" — {f.Rule.Sources[0].Title}" : "");
     public string? SourceUrl => f.Rule.Sources.FirstOrDefault()?.Url;
 }
+
+/// <summary>The overview of the computer and the running Revit sessions, as shown in the tray flyout and on the start screen.</summary>
+public sealed class HealthView
+{
+    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions)
+    {
+        StatusKey = Key(r.Level);
+        StatusTitle = r.Level switch
+        {
+            HealthLevel.Danger => "Act now",
+            HealthLevel.Watch => "Keep an eye on it",
+            _ => "All good",
+        };
+        StatusReason = r.Issues.Count > 0 ? r.Issues[0].Title
+            : r.Revits.Count == 0 ? "Revit is not running. The computer has enough resources."
+            : $"{r.Revits.Count} Revit running. Memory, drawing resources and disk are fine.";
+
+        long used = Math.Max(0, r.TotalRamMb - r.FreeRamMb);
+        RamPercent = r.TotalRamMb > 0 ? 100.0 * used / r.TotalRamMb : 0;
+        RamText = $"{Fmt.Mb((int)used)} of {Fmt.Mb((int)r.TotalRamMb)} used";
+        RamFreeText = $"{Fmt.Mb((int)r.FreeRamMb)} free";
+        RamKey = Key(r.Issues.Where(i => i.Key.StartsWith("ram", StringComparison.Ordinal)).Select(i => i.Level).DefaultIfEmpty(HealthLevel.Ok).Max());
+        ForecastText = r.RamRunsOutIn is { } eta && eta <= HealthMonitor.ForecastWatch
+            ? $"Falling: runs out in about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min"
+            : r.RamHistory.Count > 1 ? $"Free memory, last {Math.Max(1, (int)Math.Round((r.RamHistory[^1].Time - r.RamHistory[0].Time).TotalMinutes))} min" : "";
+        Sparkline = Points(r.RamHistory, r.TotalRamMb);
+
+        CpuPercent = r.CpuPercent;
+        CpuText = $"{r.CpuPercent:0} %";
+        var disk = r.Disks.OrderBy(d => d.FreeMb).FirstOrDefault();
+        DiskText = disk is null ? "" : $"{disk.Name} {Fmt.Mb((int)disk.FreeMb)} free";
+        DiskKey = Key(disk?.Level ?? HealthLevel.Ok);
+        DiskPercent = disk is { TotalMb: > 0 } ? 100.0 * (disk.TotalMb - disk.FreeMb) / disk.TotalMb : 0;
+
+        Revits = [.. r.Revits.Select(p => new RevitHealthRow(p, Match(p, r.Revits, sessions)))];
+        NoRevit = r.Revits.Count == 0;
+        Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(Key(i.Level), i.Title, i.Advice))];
+        HasIssues = Issues.Count > 0;
+    }
+
+    public string StatusKey { get; }
+    public string StatusTitle { get; }
+    public string StatusReason { get; }
+    public double RamPercent { get; }
+    public string RamText { get; }
+    public string RamFreeText { get; }
+    public string RamKey { get; }
+    public string ForecastText { get; }
+    public System.Windows.Media.PointCollection Sparkline { get; }
+    public double CpuPercent { get; }
+    public string CpuText { get; }
+    public string DiskText { get; }
+    public string DiskKey { get; }
+    public double DiskPercent { get; }
+    public IReadOnlyList<RevitHealthRow> Revits { get; }
+    public bool NoRevit { get; }
+    public IReadOnlyList<HealthIssueRow> Issues { get; }
+    public bool HasIssues { get; }
+
+    internal static string Key(HealthLevel level) => level switch { HealthLevel.Danger => "crash", HealthLevel.Watch => "warning", _ => "ok" };
+
+    /// <summary>The journal session of a process: by process id when the monitor could tell, else the only one of that version.</summary>
+    private static LiveStatus? Match(RevitHealth p, IReadOnlyList<RevitHealth> all, IReadOnlyList<LiveStatus> sessions) =>
+        sessions.FirstOrDefault(s => s.ProcessId == p.ProcessId)
+        ?? (all.Count(x => x.Version == p.Version) == 1 ? sessions.FirstOrDefault(s => s.Version == p.Version) : null);
+
+    /// <summary>Free memory over time as points in a 300 x 40 box (0 at the bottom, the machine's RAM at the top).</summary>
+    private static System.Windows.Media.PointCollection Points(IReadOnlyList<RamPoint> history, long totalMb)
+    {
+        var points = new System.Windows.Media.PointCollection();
+        if (history.Count < 2 || totalMb <= 0)
+            return points;
+        double span = Math.Max(1, (history[^1].Time - history[0].Time).TotalSeconds);
+        foreach (var p in history)
+            points.Add(new System.Windows.Point(300 * (p.Time - history[0].Time).TotalSeconds / span, 40 - 40.0 * p.FreeMb / totalMb));
+        points.Freeze();
+        return points;
+    }
+}
+
+public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session)
+{
+    public string StatusKey => !p.Responding ? HungKey : HealthView.Key(p.Level);
+    public string Title => (p.Version.Length > 0 ? $"Revit {p.Version}" : "Revit") + (session?.Model is { Length: > 0 } m ? $" · {m}" : "");
+    public string State => !p.Responding ? (p.CpuPercent >= HealthMonitor.BusyCpuPercent ? "Busy, not answering clicks" : "Not responding")
+        : session?.Busy is { } busy ? busy.TrimEnd('.') : p.CpuPercent >= HealthMonitor.BusyCpuPercent ? "Working" : "Idle";
+    // Red only for a Revit that is stuck; a busy one is a warning.
+    private string HungKey => p.CpuPercent >= HealthMonitor.BusyCpuPercent ? "warning" : "crash";
+    public string Numbers => $"{Fmt.Mb((int)p.MemoryMb)} RAM · CPU {p.CpuPercent:0} %";
+    public string Sync => session?.Sync ?? "";
+    public bool HasSync => session is not null;
+    public string SyncKey => session?.Sync.Contains("FAILED", StringComparison.Ordinal) == true ? "crash" : "pending";
+    public double GdiPercent => 100.0 * Math.Max(p.GdiObjects, p.UserObjects) / HealthMonitor.GuiLimit;
+    public string GdiText => $"{Math.Max(p.GdiObjects, p.UserObjects).ToString("N0", CultureInfo.InvariantCulture)} of 10,000 drawing resources";
+    public string GdiKey => HealthView.Key(Math.Max(p.GdiObjects, p.UserObjects) >= HealthMonitor.GuiDanger ? HealthLevel.Danger
+        : Math.Max(p.GdiObjects, p.UserObjects) >= HealthMonitor.GuiWatch ? HealthLevel.Watch : HealthLevel.Ok);
+}
+
+public sealed record HealthIssueRow(string LevelKey, string Title, string Advice);

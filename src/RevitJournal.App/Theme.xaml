@@ -234,6 +234,24 @@
     </Setter>
   </Style>
 
+  <!-- A thin meter: gray track, fill in the Foreground color (set it to the level's brush). -->
+  <Style x:Key="Meter" TargetType="ProgressBar">
+    <Setter Property="Height" Value="6" />
+    <Setter Property="Minimum" Value="0" />
+    <Setter Property="Maximum" Value="100" />
+    <Setter Property="Foreground" Value="{StaticResource Accent}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ProgressBar">
+          <Grid>
+            <Border x:Name="PART_Track" Background="#E3E7ED" CornerRadius="3" />
+            <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="3" HorizontalAlignment="Left" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- The BasePoint Labs mark (docs/brand/basepointlabs-mark.svg): four bands around a half disc. -->
   <DrawingImage x:Key="BasePointLabsMark">
     <DrawingImage.Drawing>

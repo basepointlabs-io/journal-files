@@ -53,6 +53,18 @@ public partial class App : Application
         }) { IsBackground = true, Name = "ShowSignal" };
         listener.Start();
 
+        if (Environment.GetEnvironmentVariable("RJA_SNAPSHOT") is { Length: > 0 } snapshots)
+        {
+            // Draw the screens to files and leave; nothing is shown on the desktop.
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                await window.SaveSnapshotsAsync(snapshots);
+                _agent.Dispose();
+                Shutdown();
+            });
+            return;
+        }
+
         if (!e.Args.Contains("--background"))
             window.Show();
     }

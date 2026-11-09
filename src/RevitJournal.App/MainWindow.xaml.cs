@@ -81,6 +81,15 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         };
         agent.ExitRequested += () => _exiting = true;
         agent.ResultsChanged += ApplyLiveResults;
+        agent.HealthChanged += (report, sessions) =>
+        {
+            var view = new HealthView(report, sessions);
+            HomeHealth.DataContext = view;
+            HealthCard.Visibility = Visibility.Visible;
+            _flyout?.Update(view);
+            _lastHealth = view;
+        };
+        agent.OverviewRequested += ShowOverview;
         // Keep the hint and the history in step with what just happened (a crash, a failed sync).
         agent.AlertsRaised += async alerts =>
         {
@@ -147,6 +156,65 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    private HealthFlyout? _flyout;
+    private HealthView? _lastHealth;
+
+    /// <summary>
+    /// For checking the look of a build without touching the desktop: draws the start screen and the tray overview
+    /// into PNG files while both windows stay off-screen and never take the focus (RJA_SNAPSHOT=&lt;folder&gt;).
+    /// </summary>
+    public async Task SaveSnapshotsAsync(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = -32000;
+        Top = 0;
+        ShowActivated = false;
+        ShowInTaskbar = false;
+        Show(); // loading starts when the window is first shown
+        await Task.Delay(500);
+        await _analyzed.Task;
+        for (int i = 0; i < 40 && _lastHealth is null; i++)
+            await Task.Delay(500);
+        await Task.Delay(12000); // a few readings, so processor shares and the memory curve have values
+        SavePng(this, System.IO.Path.Combine(folder, "home.png"));
+
+        var flyout = new HealthFlyout { ShowActivated = false, Left = -32000, Top = 0 };
+        if (_lastHealth is not null)
+            flyout.Update(_lastHealth);
+        flyout.Show();
+        await Task.Delay(1000);
+        SavePng(flyout, System.IO.Path.Combine(folder, "overview.png"));
+    }
+
+    private static void SavePng(FrameworkElement element, string path)
+    {
+        const double scale = 1.5;
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)(element.ActualWidth * scale), (int)(element.ActualHeight * scale),
+            96 * scale, 96 * scale, System.Windows.Media.PixelFormats.Pbgra32);
+        bitmap.Render(element);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var stream = File.Create(path);
+        encoder.Save(stream);
+    }
+
+    /// <summary>The compact overview above the tray; "Open full analysis" in it brings up this window.</summary>
+    private void ShowOverview()
+    {
+        if (_flyout is null)
+        {
+            _flyout = new HealthFlyout();
+            _flyout.OpenFullRequested += BringToFront;
+        }
+        if (_lastHealth is not null)
+            _flyout.Update(_lastHealth);
+        if (_flyout.IsVisible)
+            _flyout.Hide();
+        else
+            _flyout.ShowNearTray();
+    }
+
     public void BringToFront()
     {
         Show();
@@ -158,6 +226,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private async Task OpenAlertAsync(Core.Live.LiveAlert alert)
     {
         BringToFront();
+        // Alerts about the computer (memory, drawing resources, disk) have no journal: the overview on the start screen explains them.
+        if (alert.JournalPath.Length == 0)
+        {
+            ShowPage(HomePage);
+            HomePage.ScrollToTop();
+            return;
+        }
         await _analyzed.Task;
         // The alert may be about a journal that started after the list was built.
         if (!_items.Any(i => string.Equals(i.File.Path, alert.JournalPath, StringComparison.OrdinalIgnoreCase)))

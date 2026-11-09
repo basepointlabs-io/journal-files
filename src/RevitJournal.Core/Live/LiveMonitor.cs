@@ -4,15 +4,16 @@ using RevitJournal.Core.Parsing;
 
 namespace RevitJournal.Core.Live;
 
-public enum LiveAlertKind { SyncFailed, SyncTakingLong, LowMemory, NotResponding, SeriousError, Crashed }
+public enum LiveAlertKind { SyncFailed, SyncTakingLong, LowMemory, NotResponding, SeriousError, Crashed, DiskLow, ResourcesNearLimit }
 
 /// <summary>Something the user should know right now. <see cref="SymptomId"/> says which answer page to open.</summary>
 public sealed record LiveAlert(LiveAlertKind Kind, string Title, string Message, string JournalPath, string SymptomId, DateTime At);
 
 /// <summary>Current state of one running Revit, for the status card.</summary>
+/// <param name="ProcessId">The Revit.exe process that writes this journal, when it could be told apart.</param>
 public sealed record LiveStatus(
     string Version, string JournalPath, string? Model, DateTime? LastActivity, bool? Responding,
-    string Sync, int? FreeRamMb, int? TotalRamMb, string? Busy);
+    string Sync, int? FreeRamMb, int? TotalRamMb, string? Busy, int? ProcessId = null);
 
 public sealed record RevitProcess(int Id, string Version, bool Responding, DateTime StartTime);
 
@@ -58,7 +59,6 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
 {
     public static readonly TimeSpan SyncLongAfter = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan NotRespondingAfter = TimeSpan.FromMinutes(1);
-    public static readonly TimeSpan LowMemoryRepeat = TimeSpan.FromMinutes(30);
     public static readonly TimeSpan CrashEventDelay = TimeSpan.FromSeconds(10);
 
     private readonly string _root = root ?? JournalLocator.DefaultRoot;
@@ -74,10 +74,10 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         public int FailedSyncsSeen;
         public int DialogsSeen;
         public int LongSyncAlertedFor = -1;   // StartLine of the sync already reported as long
-        public DateTime? LowMemoryAlertedAt;
         public DateTime? NotRespondingSince;
         public bool NotRespondingAlerted;
         public bool? Responding;
+        public int? ProcessId;
         public int AnalyzedLines = -1;
         public bool? AnalyzedResponding;
         public AnalysisResult? Result;
@@ -201,14 +201,6 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
                 path, "slow", now));
         }
 
-        if (s.Ram.LastOrDefault() is { } ram && IsLowMemory(ram.AvailableMb, s.TotalRamMb)
-            && (t.LowMemoryAlertedAt is null || now - t.LowMemoryAlertedAt > LowMemoryRepeat))
-        {
-            t.LowMemoryAlertedAt = now;
-            alerts.Add(new LiveAlert(LiveAlertKind.LowMemory, "Computer is almost out of memory",
-                $"Only {Fmt.Mb(ram.AvailableMb)}{(s.TotalRamMb is { } total ? $" of {Fmt.Mb(total)}" : "")} RAM is free. Save your work now; Revit may close unexpectedly.",
-                path, "slow", now));
-        }
 
         foreach (var dialog in s.Dialogs.Skip(t.DialogsSeen))
         {
@@ -219,7 +211,9 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         t.DialogsSeen = s.Dialogs.Count;
 
         // "Not responding" comes from Windows, per process.
-        t.Responding = ProcessOf(t, procs)?.Responding;
+        var process = ProcessOf(t, procs);
+        t.ProcessId = process?.Id;
+        t.Responding = process?.Responding;
         if (t.Responding == false)
         {
             t.NotRespondingSince ??= now;
@@ -284,7 +278,7 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
             : lastSync.Succeeded ? $"Last sync OK at {Fmt.Time(lastSync.End)}"
             : $"Last sync FAILED at {Fmt.Time(lastSync.Start)}";
         return new LiveStatus(t.Version, t.Journal.Path, ModelName(s), s.LastTimestamp, t.Responding, sync,
-            s.Ram.LastOrDefault()?.AvailableMb, s.TotalRamMb, BusyWith(s));
+            s.Ram.LastOrDefault()?.AvailableMb, s.TotalRamMb, BusyWith(s), t.ProcessId);
     }
 
     private static string? BusyWith(Model.JournalSession s) =>
@@ -300,8 +294,6 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
             return s.DocumentName(doc);
         return s.Models.LastOrDefault() is { } m ? Fmt.FileName(m.Path) : null;
     }
-
-    private static bool IsLowMemory(int availMb, int? totalMb) => availMb < 1024 || (totalMb is { } t && availMb < 0.05 * t);
 
     public void Dispose()
     {
