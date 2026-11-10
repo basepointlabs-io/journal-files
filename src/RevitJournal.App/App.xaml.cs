@@ -12,8 +12,8 @@ public partial class App : Application
 {
     // RJA_INSTANCE gives a build under test its own identity, so it can run next to an installed copy.
     private static readonly string Suffix = Environment.GetEnvironmentVariable("RJA_INSTANCE") is { Length: > 0 } s ? "." + s : "";
-    private static readonly string InstanceName = "RevitJournalAnalyzer.Instance" + Suffix;
-    private static readonly string ShowSignalName = "RevitJournalAnalyzer.Show" + Suffix;
+    private static readonly string InstanceName = "RevitDoctor.Instance" + Suffix;
+    private static readonly string ShowSignalName = "RevitDoctor.Show" + Suffix;
 
     private TrayAgent? _agent;
     private Mutex? _instance;

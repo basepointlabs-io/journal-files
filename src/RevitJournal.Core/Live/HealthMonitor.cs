@@ -16,7 +16,7 @@ public sealed record DiskHealth(string Name, long FreeMb, long TotalMb, HealthLe
 public sealed record RamPoint(DateTime Time, long FreeMb);
 
 /// <summary>The computer's state right now, judged: overall level, the reasons, and a forecast for memory.</summary>
-/// <param name="RamRunsOutIn">When free memory reaches the danger line if it keeps falling as in the last minutes; null when it is not falling.</param>
+/// <param name="RamRunsOutIn">When free memory reaches the danger line if it keeps falling as in the last minutes; null when it is not falling or there is still plenty.</param>
 public sealed record HealthReport(DateTime Time, HealthLevel Level, long TotalRamMb, long FreeRamMb, long CommitLimitMb, long CommitFreeMb,
     double CpuPercent, IReadOnlyList<RevitHealth> Revits, IReadOnlyList<DiskHealth> Disks, IReadOnlyList<HealthIssue> Issues,
     TimeSpan? RamRunsOutIn, IReadOnlyList<RamPoint> RamHistory);
@@ -31,9 +31,14 @@ public sealed class HealthMonitor(ISystemProbe probe)
     // Free RAM, as a share of the machine's RAM or in absolute terms, whichever is hit first.
     public const double RamWatchShare = 0.12, RamDangerShare = 0.05;
     public const long RamWatchMb = 2048, RamDangerMb = 1024;
+    // A forecast only means something once memory is actually short: opening a model takes gigabytes in a few
+    // minutes and then stops, and a straight line through that predicts an end that never comes.
+    public const double ForecastBelowShare = 0.25;
+    public const long ForecastBelowMb = 4096;
     // Windows gives one process at most 10,000 GDI and 10,000 USER objects; Revit stops drawing when it gets there.
     public const int GuiLimit = 10_000, GuiWatch = 7_000, GuiDanger = 9_000;
-    public const long DiskWatchMb = 5 * 1024, DiskDangerMb = 1024;
+    // Autodesk: "Minimum 30 GB free space is required in the hard drive." Below 5 GB the journal, temporary files and caches may not fit.
+    public const long DiskWatchMb = 30 * 1024, DiskDangerMb = 5 * 1024;
     public const double CommitWatchShare = 0.20, CommitDangerShare = 0.10;
     /// <summary>A Revit above this share of the whole processor is doing something, even when its window does not respond.</summary>
     public const double BusyCpuPercent = 3;
@@ -57,7 +62,8 @@ public sealed class HealthMonitor(ISystemProbe probe)
     /// <summary>Notifications raised by the last <see cref="Tick"/>: a problem that became serious, at most once per half hour each.</summary>
     public IReadOnlyList<LiveAlert> NewAlerts { get; private set; } = [];
 
-    public HealthReport Tick()
+    /// <param name="models">What each running Revit has open, from its journal; judged together against the computer's memory.</param>
+    public HealthReport Tick(IReadOnlyCollection<ModelLoad>? models = null)
     {
         var now = probe.Sample();
         var previous = _previous;
@@ -118,11 +124,12 @@ public sealed class HealthMonitor(ISystemProbe probe)
         }
 
         // ---- memory soon
-        TimeSpan? runsOut = now.Revits.Count > 0 ? Forecast(now) : null;
+        bool memoryShort = now.TotalRamMb > 0 && now.FreeRamMb < Math.Max(ForecastBelowMb, ForecastBelowShare * now.TotalRamMb);
+        TimeSpan? runsOut = now.Revits.Count > 0 && memoryShort ? Forecast(now) : null;
         if (runsOut is { } eta && eta <= ForecastWatch && !issues.Any(i => i is { Key: "ram-low", Level: HealthLevel.Danger }))
             issues.Add(new HealthIssue("ram-forecast", eta <= ForecastDanger ? HealthLevel.Danger : HealthLevel.Watch,
-                $"At this rate memory runs out in about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min",
-                "Free memory has been falling steadily. Save and synchronize now, then restart Revit: it gives memory back only when restarted."));
+                $"Memory is short and still falling: {Fmt.Mb((int)now.FreeRamMb)} free, about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min left at this rate",
+                "Save and synchronize now. Close the Revit window and views you do not need; Revit gives memory back only when restarted."));
 
         if (now.CommitLimitMb > 0 && now.CommitFreeMb < CommitWatchShare * now.CommitLimitMb)
         {
@@ -138,6 +145,12 @@ public sealed class HealthMonitor(ISystemProbe probe)
                 $"{now.Revits.Count} Revit windows use {Fmt.Mb((int)revitMemory)} of {Fmt.Mb((int)now.TotalRamMb)} RAM",
                 "Close the Revit you are not working in: each one keeps its models in memory."));
 
+        if (models is not null && ModelSizeAdvice.Combined(models, now.TotalRamMb) is var (totalModelsMb, neededRam))
+            issues.Add(new HealthIssue("models-large", HealthLevel.Watch,
+                $"{models.Count} open models are {Fmt.Mb(totalModelsMb)} on disk together",
+                AutodeskArticle.MemoryInstability.Cite(
+                    $"Autodesk lists a single model of that size under {neededRam.Split(" (")[0]}; this computer has {Fmt.Mb((int)now.TotalRamMb)}. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly.")));
+
         var disks = new List<DiskHealth>();
         foreach (var d in now.Disks)
         {
@@ -145,7 +158,9 @@ public sealed class HealthMonitor(ISystemProbe probe)
             disks.Add(new DiskHealth(d.Name, d.FreeMb, d.TotalMb, level));
             if (level != HealthLevel.Ok)
                 issues.Add(new HealthIssue($"disk:{d.Name}", level, $"Drive {d.Name} has only {Fmt.Mb((int)d.FreeMb)} free",
-                    "Revit needs room for temporary files, saves and the cloud model cache; saving and synchronizing fail when the drive is full. Free up space."));
+                    level == HealthLevel.Danger
+                        ? "Free up space now: Revit needs room for temporary files, saves and the cloud model cache, and opening, saving and synchronizing fail when the drive is full. Autodesk requires at least 30 GB free."
+                        : "Autodesk requires at least 30 GB of free disk space for Revit. Free up space: Windows Disk Cleanup, and the cloud model cache you no longer need."));
         }
 
         issues = [.. issues.OrderByDescending(i => i.Level)];
@@ -189,11 +204,11 @@ public sealed class HealthMonitor(ISystemProbe probe)
         return left <= 0 ? TimeSpan.Zero : TimeSpan.FromSeconds(left / -slope);
     }
 
-    /// <summary>Serious problems and the memory forecast become notifications, each at most once per <see cref="AlertRepeat"/>.</summary>
+    /// <summary>Serious problems become notifications, each at most once per <see cref="AlertRepeat"/>.</summary>
     private List<LiveAlert> Alerts(HealthReport report)
     {
         var alerts = new List<LiveAlert>();
-        foreach (var issue in report.Issues.Where(i => i.Level == HealthLevel.Danger || i.Key == "ram-forecast"))
+        foreach (var issue in report.Issues.Where(i => i.Level == HealthLevel.Danger))
         {
             if (_alerted.TryGetValue(issue.Key, out var last) && report.Time - last < AlertRepeat)
                 continue;

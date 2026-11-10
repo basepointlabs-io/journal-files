@@ -48,6 +48,13 @@ public sealed partial class JournalParser
 
     [GeneratedRegex(@"by application (.+?) \([0-9a-fA-F-]{36}\)|Rvt\.Attr\.AddInName: (.+?) Rvt\.Attr\.")] private static partial Regex AddInActivityRegex();
 
+    [GeneratedRegex(@"Detect if missing elements for (.+?): File Size: (\d+), Element Count: (\d+)")] private static partial Regex FileSizeRegex();
+    [GeneratedRegex(@"<<Load linked file: (.+?\.rvt)\s*$", RegexOptions.IgnoreCase)] private static partial Regex LinkedFileRegex();
+
+    [GeneratedRegex(@"SLOG\s+local=""(.+?\.rvt)""", RegexOptions.IgnoreCase)] private static partial Regex SlogLocalRegex();
+
+    [GeneratedRegex(@"\[Jrn\.TabbedViewAnalytics\] (ViewCount|ProjectCount): (\d+)")] private static partial Regex TabCountRegex();
+
     private static readonly string[] FailureDialogMarkers = ["Could_Not", "Fail", "Error", "Cannot", "Unable"];
 
     private readonly RuleMatcher? _matcher;
@@ -226,6 +233,29 @@ public sealed partial class JournalParser
             if (s.AddInActivity.Count == JournalSession.AddInActivitySize)
                 s.AddInActivity.RemoveAt(0);
             s.AddInActivity.Add(new AddInActivity(n, _ts, (act.Groups[1].Success ? act.Groups[1] : act.Groups[2]).Value.Trim()));
+        }
+
+        if (line.Contains("File Size:", StringComparison.Ordinal) && FileSizeRegex().Match(line) is { Success: true } fs)
+        {
+            // Logged again on every save and sync: keep the latest figures of each file.
+            var file = new ModelFile(n, fs.Groups[1].Value.Trim(), long.Parse(fs.Groups[2].ValueSpan, CultureInfo.InvariantCulture),
+                int.TryParse(fs.Groups[3].ValueSpan, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count) ? count : null, false);
+            int at = s.ModelFiles.FindIndex(m => m.Path.Equals(file.Path, StringComparison.OrdinalIgnoreCase));
+            if (at >= 0) s.ModelFiles[at] = file; else s.ModelFiles.Add(file);
+        }
+        else if (line.Contains("Load linked file:", StringComparison.Ordinal) && LinkedFileRegex().Match(line) is { Success: true } lf
+                 && !s.ModelFiles.Any(m => m.Path.Equals(lf.Groups[1].Value.Trim(), StringComparison.OrdinalIgnoreCase)))
+            s.ModelFiles.Add(new ModelFile(n, lf.Groups[1].Value.Trim(), null, null, true));
+
+        else if (line.Contains("SLOG  local=", StringComparison.Ordinal) && SlogLocalRegex().Match(line) is { Success: true } sl
+                 && !sl.Groups[1].Value.Contains(@"\LinkedModels\", StringComparison.OrdinalIgnoreCase)
+                 && !s.ModelFiles.Any(m => m.Path.Equals(sl.Groups[1].Value, StringComparison.OrdinalIgnoreCase)))
+            s.ModelFiles.Add(new ModelFile(n, sl.Groups[1].Value, null, null, false)); // the local copy being edited; Revit logs its size only at a save
+
+        if (line.Contains("[Jrn.TabbedViewAnalytics]", StringComparison.Ordinal) && TabCountRegex().Match(line) is { Success: true } tc)
+        {
+            int count = Int(tc, 2);
+            if (tc.Groups[1].Value == "ViewCount") s.OpenViews = count; else s.OpenProjects = count;
         }
 
         if (s.StartupCompletedAt is null)

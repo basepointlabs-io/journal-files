@@ -53,6 +53,8 @@ public static class TextReport
                 }
                 sb.AppendLine($"   Source: {ConfidenceLabel(f.Rule.Confidence)} ({f.Rule.Id})"
                               + (f.AlsoMatched.Count > 0 ? $"; also: {string.Join(", ", f.AlsoMatched.Select(a => a.Id))}" : ""));
+                foreach (var src in f.Rule.Sources)
+                    sb.AppendLine($"     - {src.Title}: {src.Url}");
             }
         }
 

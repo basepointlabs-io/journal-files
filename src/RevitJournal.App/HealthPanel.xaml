@@ -3,102 +3,120 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RevitJournal.App"
              FontFamily="{StaticResource AppFontFamily}" FontSize="13" Foreground="{StaticResource Ink}">
-  <!-- The overview at a glance: overall state, memory with its recent curve, processor, disk, each running Revit,
+  <!-- The overview at a glance: overall state, free memory with its recent curve, disk, each running Revit,
        and at most three things to do. DataContext is a HealthView. Shown in the tray flyout and on the start screen. -->
   <StackPanel>
     <!-- Overall state -->
     <DockPanel>
       <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Top"
               Background="{Binding StatusKey, Converter={StaticResource StatusBrush}}">
-        <Ellipse Width="12" Height="12" Fill="White" />
+        <!-- The state as a sign as well as a colour: a check, a warning triangle, an alarm light. -->
+        <Viewbox Width="22" Height="22">
+          <Canvas Width="24" Height="24">
+            <Path Data="M6,12.5 L10.5,17 L18,8" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+              <Path.Style>
+                <Style TargetType="Path">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding StatusKey}" Value="ok">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Path.Style>
+            </Path>
+            <Path Data="M12,4.5 L20.5,19 H3.5 Z M12,10 V14 M12,16.8 V17" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+              <Path.Style>
+                <Style TargetType="Path">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding StatusKey}" Value="warning">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Path.Style>
+            </Path>
+            <Path Data="M8,16 V12 A4,4 0 0 1 16,12 V16 M6,16 H18 V19.5 H6 Z M12,3 V4.2 M4.2,12 H3 M21,12 H19.8 M5.6,5.6 L6.5,6.5 M18.4,5.6 L17.5,6.5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+              <Path.Style>
+                <Style TargetType="Path">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding StatusKey}" Value="crash">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Path.Style>
+            </Path>
+          </Canvas>
+        </Viewbox>
       </Border>
       <StackPanel>
         <TextBlock Text="{Binding StatusTitle}" FontSize="18" FontWeight="SemiBold" />
-        <TextBlock Text="{Binding StatusReason}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0" />
+        <TextBlock Text="{Binding StatusReason}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" />
       </StackPanel>
     </DockPanel>
 
-    <!-- Computer -->
-    <TextBlock Text="COMPUTER" Style="{StaticResource SectionTitle}" Margin="0,16,0,6" />
-    <DockPanel>
-      <TextBlock DockPanel.Dock="Right" Text="{Binding RamFreeText}" FontWeight="SemiBold" />
-      <TextBlock Text="Memory" />
+    <!-- Memory is the hero: the number, how it moved, and the curve. The number turns orange or red when memory is low. -->
+    <DockPanel Margin="0,24,0,0">
+      <Border DockPanel.Dock="Right" Background="{StaticResource Panel}" CornerRadius="2" Padding="8,3" VerticalAlignment="Center"
+              Visibility="{Binding HasRamTrend, Converter={StaticResource BoolToVisibility}}">
+        <TextBlock Text="{Binding RamTrendText}" FontSize="12" Foreground="{Binding RamTrendKey, Converter={StaticResource StatusBrush}}" />
+      </Border>
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="{Binding RamFreeValue}" FontSize="26" FontWeight="SemiBold"
+                   Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" />
+        <TextBlock Text="memory free" Foreground="{StaticResource Muted}" Margin="8,0,0,4" VerticalAlignment="Bottom" />
+      </StackPanel>
     </DockPanel>
-    <ProgressBar Style="{StaticResource Meter}" Value="{Binding RamPercent, Mode=OneWay}" Margin="0,4,0,2"
-                 Foreground="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
-    <TextBlock Text="{Binding RamText}" Foreground="{StaticResource Hint}" FontSize="12" />
+    <local:MemoryChart Height="96" Margin="0,8,0,0" Data="{Binding RamChart}"
+                       Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
+    <TextBlock Text="{Binding ForecastText}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0,4,0,0" />
 
-    <!-- Free memory over the last half hour: a falling line is the early warning. -->
-    <Border Background="{StaticResource Panel}" CornerRadius="2" Height="48" Margin="0,8,0,0" Padding="0,4">
-      <Viewbox Stretch="Fill">
-        <Canvas Width="300" Height="40">
-          <Polyline Points="{Binding Sparkline}" StrokeThickness="1.5" StrokeLineJoin="Round"
-                    Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
-        </Canvas>
-      </Viewbox>
-    </Border>
-    <TextBlock Text="{Binding ForecastText}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0,2,0,0" />
-
-    <Grid Margin="0,10,0,0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="16" />
-        <ColumnDefinition Width="*" />
-      </Grid.ColumnDefinitions>
-      <StackPanel>
-        <DockPanel>
-          <TextBlock DockPanel.Dock="Right" Text="{Binding CpuText}" FontWeight="SemiBold" />
-          <TextBlock Text="Processor" />
-        </DockPanel>
-        <ProgressBar Style="{StaticResource Meter}" Value="{Binding CpuPercent, Mode=OneWay}" Margin="0,4,0,0" />
+    <!-- Disk and everything running, in one quiet line. The disk figure takes the same warning colours. -->
+    <DockPanel Margin="0,16,0,0">
+      <TextBlock DockPanel.Dock="Right" Text="{Binding RevitShort}" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Bottom"
+                 TextTrimming="CharacterEllipsis" Margin="12,0,0,0" />
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Disk " Foreground="{StaticResource Muted}" />
+        <TextBlock Text="{Binding DiskText}" FontWeight="SemiBold" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" />
       </StackPanel>
-      <StackPanel Grid.Column="2">
-        <DockPanel>
-          <TextBlock DockPanel.Dock="Right" Text="{Binding DiskText}" FontWeight="SemiBold" />
-          <TextBlock Text="Disk" />
-        </DockPanel>
-        <ProgressBar Style="{StaticResource Meter}" Value="{Binding DiskPercent, Mode=OneWay}" Margin="0,4,0,0"
-                     Foreground="{Binding DiskKey, Converter={StaticResource MeterBrush}}" />
-      </StackPanel>
-    </Grid>
+    </DockPanel>
 
-    <!-- Revit -->
-    <TextBlock Text="REVIT" Style="{StaticResource SectionTitle}" Margin="0,16,0,6" />
-    <TextBlock Text="Revit is not running." Foreground="{StaticResource Muted}"
-               Visibility="{Binding NoRevit, Converter={StaticResource BoolToVisibility}}" />
-    <ItemsControl ItemsSource="{Binding Revits}">
+    <!-- Each running Revit: one line, a line of numbers, and a coloured line only when something needs attention. -->
+    <ItemsControl ItemsSource="{Binding Revits}" Margin="0,12,0,0">
       <ItemsControl.ItemTemplate>
         <DataTemplate DataType="{x:Type local:RevitHealthRow}">
-          <StackPanel Margin="0,0,0,10">
-            <DockPanel>
-              <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"
-                       Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
-              <TextBlock DockPanel.Dock="Right" Text="{Binding State}" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-            </DockPanel>
-            <TextBlock Text="{Binding Numbers}" Foreground="{StaticResource Muted}" FontSize="12" Margin="16,2,0,0" />
-            <ProgressBar Style="{StaticResource Meter}" Value="{Binding GdiPercent, Mode=OneWay}" Margin="16,4,0,2"
-                         Foreground="{Binding GdiKey, Converter={StaticResource MeterBrush}}" />
-            <TextBlock Text="{Binding GdiText}" Foreground="{StaticResource Hint}" FontSize="12" Margin="16,0,0,0" />
-            <TextBlock Text="{Binding Sync}" FontSize="12" Margin="16,2,0,0"
-                       Foreground="{Binding SyncKey, Converter={StaticResource StatusBrush}}"
-                       Visibility="{Binding HasSync, Converter={StaticResource BoolToVisibility}}" />
-          </StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,12,0,12">
+            <StackPanel>
+              <DockPanel>
+                <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"
+                         Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding State}" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+              </DockPanel>
+              <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Muted}" FontSize="12" Margin="16,4,0,0" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Attention}" FontSize="12" Margin="16,4,0,0" TextWrapping="Wrap"
+                         Foreground="{Binding AttentionKey, Converter={StaticResource StatusBrush}}"
+                         Visibility="{Binding HasAttention, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+          </Border>
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
     <!-- What to do -->
     <StackPanel Visibility="{Binding HasIssues, Converter={StaticResource BoolToVisibility}}">
-      <TextBlock Text="WHAT TO DO" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
+      <TextBlock Text="WHAT TO DO" Style="{StaticResource SectionTitle}" Margin="0,12,0,8" />
       <ItemsControl ItemsSource="{Binding Issues}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type local:HealthIssueRow}">
-            <Border BorderThickness="3,0,0,0" Padding="10,2,0,2" Margin="0,0,0,8"
+            <Border BorderThickness="3,0,0,0" Padding="12,0,0,0" Margin="0,0,0,12"
                     BorderBrush="{Binding LevelKey, Converter={StaticResource StatusBrush}}">
               <StackPanel>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                <TextBlock Text="{Binding Advice}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                <TextBlock Text="{Binding Advice}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
           </DataTemplate>

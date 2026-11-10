@@ -4,11 +4,10 @@ using Microsoft.Win32;
 
 namespace RevitJournal.App;
 
-/// <summary>Per-user settings in %LOCALAPPDATA%\RevitJournalAnalyzer; nothing leaves the computer.</summary>
+/// <summary>Per-user settings in %LOCALAPPDATA%\RevitDoctor; nothing leaves the computer.</summary>
 public sealed class Settings
 {
-    private static readonly string Folder =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RevitJournalAnalyzer");
+    private static readonly string Folder = RevitJournal.Core.AppFolders.Data;
     private static readonly string FilePath = Path.Combine(Folder, "settings.json");
 
     /// <summary>Where analysis results of finished sessions are kept between starts.</summary>
@@ -45,7 +44,7 @@ public sealed class Settings
     // ---- start with Windows (HKCU Run key, no admin rights needed) ----
 
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string RunValue = "RevitJournalAnalyzer";
+    private const string RunValue = "RevitDoctor";
 
     public static bool StartsWithWindows
     {

@@ -13,7 +13,8 @@ public sealed record LiveAlert(LiveAlertKind Kind, string Title, string Message,
 /// <param name="ProcessId">The Revit.exe process that writes this journal, when it could be told apart.</param>
 public sealed record LiveStatus(
     string Version, string JournalPath, string? Model, DateTime? LastActivity, bool? Responding,
-    string Sync, int? FreeRamMb, int? TotalRamMb, string? Busy, int? ProcessId = null);
+    string Sync, int? FreeRamMb, int? TotalRamMb, string? Busy, int? ProcessId = null, ModelLoad? Load = null,
+    int? OpenViews = null, int? OpenProjects = null);
 
 public sealed record RevitProcess(int Id, string Version, bool Responding, DateTime StartTime);
 
@@ -55,7 +56,7 @@ public sealed class WindowsRevitProcesses : IRevitProcesses
 /// Call <see cref="Tick"/> every few seconds from one thread.
 /// </summary>
 public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitProcesses? processes = null, Func<DateTime>? clock = null,
-    Func<IReadOnlyList<WindowsCrashEvent>>? crashEvents = null) : IDisposable
+    Func<IReadOnlyList<WindowsCrashEvent>>? crashEvents = null, Func<string, long?>? fileSize = null) : IDisposable
 {
     public static readonly TimeSpan SyncLongAfter = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan NotRespondingAfter = TimeSpan.FromMinutes(1);
@@ -66,6 +67,7 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
     private readonly Func<DateTime> _now = clock ?? (() => DateTime.Now);
     private readonly Func<IReadOnlyList<WindowsCrashEvent>> _crashEvents = crashEvents ?? (() => WindowsCrashLog.Recent(fresh: true));
     private readonly Dictionary<string, Tracked> _tracked = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Func<string, long?> _fileSize = fileSize ?? AnalysisContext.SizeOnDisk;
 
     private sealed class Tracked(LiveJournal journal, string version)
     {
@@ -82,6 +84,17 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
         public bool? AnalyzedResponding;
         public AnalysisResult? Result;
         public DateTime? ReleasedAt;
+        public readonly Dictionary<string, long> FileSizes = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>File sizes are read from disk once per file: the overview is refreshed every few seconds.</summary>
+        public long? SizeOf(string path, Func<string, long?> read)
+        {
+            if (FileSizes.TryGetValue(path, out long known))
+                return known;
+            if (read(path) is not { } size)
+                return null;
+            return FileSizes[path] = size;
+        }
     }
 
     public IReadOnlyList<LiveStatus> Status { get; private set; } = [];
@@ -277,8 +290,10 @@ public sealed class LiveMonitor(Analyzer analyzer, string? root = null, IRevitPr
             : !lastSync.Finished ? $"Syncing since {Fmt.Time(lastSync.Start)}"
             : lastSync.Succeeded ? $"Last sync OK at {Fmt.Time(lastSync.End)}"
             : $"Last sync FAILED at {Fmt.Time(lastSync.Start)}";
+        int? ram = s.TotalRamMb ?? (GC.GetGCMemoryInfo().TotalAvailableMemoryBytes is > 0 and var bytes ? (int)(bytes / (1024 * 1024)) : null);
         return new LiveStatus(t.Version, t.Journal.Path, ModelName(s), s.LastTimestamp, t.Responding, sync,
-            s.Ram.LastOrDefault()?.AvailableMb, s.TotalRamMb, BusyWith(s), t.ProcessId);
+            s.Ram.LastOrDefault()?.AvailableMb, s.TotalRamMb, BusyWith(s), t.ProcessId,
+            ModelSizeAdvice.Load(s, path => t.SizeOf(path, _fileSize), ram), s.OpenViews, s.OpenProjects);
     }
 
     private static string? BusyWith(Model.JournalSession s) =>

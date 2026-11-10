@@ -56,7 +56,7 @@ public sealed class TrayAgent : IDisposable
         _icon = new Forms.NotifyIcon
         {
             Icon = IconFor(HealthLevel.Ok),
-            Text = $"Revit Journal Analyzer {AppInfo.Version}",
+            Text = $"Revit Doctor {AppInfo.Version}",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -100,8 +100,9 @@ public sealed class TrayAgent : IDisposable
             var (alerts, report) = await Task.Run(() =>
             {
                 var journalAlerts = _monitor.Tick();
-                var health = _health.Tick();
+                var health = _health.Tick([.. _monitor.Status.Select(s => s.Load).OfType<ModelLoad>()]);
                 journalAlerts.AddRange(_health.NewAlerts);
+                DiskHistory.Default.Record(health.Time, health.Disks.Select(d => new DiskSample(d.Name, d.FreeMb, d.TotalMb)));
                 return (journalAlerts, health);
             });
             StatusChanged?.Invoke(_monitor.Status);
@@ -155,7 +156,7 @@ public sealed class TrayAgent : IDisposable
         };
         string revit = report.Revits.Count == 0 ? "Revit is not running" : $"{report.Revits.Count} Revit running";
         // NotifyIcon.Text is limited to 127 characters.
-        string text = $"Revit Journal Analyzer — {state}\n{revit} · {Fmt.Mb((int)report.FreeRamMb)} RAM free";
+        string text = $"Revit Doctor — {state}\n{revit} · {Fmt.Mb((int)report.FreeRamMb)} RAM free";
         _icon.Text = text.Length > 127 ? text[..127] : text;
     }
 

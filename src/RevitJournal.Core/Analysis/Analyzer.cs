@@ -24,6 +24,9 @@ public sealed class Analyzer(RuleSet rules)
     /// </summary>
     public AnalysisCache? Cache { get; set; }
 
+    /// <summary>Free disk space recorded by the tray monitor; lets a report say how full the disk was when the session ended. Null: not used.</summary>
+    public Live.DiskHistory? DiskHistory { get; set; }
+
     /// <summary>Thread-safe. One streaming pass: the journal text is never held in memory as a whole.</summary>
     /// <param name="useCache">False reads the journal again even when a cached result exists (the result is stored anew).</param>
     public AnalysisResult AnalyzeFile(string path, bool useCache = true)
@@ -82,6 +85,8 @@ public sealed class Analyzer(RuleSet rules)
             : session.ExitRequestedAt is not null ? SessionStatus.ShutdownIncomplete
             : SessionStatus.EndedAbnormally;
 
+        context = context with { Disk = DiskAdvice.AtEnd(session, context, DiskHistory) };
+
         var byId = new Dictionary<string, Finding>(StringComparer.Ordinal);
 
         foreach (var (id, lines) in session.RuleHits ?? _matcher.Match(session))
@@ -139,6 +144,18 @@ public sealed class Analyzer(RuleSet rules)
         {
             closedAfter.Steps.AddRange(StartupAdvice.ClosedAfterSteps(session));
             StartupAdvice.Weigh(closedAfter, session, context, endKind);
+        }
+
+        if (byId.TryGetValue(ModelSizeAdvice.Rule, out var modelSize))
+            modelSize.Steps.AddRange(ModelSizeAdvice.Steps(session, context));
+
+        foreach (string id in new[] { DiskAdvice.AlmostFullRule, DiskAdvice.BelowMinimumRule })
+        {
+            if (byId.TryGetValue(id, out var disk))
+            {
+                disk.Steps.AddRange(DiskAdvice.Steps(session, context));
+                disk.Severity = DiskAdvice.Severity(id, status);
+            }
         }
 
         var findings = MergeRelated(byId);
@@ -225,6 +242,7 @@ public sealed class Analyzer(RuleSet rules)
         return [.. result
             .OrderByDescending(f => f.Severity)
             .ThenBy(f => SessionEndRules.Contains(f.Rule.Id))
+            .ThenByDescending(f => f.Rule.Id == DiskAdvice.AlmostFullRule) // a full disk explains the rest
             .ThenByDescending(f => f.Rule.Id is StartupAdvice.NotCompletedRule or StartupAdvice.ClosedAfterRule) // why Revit is gone comes first
             .ThenByDescending(f => f.Rule.Confidence)
             .ThenByDescending(f => f.HitCount)];

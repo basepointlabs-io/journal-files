@@ -1,4 +1,5 @@
 using RevitJournal.Core.Analysis;
+using RevitJournal.Core.Live;
 using RevitJournal.Core.Parsing;
 using RevitJournal.Core.Rules;
 
@@ -50,7 +51,8 @@ public class StartupTests
         Assert.Equal("Revit stopped while it was starting", r.Headline);
         Assert.Contains(f.Facts, x => x.Contains("before licensing was initialized"));
         Assert.Contains(f.Facts, x => x.Contains("journal.0001.txt") && x.Contains("09:23:40"));
-        Assert.Contains(f.Steps, x => x.Contains("RevitWorker.exe"));
+        Assert.Contains(f.Steps, x => x.Contains(@"C:\ProgramData\boost_interprocess") && x.Contains("services.msc") == false);
+        Assert.Contains(f.Steps, x => x.Contains("Autodesk Desktop Licensing Service"));
     }
 
     [Fact]
@@ -74,7 +76,7 @@ public class StartupTests
 
         Assert.NotNull(f);
         Assert.Contains(f.Facts, x => x.Contains("3 had started") && x.Contains("\"Cloud Linker\" (Acme Tools"));
-        Assert.Contains(f.Steps, x => x.Contains("Disable \"Cloud Linker\""));
+        Assert.Contains(f.Steps, x => x.Contains("\"Cloud Linker\"") && x.Contains("Add-ins Manager") && x.EndsWith("[Autodesk: How to disable add-ins for Revit]"));
     }
 
     [Fact]
@@ -89,7 +91,8 @@ public class StartupTests
         Assert.Equal("Revit closed by itself right after starting", r.Headline);
         Assert.Contains(f.Facts, x => x.Contains("stops 1 s later"));
         Assert.Contains(f.Facts, x => x.Contains("Cloud Linker, Duct Helper") && !x.Contains("Coordination Model"));
-        Assert.Contains(f.Steps, x => x.Contains("Event Viewer") && x.Contains("09:27:01"));
+        Assert.Contains(f.Steps, x => x.Contains("Custom Views > Administrative Events") && x.Contains("09:27:01"));
+        Assert.Contains(f.Steps, x => x.Contains("Cloud Linker, Duct Helper") && x.Contains("Add-ins Manager"));
     }
 
     [Fact]
@@ -107,17 +110,81 @@ public class StartupTests
     }
 
     [Fact]
-    public void A_nearly_full_disk_is_the_first_suspect_and_the_first_step()
+    public void Every_generated_step_names_the_Autodesk_article_it_comes_from()
     {
-        var ctx = Closed with { Disk = new DiskSpace("C:", 300, new DateTime(2026, 11, 5, 10, 0, 0)) };
-        var f = Find(Analyze(ctx, Fixtures.Header, NativeInit, LoadingAddIns, StartupDone), StartupAdvice.ClosedAfterRule);
+        var ctx = Closed with { Previous = new PreviousSession("journal.0001.txt", new DateTime(2026, 11, 5, 9, 23, 40), false), Disk = new DiskSpace("C:", 300, new DateTime(2026, 11, 5, 9, 30, 0)) };
+        var findings = Analyze(ctx, Fixtures.Header, NativeInit).Findings
+            .Concat(Analyze(ctx, Fixtures.Header, NativeInit, LoadingAddIns, StartupDone).Findings)
+            .Where(f => f.Rule.Id.StartsWith("observed-", StringComparison.Ordinal) || f.Rule.Id.StartsWith("metric-disk", StringComparison.Ordinal))
+            .ToList();
 
-        Assert.Equal(Severity.High, f?.Severity);
-        Assert.Contains("Drive C: had only 300 MB free", f!.Facts[0]);
-        Assert.StartsWith("Free space on drive C:", f.Steps[0]);
+        Assert.True(findings.Count >= 4);
+        Assert.All(findings, f =>
+        {
+            Assert.NotEmpty(f.Steps);
+            Assert.All(f.Steps.Concat(f.Rule.Fix.En), step =>
+            {
+                Assert.Matches(@"\[Autodesk: .+\]$", step);
+                string title = step[(step.LastIndexOf("[Autodesk: ", StringComparison.Ordinal) + 11)..^1];
+                Assert.Contains(f.Rule.Sources, s => s.Url.Contains("autodesk.com") && s.Title.EndsWith(title, StringComparison.Ordinal));
+            });
+        });
+    }
 
-        var roomy = Closed with { Disk = new DiskSpace("C:", 80_000, DateTime.Now) };
-        Assert.DoesNotContain(Find(Analyze(roomy, Fixtures.Header, NativeInit), StartupAdvice.NotCompletedRule)!.Facts, x => x.Contains("Drive C:"));
+    [Fact]
+    public void An_almost_full_disk_at_the_end_of_the_session_is_the_headline()
+    {
+        var ctx = Closed with { Disk = new DiskSpace("C:", 300, new DateTime(2026, 11, 5, 9, 30, 0)) };
+        var r = Analyze(ctx, Fixtures.Header, NativeInit, LoadingAddIns, StartupDone);
+
+        Assert.Equal("The disk was almost full when the Revit session ended", r.Headline);
+        Assert.Equal(DiskAdvice.AlmostFullRule, r.Findings[0].Rule.Id);
+        Assert.Equal(Severity.Critical, r.Findings[0].Severity);
+        Assert.Contains("Drive C: had 300 MB free at 2026-11-05 09:30, 2 min 58 s after the journal ends", r.Findings[0].Facts[0]);
+        Assert.Equal(Severity.High, Find(r, StartupAdvice.ClosedAfterRule)?.Severity); // not played down as a forced close
+    }
+
+    [Fact]
+    public void Disk_space_between_5_and_30_GB_is_reported_against_Autodesks_minimum_without_taking_the_headline()
+    {
+        var ctx = Closed with { Disk = new DiskSpace("C:", 12_000, new DateTime(2026, 11, 5, 9, 30, 0)) };
+        var r = Analyze(ctx, Fixtures.Header, NativeInit, LoadingAddIns, StartupDone);
+
+        Assert.Null(Find(r, DiskAdvice.AlmostFullRule));
+        Assert.Equal(Severity.Medium, Find(r, DiskAdvice.BelowMinimumRule)?.Severity);
+        Assert.NotEqual("Free disk space is below Autodesk's minimum", r.Headline);
+    }
+
+    [Fact]
+    public void Disk_reading_comes_from_the_recorded_history_not_from_the_moment_the_report_is_opened()
+    {
+        string file = Path.Combine(Path.GetTempPath(), "rja-disk-" + Guid.NewGuid().ToString("N") + ".csv");
+        try
+        {
+            var history = new DiskHistory(file);
+            var end = new DateTime(2026, 11, 5, 9, 27, 1);
+            history.Record(end.AddMinutes(-40), [new DiskSample("C:", 9_000, 500_000)]);
+            history.Record(end.AddMinutes(-3), [new DiskSample("C:", 700, 500_000)]);
+            history.Record(end.AddMinutes(-2), [new DiskSample("C:", 690, 500_000)]);   // too soon and too small a change: not stored
+            history.Record(end.AddHours(3), [new DiskSample("C:", 60_000, 500_000)]);   // after the restart
+
+            var analyzer = Analyzer.CreateDefault();
+            analyzer.DiskHistory = new DiskHistory(file); // read back from the file
+            var session = JournalParser.Parse(@"C:\journals\journal.0002.txt", Fixtures.Lines(Fixtures.Header, NativeInit, LoadingAddIns, StartupDone));
+            // Opened a day later, with the disk roomy again.
+            var roomyNow = Closed with { Disk = new DiskSpace("C:", 60_000, end.AddDays(1)) };
+
+            var r = analyzer.Analyze(session, roomyNow);
+            Assert.Contains("Drive C: had 700 MB free at 2026-11-05 09:24, 3 min 0 s before the journal ends", r.Findings[0].Facts[0]);
+
+            Assert.Equal(3, File.ReadAllLines(file).Length);
+            Assert.Null(Find(Analyzer.Analyze(session, roomyNow), DiskAdvice.AlmostFullRule)); // no history, stale reading: nothing claimed
+            Assert.Null(Find(analyzer.Analyze(session, roomyNow with { IsLocal = false }), DiskAdvice.AlmostFullRule)); // a journal from another computer
+        }
+        finally
+        {
+            File.Delete(file);
+        }
     }
 
     [Fact]

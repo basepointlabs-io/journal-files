@@ -49,6 +49,19 @@ public sealed class MeterBrushConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
+/// <summary>Colour of a figure: ordinary text while fine, orange when it needs watching, red when it is a problem.</summary>
+public sealed class ValueInkConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as string) switch
+    {
+        "crash" => Palette.Red,
+        "warning" => Palette.Orange,
+        _ => System.Windows.Application.Current?.TryFindResource("Ink") as Brush ?? Brushes.Black,
+    };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
 public sealed class StatusBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as string) switch

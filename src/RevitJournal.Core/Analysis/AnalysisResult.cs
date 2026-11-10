@@ -64,7 +64,7 @@ public sealed class AnalysisResult
 }
 
 /// <summary>Facts about the journal that live outside its text (file system state, the Windows event log).</summary>
-public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> DumpFiles)
+public sealed partial record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> DumpFiles)
 {
     /// <summary>Revit.exe crash and hang events Windows recorded on this computer.</summary>
     public IReadOnlyList<WindowsCrashEvent> CrashEvents { get; init; } = [];
@@ -81,8 +81,15 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
     /// <summary>How the journal with the previous number in the same folder ended; null when there is none or it is still open.</summary>
     public PreviousSession? Previous { get; init; }
 
-    /// <summary>Free space on the journal's drive at analysis time; only for a journal in this computer's own journal folder.</summary>
+    /// <summary>
+    /// Free space on the journal's drive. From <see cref="ForFile"/> it is the reading at analysis time, for a journal in
+    /// this computer's own journal folder; the analyzer replaces it with the recorded reading from the end of the session
+    /// when there is one, and drops it when it was taken too long after the session to say anything about it.
+    /// </summary>
     public DiskSpace? Disk { get; init; }
+
+    /// <summary>Size in bytes of a file on this computer, or null. Null for journals that came from another computer.</summary>
+    public Func<string, long?>? FileSize { get; init; }
 
     public static AnalysisContext ForFile(string journalPath)
     {
@@ -100,10 +107,28 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
             WorkerLogs = workers,
             Previous = PreviousSession.Of(journalPath),
             Disk = local ? DiskSpace.Of(journalPath) : null,
+            FileSize = local ? SizeOnDisk : null,
             IsLocal = local,
             // Events of this computer say nothing about a journal that came from another one.
             CrashEvents = local ? WindowsCrashLog.Recent() : [],
         };
+    }
+}
+
+public sealed partial record AnalysisContext
+{
+    /// <summary>Size in bytes of a file on this computer; null when it is not there or cannot be read.</summary>
+    public static long? SizeOnDisk(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            return info.Exists ? info.Length : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
     }
 }
 

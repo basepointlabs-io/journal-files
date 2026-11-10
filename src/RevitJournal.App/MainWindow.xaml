@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:RevitJournal.App"
-        Title="Revit Journal Analyzer" Width="1280" Height="840" MinWidth="980" MinHeight="600"
+        Title="Revit Doctor" Width="900" Height="840" MinWidth="860" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         ExtendsContentIntoTitleBar="True" WindowBackdropType="None"
         Background="{StaticResource Ground}" Foreground="{StaticResource Ink}"
@@ -26,11 +26,11 @@
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
           <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2,0,0,2" />
-          <Expander Grid.Column="1" Style="{StaticResource PlainExpander}" IsExpanded="{Binding IsExpanded}" Padding="12,10">
+          <Expander Grid.Column="1" Style="{StaticResource PlainExpander}" IsExpanded="{Binding IsExpanded}" Padding="16,12">
             <Expander.Header>
               <StackPanel Orientation="Horizontal">
                 <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"
-                        Padding="6,1" Margin="0,0,10,0" VerticalAlignment="Center">
+                        Padding="6,1" Margin="0,0,12,0" VerticalAlignment="Center">
                   <TextBlock Text="{Binding SeverityText}" Foreground="White" FontSize="10" FontWeight="SemiBold" TextWrapping="NoWrap" />
                 </Border>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
@@ -39,26 +39,26 @@
               </StackPanel>
             </Expander.Header>
 
-            <StackPanel Margin="24,0,4,4">
-              <TextBlock Text="{Binding Cause}" Foreground="{StaticResource Muted}" />
+            <StackPanel Margin="24,4,8,8">
+              <TextBlock Text="{Binding Cause}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
 
               <ItemsControl ItemsSource="{Binding Facts}" Margin="0,8,0,0"
                             Visibility="{Binding HasFacts, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding StringFormat='▸ {0}'}" FontWeight="SemiBold" Margin="0,2" />
+                    <TextBlock Text="{Binding StringFormat='▸ {0}'}" FontWeight="SemiBold" Margin="0,2" TextWrapping="Wrap" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
 
               <StackPanel Visibility="{Binding HasCaseSteps, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="What to do in your case" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource Accent}" />
-                <Border Background="#EEF3FD" CornerRadius="2" Padding="12,8">
+                <TextBlock Text="What to do in your case" FontWeight="SemiBold" Margin="0,16,0,8" Foreground="{StaticResource Accent}" />
+                <Border Background="#EEF3FD" CornerRadius="2" Padding="12,8,12,8">
                   <ItemsControl ItemsSource="{Binding CaseSteps}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
                         <TextBox Text="{Binding Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                                 TextWrapping="Wrap" Margin="0,2" Padding="0" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
+                                 TextWrapping="Wrap" TextAlignment="Left" Margin="0,2" Padding="0" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
                                  Foreground="{StaticResource Ink}" />
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -66,30 +66,36 @@
                 </Border>
               </StackPanel>
 
-              <TextBlock Text="{Binding StepsTitle}" FontWeight="SemiBold" Margin="0,12,0,4" />
+              <TextBlock Text="{Binding StepsTitle}" FontWeight="SemiBold" Margin="0,16,0,8" />
               <ItemsControl ItemsSource="{Binding Steps}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding}" Margin="0,2" />
+                    <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
 
               <StackPanel Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="{Binding EvidenceTitle}" FontWeight="SemiBold" Margin="0,12,0,4" />
-                <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="8,6">
+                <TextBlock Text="{Binding EvidenceTitle}" FontWeight="SemiBold" Margin="0,16,0,8" />
+                <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="12,8">
                   <TextBox Text="{Binding Evidence, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
                            FontFamily="Cascadia Mono, Consolas" FontSize="11.5" TextWrapping="NoWrap" Padding="0"
                            HorizontalScrollBarVisibility="Auto" />
                 </Border>
               </StackPanel>
 
-              <TextBlock Margin="0,10,0,0" FontSize="12" Foreground="{StaticResource Hint}">
-                <Run Text="{Binding Source, Mode=OneWay}" />
-                <Hyperlink NavigateUri="{Binding SourceUrl}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}">
-                  <Run Text="open" />
-                </Hyperlink>
-              </TextBlock>
+              <TextBlock Margin="0,16,0,0" FontSize="12" Foreground="{StaticResource Hint}" Text="{Binding Source, Mode=OneWay}" />
+              <ItemsControl ItemsSource="{Binding Sources}" Margin="0,4,0,0">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0">
+                      <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}">
+                        <Run Text="{Binding Title, Mode=OneWay}" />
+                      </Hyperlink>
+                    </TextBlock>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
             </StackPanel>
           </Expander>
         </Grid>
@@ -97,22 +103,22 @@
     </DataTemplate>
 
     <DataTemplate x:Key="Bullets">
-      <BulletDecorator Margin="0,3">
+      <BulletDecorator Margin="0,2">
         <BulletDecorator.Bullet>
           <TextBlock Text="•" Foreground="{StaticResource Hint}" />
         </BulletDecorator.Bullet>
-        <TextBlock Text="{Binding}" Margin="8,0,0,0" />
+        <TextBlock Text="{Binding}" Margin="8,0,0,0" TextWrapping="Wrap" />
       </BulletDecorator>
     </DataTemplate>
 
     <!-- Full report for one journal (History page). -->
     <DataTemplate DataType="{x:Type local:ReportView}">
-      <StackPanel Margin="24,20,24,24" MaxWidth="980" HorizontalAlignment="Left">
-        <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" />
-        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource Hint}" Margin="0,4,0,0" FontSize="12" />
+      <StackPanel Margin="24" MaxWidth="980" HorizontalAlignment="Left">
+        <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource Hint}" Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" />
 
         <TextBlock Text="WHAT HAPPENED" Style="{StaticResource SectionTitle}" />
-        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="14,10">
+        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12">
           <ItemsControl ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource Bullets}" />
         </Border>
 
@@ -124,7 +130,7 @@
 
         <StackPanel Visibility="{Binding ShowLastActions, Converter={StaticResource BoolToVisibility}}">
           <TextBlock Text="LAST USER ACTIONS" Style="{StaticResource SectionTitle}" />
-          <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="14,10">
+          <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12">
             <ItemsControl ItemsSource="{Binding LastActions}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
@@ -139,16 +145,16 @@
 
     <!-- Answer for a symptom. -->
     <DataTemplate DataType="{x:Type local:DiagnosisView}">
-      <StackPanel Margin="32,24,32,32" MaxWidth="980" HorizontalAlignment="Left">
+      <StackPanel Margin="24" MaxWidth="980" HorizontalAlignment="Left">
         <TextBlock FontSize="13" Foreground="{StaticResource Hint}">
           <Run Text="{Binding Icon, Mode=OneWay}" />
           <Run Text="{Binding SymptomTitle, Mode=OneWay}" />
         </TextBlock>
-        <TextBlock Text="{Binding Headline}" FontSize="24" FontWeight="SemiBold" Margin="0,6,0,0" />
-        <TextBlock Text="{Binding Source}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0,6,0,0"
+        <TextBlock Text="{Binding Headline}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding Source}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0,4,0,0"
                    Visibility="{Binding HasSource, Converter={StaticResource BoolToVisibility}}" />
 
-        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="14,10" Margin="0,16,0,0"
+        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12" Margin="0,16,0,0"
                 Visibility="{Binding HasFacts, Converter={StaticResource BoolToVisibility}}">
           <ItemsControl ItemsSource="{Binding Facts}" ItemTemplate="{StaticResource Bullets}" />
         </Border>
@@ -158,10 +164,10 @@
           <ItemsControl ItemsSource="{Binding Findings}" />
         </StackPanel>
 
-        <TextBlock Text="{Binding NoCauseText}" Margin="0,20,0,0" FontSize="14"
+        <TextBlock Text="{Binding NoCauseText}" Margin="0,24,0,0" FontSize="14"
                    Visibility="{Binding ShowNoCause, Converter={StaticResource BoolToVisibility}}" />
         <TextBlock Text="{Binding ChecklistTitle}" Style="{StaticResource SectionTitle}" />
-        <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="14,10">
+        <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16,12">
           <ItemsControl ItemsSource="{Binding Checklist}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
@@ -171,10 +177,10 @@
           </ItemsControl>
         </Border>
 
-        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+        <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
           <Button Content="Open the full report for this session" Click="OnOpenFullReport" Style="{StaticResource ToolbarButton}"
                   Visibility="{Binding HasSource, Converter={StaticResource BoolToVisibility}}" />
-          <Button Content="Back to symptoms" Click="OnHome" Style="{StaticResource ToolbarButton}" />
+          <Button Content="Back to Right now" Click="OnHome" Style="{StaticResource ToolbarButton}" />
         </StackPanel>
       </StackPanel>
     </DataTemplate>
@@ -186,7 +192,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border x:Name="tile" Background="White" BorderBrush="{StaticResource GroundStroke}" BorderThickness="1"
-                    CornerRadius="2" Padding="18,16">
+                    CornerRadius="2" Padding="16">
               <ContentPresenter />
             </Border>
             <ControlTemplate.Triggers>
@@ -212,7 +218,7 @@
       <ui:TitleBar x:Name="AppTitleBar" Height="52" Title="" ShowMinimize="False" ShowMaximize="False" ShowClose="False">
         <ui:TitleBar.TrailingContent>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-            <TextBlock Text="Revit version" VerticalAlignment="Center" Foreground="{StaticResource Hint}" Margin="0,0,8,0" />
+            <TextBlock x:Name="VersionLabel" Text="Revit version" VerticalAlignment="Center" Foreground="{StaticResource Hint}" Margin="0,0,8,0" />
             <ComboBox x:Name="VersionPicker" MinWidth="150" Height="36" VerticalContentAlignment="Center"
                       SelectionChanged="OnVersionChanged" WindowChrome.IsHitTestVisibleInChrome="True" />
             <Border Width="28" />
@@ -231,7 +237,7 @@
 
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" IsHitTestVisible="False">
         <Image Source="/Icons/logo.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,8,0" />
-        <TextBlock Text="Revit Journal Analyzer" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap" />
+        <TextBlock Text="Revit Doctor" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap" />
         <TextBlock x:Name="VersionText" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center" Margin="8,0,0,0" TextWrapping="NoWrap" />
       </StackPanel>
     </Grid>
@@ -260,13 +266,13 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,2,0" ToolTip="Open a journal file from anywhere">
+          <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,4,0" ToolTip="Open a journal file from anywhere">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="FolderOpen24" FontSize="16" Margin="0,0,8,0" />
               <TextBlock Text="Open…" VerticalAlignment="Center" TextWrapping="NoWrap" />
             </StackPanel>
           </Button>
-          <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="2,0,0,0" ToolTip="Read all journals again">
+          <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="4,0,0,0" ToolTip="Read all journals again">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Margin="0,0,8,0" />
               <TextBlock Text="Refresh" VerticalAlignment="Center" TextWrapping="NoWrap" />
@@ -274,16 +280,26 @@
           </Button>
         </Grid>
 
-        <Button DockPanel.Dock="Top" Style="{StaticResource PrimaryButton}" Click="OnHome" Margin="0,4,0,0" HorizontalAlignment="Stretch">
-          <StackPanel Orientation="Horizontal">
-            <ui:SymbolIcon Symbol="QuestionCircle24" FontSize="16" Margin="0,0,8,0" Foreground="White" />
-            <TextBlock Text="What's wrong with Revit?" VerticalAlignment="Center" Foreground="White" TextWrapping="NoWrap" />
-          </StackPanel>
-        </Button>
+        <!-- The live overview as the first entry of the list: highlighted while it is the page shown, with the
+             current state beside it, so it reads as "where you are" and not as an action. -->
+        <RadioButton x:Name="HomeNav" DockPanel.Dock="Top" Style="{StaticResource NavRow}" Click="OnHome" IsChecked="True"
+                     Margin="0,8,0,0" ToolTip="The computer and every running Revit, live">
+          <DockPanel>
+            <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Pulse24" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"
+                           Foreground="{StaticResource Accent}" />
+            <Ellipse x:Name="HomeNavDot" DockPanel.Dock="Right" Width="8" Height="8" VerticalAlignment="Center" Margin="8,0,0,0"
+                     Fill="{StaticResource Hint}" />
+            <StackPanel>
+              <TextBlock Text="Right now" FontWeight="SemiBold" />
+              <TextBlock x:Name="HomeNavHint" Text="This computer and running Revit" FontSize="12" Foreground="{StaticResource Muted}"
+                         TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+            </StackPanel>
+          </DockPanel>
+        </RadioButton>
 
         <!-- Running Revit sessions, live from the tray agent -->
         <StackPanel DockPanel.Dock="Top">
-          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="12,12,0,2" Visibility="Collapsed" />
+          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="12,16,0,4" Visibility="Collapsed" />
           <ItemsControl x:Name="LiveCards">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type local:LiveCardView}">
@@ -312,7 +328,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Text="SESSIONS" Style="{StaticResource SectionTitle}" Margin="12,12,0,2" />
+          <TextBlock Text="SESSIONS" Style="{StaticResource SectionTitle}" Margin="12,16,0,4" />
         </StackPanel>
 
         <!-- Every session, grouped by day; selecting one opens its report in the card -->
@@ -385,74 +401,42 @@
           <Grid>
             <!-- HOME: on the left what is going on right now, on the right the way to an answer -->
             <ScrollViewer x:Name="HomePage" VerticalScrollBarVisibility="Auto">
-              <Grid Margin="32,28,32,32" MaxWidth="1100" HorizontalAlignment="Left">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="400" />
-                  <ColumnDefinition Width="32" />
-                  <ColumnDefinition Width="*" MinWidth="320" />
-                </Grid.ColumnDefinitions>
+              <!-- Right now: the same overview the tray icon opens, and what the recent sessions say. -->
+              <StackPanel Margin="24" Width="480" HorizontalAlignment="Left">
+                <TextBlock Text="Right now" FontSize="26" FontWeight="SemiBold" />
+                <TextBlock Text="This computer and every running Revit, read every 5 seconds." Foreground="{StaticResource Muted}"
+                           FontSize="14" Margin="0,4,0,0" />
+                <Border x:Name="HealthCard" Visibility="Collapsed" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2"
+                        Padding="20" Margin="0,16,0,16">
+                  <local:HealthPanel x:Name="HomeHealth" />
+                </Border>
 
-                <!-- Right now: the same overview the tray icon opens -->
-                <StackPanel>
-                  <TextBlock Text="Right now" FontSize="26" FontWeight="SemiBold" />
-                  <TextBlock Text="This computer and every running Revit, read every 5 seconds." Foreground="{StaticResource Muted}"
-                             FontSize="14" Margin="0,6,0,0" />
-                  <Border x:Name="HealthCard" Visibility="Collapsed" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2"
-                          Padding="16" Margin="0,20,0,0">
-                    <local:HealthPanel x:Name="HomeHealth" />
-                  </Border>
-                </StackPanel>
+                <Border x:Name="HintBanner" Visibility="Collapsed" Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1"
+                        CornerRadius="2" Padding="16,12" Margin="0,0,0,8">
+                  <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="See why" Click="OnHintClick" Style="{StaticResource ToolbarButton}"
+                            Margin="12,0,0,0" VerticalAlignment="Center" Background="White" />
+                    <TextBlock x:Name="HintText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </DockPanel>
+                </Border>
 
-                <StackPanel Grid.Column="2" MaxWidth="560" HorizontalAlignment="Left">
-                  <TextBlock Text="What's wrong with Revit?" FontSize="26" FontWeight="SemiBold" />
-                  <TextBlock x:Name="HomeSubtitle" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,6,0,0" />
-
-                  <Border x:Name="HintBanner" Visibility="Collapsed" Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1"
-                          CornerRadius="2" Padding="16,8" Margin="0,20,0,0">
-                    <DockPanel>
-                      <Button DockPanel.Dock="Right" Content="See why" Click="OnHintClick" Style="{StaticResource ToolbarButton}"
-                              Margin="12,0,0,0" VerticalAlignment="Center" Background="White" />
-                      <TextBlock x:Name="HintText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    </DockPanel>
-                  </Border>
-
-                  <!-- Shown when Revit crashed several times in the last week (metric-repeated-crashes). -->
-                  <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="#FFF1F0" BorderBrush="#FFCECB" BorderThickness="1"
-                          CornerRadius="2" Padding="16,10" Margin="0,8,0,0">
-                    <StackPanel>
-                      <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="#CF222E" />
-                      <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <TextBlock Text="{Binding StringFormat='• {0}'}" Margin="0,1" />
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </Border>
-
-                  <ItemsControl x:Name="SymptomCards" Margin="0,20,0,0">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate DataType="{x:Type local:SymptomCard}">
-                        <Button Style="{StaticResource SymptomButton}" Click="OnSymptomClick" Tag="{Binding}" Margin="0,0,0,8"
-                                HorizontalContentAlignment="Stretch">
-                          <DockPanel>
-                            <TextBlock DockPanel.Dock="Left" Text="{Binding Icon}" FontSize="26" FontFamily="Segoe UI Emoji" Width="44"
-                                       VerticalAlignment="Center" />
-                            <StackPanel>
-                              <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource Muted}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                          </DockPanel>
-                        </Button>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-
-                  <TextBlock Margin="0,4,0,0" FontSize="13" Foreground="{StaticResource Muted}"
-                             Text="Something else? Pick any session on the left to see its full report." />
-                </StackPanel>
-              </Grid>
+                <!-- Shown when Revit crashed several times in the last week (metric-repeated-crashes). -->
+                <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="#FFF1F0" BorderBrush="#FFCECB" BorderThickness="1"
+                        CornerRadius="2" Padding="16,12" Margin="0,0,0,8">
+                  <StackPanel>
+                    <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="#CF222E" />
+                    <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding StringFormat='• {0}'}" Margin="0,1" TextWrapping="Wrap" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+                <TextBlock Margin="0,8,0,0" FontSize="13" Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                           Text="Pick any session on the left to see its full report." />
+              </StackPanel>
             </ScrollViewer>
 
             <!-- ANSWER for the chosen symptom -->
@@ -488,7 +472,7 @@
           </StackPanel>
           <StackPanel VerticalAlignment="Center">
             <TextBlock x:Name="StatusLine" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="Everything runs on this computer. Nothing is uploaded." Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" />
+            <TextBlock Text="Everything runs on this computer. Nothing is uploaded." Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </DockPanel>
       </Grid>

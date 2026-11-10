@@ -1,5 +1,5 @@
-# Draws the Revit Journal Analyzer logo in the FlexiData style (a cobalt tile with geometric letters:
-# a white "R" and a light-blue "j") and writes Icons\logo.png (256 px) and Icons\app.ico (16-256 px).
+# Draws the Revit Doctor logo: the cobalt FlexiData tile with a white cross and a pulse line cut through it.
+# Writes Icons\logo.png (256 px) and Icons\app.ico (16-256 px).
 # Run on Windows:  powershell -ExecutionPolicy Bypass -File tools\make-icon.ps1
 param([string]$Out = "src\RevitJournal.App\Icons")
 
@@ -22,22 +22,24 @@ function Draw([int]$size) {
     $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(0x24, 0x57, 0xD6))), $tile)
 
     $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
-    $light = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(0xB9, 0xCB, 0xF6))
 
-    # "R": stem, top, bowl side, middle and a short leg, all 26 wide.
-    $g.FillRectangle($white, 44, 44, 26, 168)
-    $g.FillRectangle($white, 44, 44, 106, 26)
-    $g.FillRectangle($white, 124, 44, 26, 74)
-    $g.FillRectangle($white, 44, 96, 106, 22)
-    $leg = [System.Drawing.PointF[]]@(
-        (New-Object System.Drawing.PointF 92, 118), (New-Object System.Drawing.PointF 120, 118),
-        (New-Object System.Drawing.PointF 152, 166), (New-Object System.Drawing.PointF 124, 166))
-    $g.FillPolygon($white, $leg)
+    # A white cross: two bars 64 wide, 168 long.
+    $g.FillRectangle($white, 96, 44, 64, 168)
+    $g.FillRectangle($white, 44, 96, 168, 64)
 
-    # "j": dot, stem and a long hook along the bottom, under the R, like the d of FlexiData.
-    $g.FillRectangle($light, 186, 44, 26, 26)
-    $g.FillRectangle($light, 186, 92, 26, 120)
-    $g.FillRectangle($light, 96, 186, 116, 26)
+    # A pulse line cut through the cross in the tile's colour. Below 32 px it would only blur the cross.
+    if ($size -ge 32) {
+        $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(0x24, 0x57, 0xD6)), 13
+        $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+        $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+        $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+        $pulse = [System.Drawing.PointF[]]@(
+            (New-Object System.Drawing.PointF 58, 128), (New-Object System.Drawing.PointF 102, 128),
+            (New-Object System.Drawing.PointF 117, 99), (New-Object System.Drawing.PointF 139, 157),
+            (New-Object System.Drawing.PointF 154, 128), (New-Object System.Drawing.PointF 198, 128))
+        $g.DrawLines($pen, $pulse)
+        $pen.Dispose()
+    }
 
     $g.Dispose()
     return $bmp

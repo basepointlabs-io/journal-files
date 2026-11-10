@@ -7,6 +7,6 @@
     <!-- Shown in the title bar, like the FlexiData Configurator's version. -->
     <Version>0.4.0</Version>
     <Company>BasePoint Labs</Company>
-    <Product>Revit Journal Analyzer</Product>
+    <Product>Revit Doctor</Product>
   </PropertyGroup>
 </Project>

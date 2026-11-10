@@ -14,6 +14,7 @@ if (args.Length == 0)
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 var analyzer = Analyzer.CreateDefault();
+analyzer.DiskHistory = RevitJournal.Core.Live.DiskHistory.Default; // readings the tray monitor recorded, if it runs on this PC
 // --cache <folder>: keep results on disk like the app does (off by default, so rule work always reads the journals).
 if (Array.IndexOf(args, "--cache") is int ci and >= 0 && ci + 1 < args.Length)
     analyzer.Cache = new AnalysisCache(args[ci + 1], analyzer.Rules);

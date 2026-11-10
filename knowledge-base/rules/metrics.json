@@ -372,39 +372,53 @@
       "severity": "medium",
       "match": {},
       "metric": {
-        "type": "model_file_size_times_20_vs_total_ram",
-        "threshold": 20,
-        "description": "If a model file size is available (e.g. 'Fix Missing Element For <path>: File Size: <bytes>, Element Count: <n>' or a 'fileSizeOnOpen' value), compute required_mb = file_size_bytes / 1048576 * 20. Fire if required_mb > total_ram_mb. If no size line exists, do not fire (the size is not reliably logged; the analyzer may accept the size as user input instead)."
+        "type": "model_size_vs_ram",
+        "threshold": 1,
+        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when the size exceeds, by more than 10 %, the size Autodesk's system requirements list for this computer's RAM (16 GB: ~300 MB, 32 GB: ~600 MB, 64 GB: ~1 GB), or when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer."
       },
-      "context": "Opening large models",
-      "versions": "size lines seen only sporadically (R2020); unverified for other versions",
+      "context": "Both Autodesk measures are estimates for a single model; Autodesk notes that individual models vary. What Revit actually used is measured separately (peak RAM, lowest free memory).",
       "title": {
-        "uk": "Модель завелика для оперативної пам'яті цього комп'ютера",
-        "en": "The model is too large for this computer's RAM"
+        "uk": "Модель більша, ніж Autodesk рекомендує для пам'яті цього комп'ютера",
+        "en": "The model is larger than Autodesk's guidance for this computer's memory"
       },
       "cause": {
-        "uk": "За рекомендацією Autodesk, оперативної пам'яті має бути приблизно у 20 разів більше за розмір стиснутого центрального файлу. Тут пам'яті менше.",
-        "en": "Autodesk recommends RAM of about 20 times the compacted central file size; this computer has less."
+        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цими оцінками модель із цієї сесії потребує більше пам'яті, ніж має комп'ютер, і це ще без урахування лінків. Коли пам'яті бракує, Revit працює повільно і може закритися.",
+        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By those estimates the model of this session needs more memory than this computer has, before counting linked models. When memory is short, Revit becomes slow and can close."
       },
       "fix": {
         "uk": [
-          "Відкривайте лише потрібні робочі набори (Specify у вікні Open) і вивантажуйте непотрібні зв'язки.",
-          "Попросіть BIM-менеджера стиснути центральну модель (Compact Central Model) і почистити її (Purge Unused).",
-          "Зверніться до ІТ щодо збільшення оперативної пам'яті."
+          "Зменште кількість завантажених лінків DWG і RVT. [Autodesk: Memory Usage and Instability]",
+          "Обмежте робочі набори, які відкриваєте: у вікні Open виберіть Specify у списку Open і закрийте непотрібні набори. [Autodesk: Memory Usage and Instability]",
+          "Обмежте кількість відкритих видів: вкладка View > панель Windows > Close Inactive. [Autodesk: Memory Usage and Instability]",
+          "Очистіть невикористані об'єкти (Purge Unused). [Autodesk: Memory Usage and Instability]",
+          "Регулярно перезапускайте Revit, а також перед друком, рендерингом, експортом чи оновленням моделей. [Autodesk: Memory Recommendations]",
+          "Запитайте в IT про більше пам'яті: 16 ГБ зазвичай достатньо для однієї моделі приблизно до 300 МБ на диску, 32 ГБ — до 600 МБ, 64 ГБ — до 1 ГБ. [Autodesk: System requirements for Revit 2025 products]"
         ],
         "en": [
-          "Open only the worksets you need (Specify in the Open dialog) and unload unneeded links.",
-          "Ask your BIM manager to compact the central model (Compact Central Model) and purge unused content (Purge Unused).",
-          "Ask IT to add RAM."
+          "Reduce the number of loaded DWG and RVT links. [Autodesk: Memory Usage and Instability]",
+          "Limit the worksets you open: in the Open dialog choose Specify from the Open drop-down list and close the worksets you do not need. [Autodesk: Memory Usage and Instability]",
+          "Limit the number of open views: View tab > Windows panel > Close Inactive. [Autodesk: Memory Usage and Instability]",
+          "Purge unused objects. [Autodesk: Memory Usage and Instability]",
+          "Restart Revit regularly, and before printing, rendering, exporting or upgrading models. [Autodesk: Memory Recommendations]",
+          "Ask IT about more memory: 16 GB of RAM is usually sufficient for a single model up to approximately 300 MB on disk, 32 GB up to approximately 600 MB, 64 GB up to approximately 1 GB. [Autodesk: System requirements for Revit 2025 products]"
         ]
       },
       "sources": [
         {
-          "title": "Autodesk Help (2020): Memory-based strategies to improve performance (RAM ~20x central file size)",
-          "url": "https://help.autodesk.com/cloudhelp/2020/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+          "title": "Autodesk: System requirements for Revit 2025 products",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/System-requirements-for-Revit-2025-products.html"
+        },
+        {
+          "title": "Autodesk Help: Memory Recommendations",
+          "url": "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6"
+        },
+        {
+          "title": "Autodesk Help: Memory Usage and Instability",
+          "url": "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9"
         }
       ],
-      "confidence": "official"
+      "confidence": "official",
+      "related": []
     },
     {
       "id": "metric-memory-growth-long-session",
@@ -1292,6 +1306,104 @@
         }
       ],
       "confidence": "community"
+    },
+    {
+      "id": "metric-disk-almost-full",
+      "category": "other",
+      "severity": "critical",
+      "match": {},
+      "metric": {
+        "type": "disk_free_at_session_end_mb",
+        "threshold": 5120,
+        "description": "Free space on the journal's drive at the end of the session is below 5 GB. The value is not in the journal: it comes from the readings the tray monitor records every few minutes (disk-history.csv in the app's folder), or from the drive itself when the session ended less than an hour before the analysis. Only for journals in this computer's own journal folder."
+      },
+      "context": "Revit writes its journal, temporary files, local copies and the cloud model cache to the system drive. A report is usually opened after a restart, when Windows has freed space again; hence the recorded readings.",
+      "title": {
+        "uk": "Диск був майже заповнений, коли сесія Revit закінчилась",
+        "en": "The disk was almost full when the Revit session ended"
+      },
+      "cause": {
+        "uk": "На диску, куди Revit пише журнал, тимчасові файли й кеш хмарних моделей, лишалося менше 5 ГБ. Autodesk вимагає щонайменше 30 ГБ вільного місця і описує, що без нього Revit не може відкривати, зберігати й синхронізувати моделі та може несподівано закриватися.",
+        "en": "The drive where Revit writes its journal, temporary files and cloud model cache had less than 5 GB free. Autodesk requires at least 30 GB of free space and describes that without it Revit cannot open, save or synchronize models and can close unexpectedly."
+      },
+      "fix": {
+        "uk": [
+          "Звільніть місце на системному диску, доки не стане щонайменше 30 ГБ вільних. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Разом з IT звільніть місце і запустіть Windows Disk Cleanup. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Закривши Revit, видаліть файли в папці CollaborationCache (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit 20xx\\CollaborationCache) і PacCache (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\PacCache). Після цього хмарні моделі вперше відкриваються повільно. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Видаліть копії моделей, які Revit зберігає в папці журналів. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Якщо є другий диск, перенесіть на нього папку Temp Windows. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]"
+        ],
+        "en": [
+          "Free space on the system drive until at least 30 GB are free. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Work with your IT support to free up space, and run Windows Disk Cleanup. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "With Revit closed, delete the files in the CollaborationCache folder (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit 20xx\\CollaborationCache) and the PacCache folder (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\PacCache). Cloud models open slowly the first time afterwards. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Delete the copies of models that Revit keeps in the journal folder. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "If the computer has a second drive, move the Windows Temp folder to it. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit.html"
+        },
+        {
+          "title": "Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Disk-full-while-accessing-or-There-is-not-enough-space-on-drive-C-when-syncing-or-saving-in-Revit.html"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "metric-disk-below-autodesk-minimum"
+      ]
+    },
+    {
+      "id": "metric-disk-below-autodesk-minimum",
+      "category": "other",
+      "severity": "medium",
+      "match": {},
+      "metric": {
+        "type": "disk_free_at_session_end_mb",
+        "threshold": 30720,
+        "description": "Free space on the journal's drive at the end of the session is between 5 and 30 GB (Autodesk: minimum 30 GB free). Same source of the value as metric-disk-almost-full."
+      },
+      "context": "Autodesk lists insufficient free space among the causes of Revit closing unexpectedly at launch or when opening a project.",
+      "title": {
+        "uk": "Вільного місця на диску менше, ніж вимагає Autodesk",
+        "en": "Free disk space is below Autodesk's minimum"
+      },
+      "cause": {
+        "uk": "Autodesk вимагає щонайменше 30 ГБ вільного місця на диску для Revit. Коли місця менше, зростає ризик помилок під час відкриття, збереження й синхронізації моделей.",
+        "en": "Autodesk requires at least 30 GB of free disk space for Revit. With less, errors when opening, saving and synchronizing models become more likely."
+      },
+      "fix": {
+        "uk": [
+          "Звільніть місце на системному диску, доки не стане щонайменше 30 ГБ вільних. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Разом з IT звільніть місце і запустіть Windows Disk Cleanup. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Закривши Revit, видаліть файли в папці CollaborationCache (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit 20xx\\CollaborationCache) і PacCache (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\PacCache). Після цього хмарні моделі вперше відкриваються повільно. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Видаліть копії моделей, які Revit зберігає в папці журналів. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Якщо є другий диск, перенесіть на нього папку Temp Windows. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]"
+        ],
+        "en": [
+          "Free space on the system drive until at least 30 GB are free. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Work with your IT support to free up space, and run Windows Disk Cleanup. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "With Revit closed, delete the files in the CollaborationCache folder (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit 20xx\\CollaborationCache) and the PacCache folder (C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit\\PacCache). Cloud models open slowly the first time afterwards. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "Delete the copies of models that Revit keeps in the journal folder. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]",
+          "If the computer has a second drive, move the Windows Temp folder to it. [Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit]"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit.html"
+        },
+        {
+          "title": "Autodesk: \"Disk full while accessing\" or \"…not enough space\" and storage, operation related messages appear in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Disk-full-while-accessing-or-There-is-not-enough-space-on-drive-C-when-syncing-or-saving-in-Revit.html"
+        }
+      ],
+      "confidence": "official",
+      "related": []
     }
   ]
 }

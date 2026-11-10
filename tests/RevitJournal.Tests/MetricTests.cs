@@ -28,6 +28,97 @@ public class MetricTests
         Assert.Contains("8 min 0 s", f.Facts[0]);
     }
 
+    private const string BigModelWithLinks = """
+        'C 05-Nov-2026 10:00:00.000;   0:< x
+          ' 1:< RAM Statistics:    11185 /    32212      9769=InUse    21719=Peak
+          ' 6:< Detect if missing elements for C:\\Cache\\P1\\aaaaaaaa-0000-0000-0000-000000000001.rvt: File Size: 1000000000, Element Count: 400000
+          ' 6:< Detect if missing elements for C:\\Cache\\P1\\aaaaaaaa-0000-0000-0000-000000000001.rvt: File Size: 1342185472, Element Count: 436899
+        ' 0:< ModelPath Created: Is server path = True, Region = "EMEA", Central server = "", Path = "CLD:\\\\EMEA\\{bbbbbbbb-0000-0000-0000-000000000000}Project\\{aaaaaaaa-0000-0000-0000-000000000001}Tower_ARC.rvt"
+        ' 0:< ModelPath Created: Is server path = True, Region = "EMEA", Central server = "", Path = "CLD:\\\\EMEA\\{bbbbbbbb-0000-0000-0000-000000000000}Project\\{aaaaaaaa-0000-0000-0000-000000000002}Tower_MEP.rvt"
+        '  3.123456       5:<<Load linked file: C:\\Cache\\P1\\LinkedModels\\aaaaaaaa-0000-0000-0000-000000000002.rvt
+        '  1.123456       5:<<Load linked file: C:\\Cache\\P1\\LinkedModels\\aaaaaaaa-0000-0000-0000-000000000003.rvt
+        '  3.123456       5:<<Load linked file: C:\\Cache\\P1\\LinkedModels\\aaaaaaaa-0000-0000-0000-000000000002.rvt
+        """;
+
+    [Fact]
+    public void Model_size_is_compared_with_Autodesks_memory_guidance_and_links_are_sized_from_disk()
+    {
+        var onThisComputer = Closed with { FileSize = path => path.EndsWith("2.rvt", StringComparison.Ordinal) ? 800L * 1024 * 1024 : null };
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, BigModelWithLinks, Fixtures.NormalEnd));
+        var f = Find(Analyzer.Analyze(session, onThisComputer), "metric-model-size-vs-ram");
+
+        Assert.NotNull(f);
+        Assert.Contains("Tower_ARC.rvt is 1.3 GB on disk (436,899 elements); this computer has 31.5 GB of RAM.", f.Facts[0]);   // latest figures, real name
+        Assert.Contains("32 GB of RAM is usually sufficient for a single model up to approximately 600 MB", f.Facts[1]);
+        Assert.Contains("64 GB of RAM or more", f.Facts[1]);
+        Assert.Contains("20 times", f.Facts[2]);
+        Assert.DoesNotContain("more than this computer has", f.Facts[2]);                       // 25.6 GB of 31.5 GB
+        Assert.Contains("loaded 2 linked model(s); 1 of them are on this computer and take 800 MB", f.Facts[3]);
+        Assert.Contains("Tower_MEP.rvt 800 MB", f.Facts[3]);
+        Assert.Contains(f.Steps, x => x.Contains("Tower_MEP.rvt") && x.EndsWith("[Autodesk: Memory Usage and Instability]"));
+        Assert.All(f.Steps.Concat(f.Rule.Fix.En), x => Assert.Matches(@"\[Autodesk: .+\]$", x));
+
+        // A journal from another computer: the model is still judged, the links are counted without sizes.
+        var elsewhere = Find(Analyzer.Analyze(session, Closed), "metric-model-size-vs-ram");
+        Assert.Contains("their sizes are not known here", elsewhere!.Facts[3]);
+    }
+
+    [Fact]
+    public void Before_the_first_save_the_open_models_size_is_read_from_its_local_file()
+    {
+        // Revit logs "File Size" only at a save or sync; until then only the path of the local copy is known.
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            ' 5:< SLOG  local="C:\Cache\P1\aaaaaaaa-0000-0000-0000-000000000001.rvt"
+            ' 4:< SLOG  local="C:\Cache\P1\LinkedModels\aaaaaaaa-0000-0000-0000-000000000002.rvt"
+            '  3.123456       5:<<Load linked file: C:\Cache\P1\LinkedModels\aaaaaaaa-0000-0000-0000-000000000002.rvt
+            """));
+        long? OnDisk(string path) => path.Contains("LinkedModels") ? 300L * 1024 * 1024 : 700L * 1024 * 1024;
+
+        var load = ModelSizeAdvice.Load(session, OnDisk, ramMb: 32_212);
+
+        Assert.Equal(new ModelLoad("aaaaaaaa-0000-0000-0000-000000000001.rvt", 700, null, 1, 1, 300, "64 GB of RAM", true), load);
+        Assert.False(ModelSizeAdvice.Load(session, OnDisk, ramMb: 65_000)!.OverGuidance);
+        Assert.Null(ModelSizeAdvice.Load(session, null, ramMb: 32_212));          // another computer's journal, nothing logged yet
+    }
+
+    [Fact]
+    public void Open_views_and_models_are_the_counts_Revit_logged_last()
+    {
+        var s = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+                ' [Jrn.TabbedViewAnalytics] ProjectCount: 1
+                ' [Jrn.TabbedViewAnalytics] ViewCount: 1
+              ' [Jrn.TabbedViewAnalytics] ViewCount: 3
+              ' [Jrn.TabbedViewAnalytics] Rvt.Attr.ActivateView: FromTab
+              ' [Jrn.TabbedViewAnalytics] ViewCount: 2
+            """));
+
+        Assert.Equal(2, s.OpenViews);
+        Assert.Equal(1, s.OpenProjects);
+    }
+
+    [Fact]
+    public void Models_open_in_several_Revits_are_judged_together()
+    {
+        var small = new ModelLoad("A.rvt", 250, null, 0, 0, 0, "16 GB of RAM", false);
+        var other = new ModelLoad("B.rvt", 280, null, 2, 2, 100, "16 GB of RAM", false);
+
+        Assert.Null(ModelSizeAdvice.Combined([small], 16_000));                    // one model: its own row says it
+        Assert.Null(ModelSizeAdvice.Combined([small, other], 32_212));             // 530 MB fits 32 GB
+        Assert.Equal((530, "32 GB of RAM"), ModelSizeAdvice.Combined([small, other], 16_000));   // each fits 16 GB, together they do not
+    }
+
+    [Fact]
+    public void A_model_that_fits_Autodesks_guidance_is_not_reported()
+    {
+        var r = Analyze(Fixtures.Header, """
+            'C 05-Nov-2026 10:00:00.000;   0:< x
+              ' 1:< RAM Statistics:    11185 /    32212      9769=InUse    21719=Peak
+              ' 6:< Detect if missing elements for C:\\Models\\Small.rvt: File Size: 524288000, Element Count: 90000
+            """, Fixtures.NormalEnd);
+
+        Assert.Null(Find(r, "metric-model-size-vs-ram"));
+    }
+
     [Fact]
     public void Slow_local_copy_is_timed_from_create_new_local()
     {

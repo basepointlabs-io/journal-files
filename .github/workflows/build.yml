@@ -42,7 +42,7 @@ jobs:
         run: python tools/validate_kb.py
 
       - name: Build
-        run: dotnet build RevitJournalAnalyzer.slnx -c Release
+        run: dotnet build RevitDoctor.slnx -c Release
 
       - name: Test
         run: dotnet test tests/RevitJournal.Tests/RevitJournal.Tests.csproj -c Release --no-build
@@ -55,7 +55,7 @@ jobs:
             dotnet publish src/RevitJournal.App/RevitJournal.App.csproj -c Release -r $rid --self-contained true `
               -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
               -o "publish/$rid"
-            Copy-Item "publish/$rid/RevitJournalAnalyzer.exe" "publish/RevitJournalAnalyzer-$v-portable-$($rid.Substring(4)).exe"
+            Copy-Item "publish/$rid/RevitDoctor.exe" "publish/RevitDoctor-$v-portable-$($rid.Substring(4)).exe"
           }
 
       - name: Build installer (Inno Setup)
@@ -65,23 +65,23 @@ jobs:
           if (-not (Test-Path $iscc)) {
             choco install innosetup -y --no-progress
           }
-          & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" installer/RevitJournalAnalyzer.iss
+          & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" installer/RevitDoctor.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
 
       - uses: actions/upload-artifact@v7
         with:
-          name: RevitJournalAnalyzer-${{ steps.version.outputs.value }}
+          name: RevitDoctor-${{ steps.version.outputs.value }}
           path: |
-            publish/RevitJournalAnalyzer-*-setup.exe
-            publish/RevitJournalAnalyzer-*-portable-*.exe
+            publish/RevitDoctor-*-setup.exe
+            publish/RevitDoctor-*-portable-*.exe
           if-no-files-found: error
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          name: Revit Journal Analyzer ${{ steps.version.outputs.value }}
+          name: Revit Doctor ${{ steps.version.outputs.value }}
           body_path: docs/releases/v${{ steps.version.outputs.value }}.md
           files: |
-            publish/RevitJournalAnalyzer-*-setup.exe
-            publish/RevitJournalAnalyzer-*-portable-*.exe
+            publish/RevitDoctor-*-setup.exe
+            publish/RevitDoctor-*-portable-*.exe

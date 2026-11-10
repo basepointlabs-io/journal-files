@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using RevitJournal.Core;
 using RevitJournal.Core.Analysis;
+using RevitJournal.Core.Live;
 using RevitJournal.Core.Reporting;
 using RevitJournal.Core.Symptoms;
 
@@ -31,9 +32,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         InitializeComponent();
         VersionText.Text = AppInfo.Version;
-        Title = $"Revit Journal Analyzer {AppInfo.Version}";
+        Title = $"Revit Doctor {AppInfo.Version}";
         _advisor = SymptomAdvisor.CreateDefault(_analyzer.Rules);
-        SymptomCards.ItemsSource = _advisor.Symptoms.Select(s => new SymptomCard(s)).ToList();
 
         Sessions.ItemsSource = _items;
         var view = CollectionViewSource.GetDefaultView(_items);
@@ -41,8 +41,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(JournalItem.Day)));
         view.Filter = o => o is JournalItem i && MatchesVersion(i);
 
-        // Finished sessions are analyzed once and then read from %LOCALAPPDATA%\RevitJournalAnalyzer\cache.
+        // Finished sessions are analyzed once and then read from %LOCALAPPDATA%\RevitDoctor\cache.
         _analyzer.Cache = new AnalysisCache(Settings.CacheFolder, _analyzer.Rules);
+        _analyzer.DiskHistory = RevitJournal.Core.Live.DiskHistory.Default;
 
         Loaded += async (_, _) =>
         {
@@ -83,8 +84,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         agent.ResultsChanged += ApplyLiveResults;
         agent.HealthChanged += (report, sessions) =>
         {
+            if (_demo)
+                return; // the snapshot run is showing made-up numbers
             var view = new HealthView(report, sessions);
-            HomeHealth.DataContext = view;
+            FollowRunningVersions([.. report.Revits.Select(p => p.Version).Where(v => v.Length > 0)]);
+            ShowHealth(view);
             HealthCard.Visibility = Visibility.Visible;
             _flyout?.Update(view);
             _lastHealth = view;
@@ -112,7 +116,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             var settings = Settings.Load();
             if (!settings.TrayHintShown)
             {
-                agent.ShowInfo("Still watching Revit", "Revit Journal Analyzer keeps running here and will warn you if Revit crashes, stops responding or cannot sync.");
+                agent.ShowInfo("Still watching Revit", "Revit Doctor keeps running here and will warn you if Revit crashes, stops responding or cannot sync.");
                 settings.TrayHintShown = true;
                 settings.Save();
             }
@@ -159,6 +163,15 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private HealthFlyout? _flyout;
     private HealthView? _lastHealth;
 
+    /// <summary>Puts a reading on the start screen and its state beside "Right now" in the list.</summary>
+    private void ShowHealth(HealthView view)
+    {
+        HomeHealth.DataContext = view;
+        HomeNavHint.Text = view.StatusTitle;
+        HomeNavDot.Fill = (System.Windows.Media.Brush)new StatusBrushConverter().Convert(view.StatusKey, typeof(System.Windows.Media.Brush), null!, System.Globalization.CultureInfo.InvariantCulture);
+    }
+    private bool _demo;
+
     /// <summary>
     /// For checking the look of a build without touching the desktop: draws the start screen and the tray overview
     /// into PNG files while both windows stay off-screen and never take the focus (RJA_SNAPSHOT=&lt;folder&gt;).
@@ -185,6 +198,63 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         flyout.Show();
         await Task.Delay(1000);
         SavePng(flyout, System.IO.Path.Combine(folder, "overview.png"));
+        flyout.Close();
+
+        // The same screen with a Revit that has a large model open: made-up numbers, to look at the layout
+        // on a computer where no Revit is running.
+        var at = DateTime.Now;
+        var demo = new HealthView(
+            new HealthReport(at, HealthLevel.Watch, 32_212, 9_800, 40_000, 15_000, 20,
+                [new RevitHealth(1, "2025", at.AddHours(-2), true, 18_400, 1, 2_150, 900, HealthLevel.Ok),
+                 new RevitHealth(2, "2024", at.AddHours(-1), true, 6_200, 9, 1_300, 600, HealthLevel.Ok)],
+                [new DiskHealth("C:", 22_500, 476_000, HealthLevel.Watch)],
+                [new HealthIssue("disk:C:", HealthLevel.Watch, "Drive C: has only 22.0 GB free",
+                    "Autodesk requires at least 30 GB of free disk space for Revit. Free up space: Windows Disk Cleanup, and the cloud model cache you no longer need."),
+                 new HealthIssue("models-large", HealthLevel.Watch, "2 open models are 1.7 GB on disk together",
+                    "Autodesk lists a single model of that size under 64 GB of RAM or more; this computer has 31.5 GB. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly. [Autodesk: Memory Usage and Instability]")],
+                null, [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 14_000 - i * 140))]),
+            [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 9_800, 32_212, null, 1,
+                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_280, 436_899, 13, 13, 2_150, "64 GB of RAM or more (the table ends at approximately 1 GB)", true), 9, 1),
+             new LiveStatus("2024", "", "Clinic_MEP.rvt", at, true, "Last sync OK at 10:15:02", 9_800, 32_212, null, 2,
+                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "32 GB of RAM", false), 3, 1)]);
+        FollowRunningVersions(["2025", "2024"]);
+        _demo = true;
+        ShowHealth(demo);
+        await Task.Delay(800);
+        SavePng(this, System.IO.Path.Combine(folder, "home-demo.png"));
+        // The same computer when memory and disk have run low: the figures turn red.
+        ShowHealth(new HealthView(
+            new HealthReport(at, HealthLevel.Danger, 32_212, 1_100, 40_000, 3_000, 20,
+                [new RevitHealth(1, "2025", at.AddHours(-2), true, 26_400, 1, 2_150, 900, HealthLevel.Ok)],
+                [new DiskHealth("C:", 3_200, 476_000, HealthLevel.Danger)],
+                [new HealthIssue("ram-low", HealthLevel.Danger, "Memory is almost full: 1.1 GB of 31.5 GB free",
+                    "Save now. Close the Revit window you are not working in and other heavy programs; Revit can close unexpectedly when memory runs out."),
+                 new HealthIssue("disk:C:", HealthLevel.Danger, "Drive C: has only 3.1 GB free",
+                    "Free up space now: Revit needs room for temporary files, saves and the cloud model cache, and opening, saving and synchronizing fail when the drive is full. Autodesk requires at least 30 GB free.")],
+                TimeSpan.FromMinutes(4), [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 9_000 - i * 272))]),
+            [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 1_100, 32_212, null, 1,
+                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_280, 436_899, 13, 13, 2_150, "64 GB of RAM or more (the table ends at approximately 1 GB)", true), 14, 1)]));
+        await Task.Delay(800);
+        SavePng(this, System.IO.Path.Combine(folder, "home-low.png"));
+
+        var demoFlyout = new HealthFlyout { ShowActivated = false, Left = -32000, Top = 0 };
+        demoFlyout.Update(demo);
+        demoFlyout.Show();
+        await Task.Delay(800);
+        SavePng(demoFlyout, System.IO.Path.Combine(folder, "overview-demo.png"));
+        demoFlyout.Close();
+        if (_lastHealth is not null)
+            ShowHealth(_lastHealth);
+        _demo = false;
+
+        // A report: the session with the most to say.
+        if (_items.Where(i => i.Result is not null).OrderByDescending(i => i.Result!.WorstSeverity).ThenByDescending(i => i.Result!.Findings.Count).FirstOrDefault() is { } item)
+        {
+            ShowReport(item);
+            ShowPage(ReportPage);
+            await Task.Delay(1500);
+            SavePng(this, System.IO.Path.Combine(folder, "report.png"));
+        }
     }
 
     private static void SavePng(FrameworkElement element, string path)
@@ -255,6 +325,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (page != AnswerPage)
             _shownSymptom = null;
         ReportActions.Visibility = page == ReportPage ? Visibility.Visible : Visibility.Collapsed;
+        HomeNav.IsChecked = page == HomePage;
         // Leaving the report clears the selection, so clicking the same session again opens it again.
         if (page != ReportPage)
             Sessions.SelectedItem = null;
@@ -352,6 +423,30 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         VersionPicker.IsEnabled = options.Count > 1;
     }
 
+    private string _runningVersions = "";
+
+    /// <summary>
+    /// The version picker follows what is running: one version selects it, several select "All versions" and are
+    /// named beside the picker. It only moves when the set of running versions changes, so a choice made by hand stays.
+    /// </summary>
+    private void FollowRunningVersions(IReadOnlyList<string> running)
+    {
+        var groups = running.GroupBy(v => v).OrderBy(g => g.Key).ToList();
+        string key = string.Join(",", groups.Select(g => $"{g.Key}x{g.Count()}"));
+        if (key == _runningVersions)
+            return;
+        _runningVersions = key;
+        VersionLabel.Text = groups.Count == 0 ? "Revit version"
+            : "Running: " + string.Join(", ", groups.Select(g => $"Revit {g.Key}" + (g.Count() > 1 ? $" ×{g.Count()}" : "")));
+        if (groups.Count == 0 || VersionPicker.ItemsSource is not IEnumerable<VersionOption> options)
+            return;
+        var target = groups.Count == 1
+            ? options.FirstOrDefault(o => o.Version == groups[0].Key)
+            : options.FirstOrDefault(o => o.Version is null);
+        if (target is not null && !Equals(VersionPicker.SelectedItem, target))
+            VersionPicker.SelectedItem = target;
+    }
+
     private async void OnVersionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         CollectionViewSource.GetDefaultView(_items).Refresh();
@@ -366,8 +461,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void UpdateHomeText()
     {
-        string which = SelectedVersion is { } v ? $"Revit {v}" : "all Revit versions";
-        HomeSubtitle.Text = $"Pick what you see. We'll check the journals of {which} on this computer.";
+        // The start screen no longer has text that depends on the selected version.
     }
 
     // ---- loading and analysis ----------------------------------------------------------------------------

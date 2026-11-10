@@ -236,33 +236,51 @@
         "en": "Revit stopped while it was starting"
       },
       "cause": {
-        "uk": "Журнал обривається ще до того, як Revit закінчив запуск: ви не встигли відкрити модель чи виконати команду. Якщо перед цим інша сесія Revit зникла без нормального завершення, найімовірніше її процеси (Revit.exe, RevitWorker.exe) лишилися у пам'яті й заважають новому запуску. Якщо Revit зупинився під час завантаження add-in'ів, причиною може бути один із них. Журнал показує етап, але не доводить причину.",
-        "en": "The journal ends before Revit finished starting: you had not opened a model or run a command yet. If another Revit session vanished without a normal shutdown shortly before, its processes (Revit.exe, RevitWorker.exe) most likely stayed in memory and block the new start. If Revit stopped while loading add-ins, one of them may be the cause. The journal shows the stage; it does not prove the cause."
+        "uk": "Журнал обривається ще до того, як Revit закінчив запуск: ви не встигли відкрити модель чи виконати команду. Журнал показує етап, на якому Revit зупинився, але не причину. Autodesk серед причин, через які Revit не запускається, називає службу ліцензування, add-in'и, захисне ПЗ, брак оновлень і файли, що лишилися в папці сесій Revit.",
+        "en": "The journal ends before Revit finished starting: you had not opened a model or run a command yet. The journal shows the stage at which Revit stopped, not the cause. Among the reasons Autodesk gives for Revit not starting are the licensing service, add-ins, security software, missing updates and files left in Revit's session folder."
       },
       "fix": {
         "uk": [
-          "Спершу перевірте вільне місце на диску C:. Revit пише туди журнал, тимчасові файли й кеш; коли диск заповнений, він може закритися без повідомлення і не запуститися знову. Тримайте вільними щонайменше 10 ГБ.",
-          "Не перезавантажуйте комп'ютер одразу: у Task Manager > Details завершіть процеси Revit.exe, RevitWorker.exe і CefSharp.BrowserSubprocess.exe, що лишилися, і запустіть Revit знову.",
-          "Коли жоден Revit не запущений, папка C:\\ProgramData\\boost_interprocess має бути порожньою (так описує Autodesk для Revit 2024 і новіших). Якщо в ній лишаються файли, повідомте IT.",
-          "Якщо Revit зупиняється під час завантаження add-in'ів, тимчасово вимкніть сторонні add-in'и і вмикайте їх по одному.",
-          "Подивіться в Event Viewer > Windows Logs > Application записи про Revit.exe за цей час: «Faulting module name» називає компонент, який дав збій."
+          "Перевірте вільне місце на системному диску: потрібно щонайменше 30 ГБ. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Перезавантажте комп'ютер; потім перевірте, що папка C:\\ProgramData\\boost_interprocess (Revit 2024 і новіші) або C:\\ProgramData\\RevitInterProcess (2023 і старіші) порожня, і перенесіть файли з неї в інше місце перед запуском Revit. [Autodesk: \"Revit has stopped working\" and then Revit shuts down]",
+          "У services.msc перевірте, що служби Autodesk Desktop Licensing Service, FLEXnet Licensing Service і FLEXnet Licensing Service 64 запущені. [Autodesk: Autodesk products do not respond when launching from the desktop]",
+          "Вимкніть add-in'и: у Revit 2025.3 і новіших через Add-ins Manager; у Revit 2024 і старіших закрийте Revit і тимчасово перенесіть файли add-in'ів з C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "Подивіться у Windows Event Viewer > Custom Views > Administrative Events запис про Revit.exe і модуль, що дав збій. [Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer]",
+          "Встановіть оновлення Revit; перевстановіть Autodesk Desktop Licensing Service і компонент Autodesk Identity Manager. [Autodesk: Revit hangs at the splash screen and doesn't start]"
         ],
         "en": [
-          "Check the free space on drive C: first. Revit writes its journal, temporary files and caches there; when the disk is full it can close without a message and fail to start again. Keep at least 10 GB free.",
-          "Do not restart the computer right away: in Task Manager > Details end the leftover Revit.exe, RevitWorker.exe and CefSharp.BrowserSubprocess.exe processes and start Revit again.",
-          "With no Revit running, the folder C:\\ProgramData\\boost_interprocess should be empty (Autodesk describes this for Revit 2024 and later). If files stay there, tell IT.",
-          "If Revit stops while loading add-ins, disable third-party add-ins temporarily and enable them one at a time.",
-          "Check Event Viewer > Windows Logs > Application for Revit.exe entries at that time: \"Faulting module name\" is the component that failed."
+          "Check the free space on the system drive: a minimum of 30 GB free is required. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Restart the computer; then check that C:\\ProgramData\\boost_interprocess (Revit 2024 and later) or C:\\ProgramData\\RevitInterProcess (2023 and earlier) is empty, and move any files in it to another location before starting Revit. [Autodesk: \"Revit has stopped working\" and then Revit shuts down]",
+          "In services.msc verify that Autodesk Desktop Licensing Service, FLEXnet Licensing Service and FLEXnet Licensing Service 64 are running. [Autodesk: Autodesk products do not respond when launching from the desktop]",
+          "Disable the add-ins: in Revit 2025.3 and later with the Add-ins Manager; in Revit 2024 and earlier close Revit and temporarily move the add-in files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "Look in Windows Event Viewer > Custom Views > Administrative Events for the Revit.exe entry and its faulting module. [Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer]",
+          "Install missing Revit updates; reinstall the Autodesk Desktop Licensing Service and the Autodesk Identity Manager component. [Autodesk: Revit hangs at the splash screen and doesn't start]"
         ]
       },
       "sources": [
         {
           "title": "Autodesk: \"Revit has stopped working\" and then Revit shuts down",
-          "url": "https://autodesk.com/support/technical/article/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down"
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down.html"
+        },
+        {
+          "title": "Autodesk: Autodesk products do not respond when launching from the desktop",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Autodesk-products-do-not-respond-when-launching-from-desktop.html"
+        },
+        {
+          "title": "Autodesk: How to disable add-ins for Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/How-to-Disable-Add-Ins-for-Revit-Products.html"
+        },
+        {
+          "title": "Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Faulting-module-KERNELBASE-dll-appears-in-Event-Viewer-when-Revit-crashes-upon-opening.html"
+        },
+        {
+          "title": "Autodesk: Revit hangs at the splash screen and doesn't start",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/When-starting-Revit-splash-screen-is-appeared-and-the-program-stuck.html"
         },
         {
           "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
-          "url": "https://autodesk.com/support/technical/article/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit"
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit.html"
         },
         {
           "title": "Revit journal format reference (this project)",
@@ -289,33 +307,47 @@
         "en": "Revit closed by itself right after starting"
       },
       "cause": {
-        "uk": "Revit завершив запуск, і за кілька секунд журнал обривається без жодної помилки: ні вікна про збій, ні запису в журналі. Так буває, коли процес завершує не сам Revit: add-in, який падає одразу після запуску (у цей момент add-in'и виконують свої перші дії), або зовнішня програма, наприклад антивірус. Журнал називає add-in'и, які були активні в останні секунди, але це збіг у часі, а не доказ.",
-        "en": "Revit finished starting, and seconds later the journal stops with no error at all: no crash window and no crash record. This happens when something other than Revit's own error handling ends the process: an add-in that fails right after start-up (add-ins run their first actions at that moment), or an outside program such as antivirus software. The journal names the add-ins that were active in the last seconds; that is a coincidence in time, not proof."
+        "uk": "Revit завершив запуск, і за кілька секунд журнал обривається без жодної помилки: ні вікна про збій, ні запису в журналі. Журнал називає add-in'и, які були активні в останні секунди; це збіг у часі, а не доказ. Autodesk серед причин несподіваного закриття Revit під час запуску називає add-in'и, застарілу версію, пошкоджений обліковий запис Windows і брак місця на диску.",
+        "en": "Revit finished starting, and seconds later the journal stops with no error at all: no crash window and no crash record. The journal names the add-ins that were active in the last seconds; that is a coincidence in time, not proof. Among the reasons Autodesk gives for Revit closing unexpectedly at launch are add-ins, an out-of-date installation, a corrupted Windows user account and too little free disk space."
       },
       "fix": {
         "uk": [
-          "Спершу перевірте вільне місце на диску C:. Revit пише туди журнал, тимчасові файли й кеш; коли диск заповнений, він може закритися без повідомлення і не запуститися знову. Тримайте вільними щонайменше 10 ГБ.",
-          "Подивіться в Event Viewer > Windows Logs > Application записи «Application Error» або «.NET Runtime» для Revit.exe за цей час: «Faulting module name» називає компонент, який дав збій.",
-          "Тимчасово вимкніть add-in'и, названі нижче, і запустіть Revit знову; повертайте їх по одному.",
-          "Якщо Windows не записала жодної помилки, попросіть IT перевірити журнал антивіруса / захисту кінцевих точок за ту саму хвилину.",
-          "Якщо після цього Revit не запускається, завершіть процеси Revit.exe і RevitWorker.exe, що лишилися, у Task Manager замість перезавантаження."
+          "Перевірте вільне місце на системному диску: потрібно щонайменше 30 ГБ. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Подивіться у Windows Event Viewer > Custom Views > Administrative Events запис про Revit.exe і модуль, що дав збій. [Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer]",
+          "Вимкніть add-in'и, які можуть спричиняти збій, і переконайтеся, що Revit та Windows оновлені. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Щоб вимкнути add-in'и: у Revit 2025.3 і новіших скористайтеся Add-ins Manager; у Revit 2024 і старіших закрийте Revit і тимчасово перенесіть файли add-in'ів з C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "Запустіть Revit від імені іншого користувача Windows (Shift + клік по ярлику Revit), щоб виключити пошкоджений обліковий запис. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Захисне ПЗ може конфліктувати з Revit: попросіть IT перевірити роботу з вимкненим захистом. [Autodesk: Revit hangs at the splash screen and doesn't start]"
         ],
         "en": [
-          "Check the free space on drive C: first. Revit writes its journal, temporary files and caches there; when the disk is full it can close without a message and fail to start again. Keep at least 10 GB free.",
-          "Check Event Viewer > Windows Logs > Application for \"Application Error\" or \".NET Runtime\" entries for Revit.exe at that time: \"Faulting module name\" is the component that failed.",
-          "Temporarily disable the add-ins named below and start Revit again; put them back one at a time.",
-          "If Windows recorded no error, ask IT to check the antivirus / endpoint protection log for the same minute.",
-          "If Revit does not start afterwards, end the leftover Revit.exe and RevitWorker.exe processes in Task Manager instead of restarting the computer."
+          "Check the free space on the system drive: a minimum of 30 GB free is required. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Look in Windows Event Viewer > Custom Views > Administrative Events for the Revit.exe entry and its faulting module. [Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer]",
+          "Disable add-ons that might cause Revit to crash, and make sure Revit and Windows are up to date. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "To disable add-ins: in Revit 2025.3 and later use the Add-ins Manager; in Revit 2024 and earlier close Revit and temporarily move the add-in files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "Run Revit as a different Windows user (Shift + click the Revit shortcut) to rule out a corrupted user account. [Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project]",
+          "Security software can conflict with Revit: ask IT to test with it disabled. [Autodesk: Revit hangs at the splash screen and doesn't start]"
         ]
       },
       "sources": [
         {
           "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
-          "url": "https://autodesk.com/support/technical/article/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit"
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit.html"
+        },
+        {
+          "title": "Autodesk: Revit crashes at launch and \"Faulting module: KERNELBASE.dll\" is shown in Event Viewer",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Faulting-module-KERNELBASE-dll-appears-in-Event-Viewer-when-Revit-crashes-upon-opening.html"
+        },
+        {
+          "title": "Autodesk: How to disable add-ins for Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/How-to-Disable-Add-Ins-for-Revit-Products.html"
+        },
+        {
+          "title": "Autodesk: Revit hangs at the splash screen and doesn't start",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/When-starting-Revit-splash-screen-is-appeared-and-the-program-stuck.html"
         },
         {
           "title": "Autodesk: \"Revit has stopped working\" and then Revit shuts down",
-          "url": "https://autodesk.com/support/technical/article/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down"
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down.html"
         },
         {
           "title": "Revit journal format reference (this project)",
@@ -346,14 +378,12 @@
       },
       "fix": {
         "uk": [
-          "Видаліть або вимкніть add-in'и, якими не користуєтесь, доки їх вкладок не стане менше 20 (список сторонніх add-in'ів є в цьому звіті).",
-          "Якщо add-in дозволяє, перенесіть його кнопки на спільну вкладку Add-Ins у налаштуваннях add-in'а.",
-          "Якщо всі add-in'и потрібні, попросіть розробників розміщувати панелі на вкладці Add-Ins замість власної."
+          "Вимкніть add-in'и, якими не користуєтесь, щоб менше з них створювали вкладку: у Revit 2025.3 і новіших через Add-ins Manager; у Revit 2024 і старіших тимчасово перенісши їхні файли з C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "Якщо всі add-in'и потрібні, попросіть розробника розмістити панелі на вкладці Add-Ins, як радить саме вікно: за сесію можна створити не більше 20 власних вкладок. [Autodesk: Autodesk Revit API reference: UIControlledApplication.CreateRibbonTab (maximum of 20 custom tabs)]"
         ],
         "en": [
-          "Uninstall or disable add-ins you do not use until fewer than 20 of them create a tab (this report lists the third-party add-ins).",
-          "Where an add-in offers it, move its buttons to the shared Add-Ins tab in the add-in's settings.",
-          "If every add-in is needed, ask their developers to place their panels on the Add-Ins tab instead of a tab of their own."
+          "Disable the add-ins you do not use, so that fewer of them create a ribbon tab: in Revit 2025.3 and later with the Add-ins Manager; in Revit 2024 and earlier by temporarily moving their files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\[Version]. [Autodesk: How to disable add-ins for Revit]",
+          "If every add-in is needed, ask its developer to place the panels on the Add-Ins tab, as the dialog itself suggests: no more than 20 custom tabs can be created in a session. [Autodesk: Autodesk Revit API reference: UIControlledApplication.CreateRibbonTab (maximum of 20 custom tabs)]"
         ]
       },
       "sources": [
@@ -362,8 +392,8 @@
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-API-MainReference/files/html/8ce17489-75ee-ae81-306d-58f9c505c80c.htm"
         },
         {
-          "title": "McNeel forum: Rhino.Inside exception in Revit - too many tabs have been created",
-          "url": "https://discourse.mcneel.com/t/rhino-inside-exception-in-revit-2020-too-many-tabs-have-been-created/125804"
+          "title": "Autodesk: How to disable add-ins for Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/How-to-Disable-Add-Ins-for-Revit-Products.html"
         }
       ],
       "confidence": "official",

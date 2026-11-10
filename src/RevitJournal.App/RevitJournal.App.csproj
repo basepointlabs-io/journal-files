@@ -6,7 +6,7 @@
     <UseWPF>true</UseWPF>
     <!-- Only for the tray icon (NotifyIcon); WPF has none. -->
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>RevitJournalAnalyzer</AssemblyName>
+    <AssemblyName>RevitDoctor</AssemblyName>
     <RootNamespace>RevitJournal.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Lets the project build on non-Windows machines too; it only runs on Windows. -->

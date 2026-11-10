@@ -218,9 +218,9 @@ public sealed class FindingView(Finding f, bool expanded)
         f.Evidence.Select(e => $"{e.Where,7}  {Fmt.Time(e.Time)}  {Fmt.Trim(e.Text, 220)}"));
     /// <summary>How far to trust this finding, shown in the card header.</summary>
     public string Confidence => TextReport.ConfidenceChip(f.Rule);
-    public string Source => $"Source: {TextReport.ConfidenceLabel(f.Rule.Confidence)}"
-                            + (f.Rule.Sources.Count > 0 ? $" — {f.Rule.Sources[0].Title}" : "");
-    public string? SourceUrl => f.Rule.Sources.FirstOrDefault()?.Url;
+    public string Source => $"Source: {TextReport.ConfidenceLabel(f.Rule.Confidence)}";
+    /// <summary>The articles the advice comes from; each opens in the browser.</summary>
+    public IReadOnlyList<RuleSource> Sources => f.Rule.Sources;
 }
 
 /// <summary>The overview of the computer and the running Revit sessions, as shown in the tray flyout and on the start screen.</summary>
@@ -243,21 +243,33 @@ public sealed class HealthView
         RamPercent = r.TotalRamMb > 0 ? 100.0 * used / r.TotalRamMb : 0;
         RamText = $"{Fmt.Mb((int)used)} of {Fmt.Mb((int)r.TotalRamMb)} used";
         RamFreeText = $"{Fmt.Mb((int)r.FreeRamMb)} free";
+        RamFreeValue = Fmt.Mb((int)r.FreeRamMb);
         RamKey = Key(r.Issues.Where(i => i.Key.StartsWith("ram", StringComparison.Ordinal)).Select(i => i.Level).DefaultIfEmpty(HealthLevel.Ok).Max());
-        ForecastText = r.RamRunsOutIn is { } eta && eta <= HealthMonitor.ForecastWatch
-            ? $"Falling: runs out in about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min"
-            : r.RamHistory.Count > 1 ? $"Free memory, last {Math.Max(1, (int)Math.Round((r.RamHistory[^1].Time - r.RamHistory[0].Time).TotalMinutes))} min" : "";
-        Sparkline = Points(r.RamHistory, r.TotalRamMb);
+        ForecastText = RamText + (r.RamRunsOutIn is { } eta && eta <= HealthMonitor.ForecastWatch
+            ? $" · at this rate about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min left" : "");
+        RamChart = new MemoryChartData(r.RamHistory, r.TotalRamMb, (long)Math.Max(HealthMonitor.RamWatchMb, HealthMonitor.RamWatchShare * r.TotalRamMb));
+        // The change over the window is said in words only when it is more than noise.
+        if (r.RamHistory.Count > 1 && r.RamHistory[^1].Time - r.RamHistory[0].Time >= TimeSpan.FromMinutes(3)
+            && Math.Abs(r.RamHistory[^1].FreeMb - r.RamHistory[0].FreeMb) is >= 512 and var change)
+        {
+            bool falling = r.RamHistory[^1].FreeMb < r.RamHistory[0].FreeMb;
+            int minutes = (int)Math.Round((r.RamHistory[^1].Time - r.RamHistory[0].Time).TotalMinutes);
+            RamTrendText = $"{(falling ? "↓" : "↑")} {Fmt.Mb((int)change)} in {minutes} min";
+            RamTrendKey = falling ? "warning" : "pending";
+        }
 
-        CpuPercent = r.CpuPercent;
-        CpuText = $"{r.CpuPercent:0} %";
         var disk = r.Disks.OrderBy(d => d.FreeMb).FirstOrDefault();
         DiskText = disk is null ? "" : $"{disk.Name} {Fmt.Mb((int)disk.FreeMb)} free";
         DiskKey = Key(disk?.Level ?? HealthLevel.Ok);
         DiskPercent = disk is { TotalMb: > 0 } ? 100.0 * (disk.TotalMb - disk.FreeMb) / disk.TotalMb : 0;
 
-        Revits = [.. r.Revits.Select(p => new RevitHealthRow(p, Match(p, r.Revits, sessions)))];
+        Revits = [.. r.Revits.Select(p => new RevitHealthRow(p, Match(p, r.Revits, sessions), r.TotalRamMb))];
         NoRevit = r.Revits.Count == 0;
+        int openViews = sessions.Sum(s => s.OpenViews ?? 0);
+        RevitShort = NoRevit ? "Revit is not running"
+            : $"{r.Revits.Count} Revit" + (openViews > 0 ? $" · {openViews} views" : "") + $" · {Fmt.Mb((int)r.Revits.Sum(p => p.MemoryMb))}";
+        RevitSummary = Summary(r, sessions);
+        HasRevitSummary = RevitSummary.Length > 0;
         Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(Key(i.Level), i.Title, i.Advice))];
         HasIssues = Issues.Count > 0;
     }
@@ -268,18 +280,48 @@ public sealed class HealthView
     public double RamPercent { get; }
     public string RamText { get; }
     public string RamFreeText { get; }
+    public string RamFreeValue { get; }
+    public bool HasRamTrend => RamTrendText.Length > 0;
+    /// <summary>"2 Revit · 12 views · 24.0 GB", or that none is running.</summary>
+    public string RevitShort { get; }
     public string RamKey { get; }
     public string ForecastText { get; }
-    public System.Windows.Media.PointCollection Sparkline { get; }
-    public double CpuPercent { get; }
-    public string CpuText { get; }
+    public MemoryChartData RamChart { get; }
+    public string RamTrendText { get; } = "";
+    public string RamTrendKey { get; } = "pending";
     public string DiskText { get; }
     public string DiskKey { get; }
     public double DiskPercent { get; }
     public IReadOnlyList<RevitHealthRow> Revits { get; }
     public bool NoRevit { get; }
+    /// <summary>Everything running together, shown when more than one Revit is open.</summary>
+    public string RevitSummary { get; }
+    public bool HasRevitSummary { get; }
     public IReadOnlyList<HealthIssueRow> Issues { get; }
     public bool HasIssues { get; }
+
+    /// <summary>"3 Revit running (2024 ×2, 2025) · 5 models, 31 links, 9.4 GB on disk · 12 views · 41.0 GB of memory".</summary>
+    private static string Summary(HealthReport r, IReadOnlyList<LiveStatus> sessions)
+    {
+        if (r.Revits.Count < 2)
+            return "";
+        var versions = r.Revits.GroupBy(p => p.Version.Length > 0 ? p.Version : "?").OrderBy(g => g.Key)
+            .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
+        var parts = new List<string> { $"{r.Revits.Count} Revit running ({string.Join(", ", versions)})" };
+
+        var loads = sessions.Select(s => s.Load).OfType<ModelLoad>().ToList();
+        int models = sessions.Sum(s => s.OpenProjects ?? (s.Load is null ? 0 : 1));
+        if (models > 0)
+        {
+            int links = loads.Sum(l => l.LinkCount);
+            int diskMb = loads.Sum(l => l.ModelMb + l.LinksMb);
+            parts.Add($"{models} model{(models == 1 ? "" : "s")}" + (links > 0 ? $", {links} links" : "") + (diskMb > 0 ? $", {Fmt.Mb(diskMb)} on disk" : ""));
+        }
+        if (sessions.Sum(s => s.OpenViews ?? 0) is > 0 and var views)
+            parts.Add($"{views} views");
+        parts.Add($"{Fmt.Mb((int)r.Revits.Sum(p => p.MemoryMb))} of memory");
+        return string.Join(" · ", parts);
+    }
 
     internal static string Key(HealthLevel level) => level switch { HealthLevel.Danger => "crash", HealthLevel.Watch => "warning", _ => "ok" };
 
@@ -287,22 +329,9 @@ public sealed class HealthView
     private static LiveStatus? Match(RevitHealth p, IReadOnlyList<RevitHealth> all, IReadOnlyList<LiveStatus> sessions) =>
         sessions.FirstOrDefault(s => s.ProcessId == p.ProcessId)
         ?? (all.Count(x => x.Version == p.Version) == 1 ? sessions.FirstOrDefault(s => s.Version == p.Version) : null);
-
-    /// <summary>Free memory over time as points in a 300 x 40 box (0 at the bottom, the machine's RAM at the top).</summary>
-    private static System.Windows.Media.PointCollection Points(IReadOnlyList<RamPoint> history, long totalMb)
-    {
-        var points = new System.Windows.Media.PointCollection();
-        if (history.Count < 2 || totalMb <= 0)
-            return points;
-        double span = Math.Max(1, (history[^1].Time - history[0].Time).TotalSeconds);
-        foreach (var p in history)
-            points.Add(new System.Windows.Point(300 * (p.Time - history[0].Time).TotalSeconds / span, 40 - 40.0 * p.FreeMb / totalMb));
-        points.Freeze();
-        return points;
-    }
 }
 
-public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session)
+public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long totalRamMb)
 {
     public string StatusKey => !p.Responding ? HungKey : HealthView.Key(p.Level);
     public string Title => (p.Version.Length > 0 ? $"Revit {p.Version}" : "Revit") + (session?.Model is { Length: > 0 } m ? $" · {m}" : "");
@@ -310,7 +339,37 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session)
         : session?.Busy is { } busy ? busy.TrimEnd('.') : p.CpuPercent >= HealthMonitor.BusyCpuPercent ? "Working" : "Idle";
     // Red only for a Revit that is stuck; a busy one is a warning.
     private string HungKey => p.CpuPercent >= HealthMonitor.BusyCpuPercent ? "warning" : "crash";
-    public string Numbers => $"{Fmt.Mb((int)p.MemoryMb)} RAM · CPU {p.CpuPercent:0} %";
+    public string Numbers => $"Uses {Fmt.Mb((int)p.MemoryMb)} of memory"
+                             + (session?.OpenViews is > 0 and var views ? $" · {views} view{(views == 1 ? "" : "s")} open" : "");
+
+    // The open model against Autodesk's memory guidance; known once Revit has written the model's local file.
+    private Core.Analysis.ModelLoad? Load => session?.Load;
+    public bool HasModel => Load is not null;
+    public string ModelLine => Load is not { } m ? "" :
+        $"Model {Fmt.Mb(m.ModelMb)}" + (m.Elements is { } e ? $" · {e.ToString("N0", CultureInfo.InvariantCulture)} elements" : "") +
+        (m.LinkCount == 0 ? "" : m.LinksKnown == 0 ? $" · {m.LinkCount} links" : $" · {m.LinkCount} links {Fmt.Mb(m.LinksMb)}");
+    public string GuidanceLine => Load is not { } m ? "" : m.OverGuidance
+        ? $"Autodesk: {m.NeededRam.Split(" (")[0]} for a model this size; this computer has {Fmt.Mb((int)totalRamMb)}"
+        : $"Within Autodesk's memory guidance for this computer ({Fmt.Mb((int)totalRamMb)})";
+    public string GuidanceKey => Load?.OverGuidance == true ? "warning" : "pending";
+
+    /// <summary>"18.0 GB · 9 views · model 1.3 GB, 13 links": the numbers of this Revit on one line.</summary>
+    public string Detail => string.Join(" · ", new[]
+    {
+        Fmt.Mb((int)p.MemoryMb),
+        session?.OpenViews is > 0 and var views ? $"{views} view{(views == 1 ? "" : "s")}" : null,
+        Load is { } m ? $"model {Fmt.Mb(m.ModelMb)}" + (m.LinkCount > 0 ? $", {m.LinkCount} links" : "") : null,
+        HasSync && !Sync.Contains("FAILED", StringComparison.Ordinal) ? Sync.Replace("Last sync OK at", "synced") : null,
+    }.Where(x => x is not null));
+
+    /// <summary>The one thing about this Revit that needs attention, most serious first; empty when all is well.</summary>
+    public string Attention =>
+        HasSync && Sync.Contains("FAILED", StringComparison.Ordinal) ? Sync
+        : GdiKey != "ok" ? GdiText
+        : Load is { OverGuidance: true } m ? $"Autodesk: {m.NeededRam.Split(" (")[0]} for this model; this computer has {Fmt.Mb((int)totalRamMb)}"
+        : "";
+    public bool HasAttention => Attention.Length > 0;
+    public string AttentionKey => HasSync && Sync.Contains("FAILED", StringComparison.Ordinal) ? "crash" : GdiKey == "crash" ? "crash" : "warning";
     public string Sync => session?.Sync ?? "";
     public bool HasSync => session is not null;
     public string SyncKey => session?.Sync.Contains("FAILED", StringComparison.Ordinal) == true ? "crash" : "pending";

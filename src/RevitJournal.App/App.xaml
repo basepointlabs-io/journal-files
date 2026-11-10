@@ -15,6 +15,7 @@
       <local:SeverityBrushConverter x:Key="SeverityBrush" />
       <local:StatusBrushConverter x:Key="StatusBrush" />
       <local:MeterBrushConverter x:Key="MeterBrush" />
+      <local:ValueInkConverter x:Key="ValueInk" />
       <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
       <!-- Manrope everywhere, as in the FlexiData Configurator. Only the font is set globally: colors come

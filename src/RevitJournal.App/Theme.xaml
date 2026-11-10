@@ -32,7 +32,7 @@
     <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{StaticResource Hint}" />
-    <Setter Property="Margin" Value="0,20,0,8" />
+    <Setter Property="Margin" Value="0,24,0,8" />
   </Style>
 
   <!-- A button standing on the ground or in a card: clear, hairline, 2 corners. -->

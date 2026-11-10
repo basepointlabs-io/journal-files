@@ -1,3 +1,4 @@
+using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Live;
 
 namespace RevitJournal.Tests;
@@ -43,28 +44,33 @@ public class HealthTests
     }
 
     [Fact]
-    public void Steadily_falling_memory_is_forecast_before_it_is_low()
+    public void Falling_memory_is_only_forecast_once_memory_is_short_and_notifies_only_when_minutes_are_left()
     {
         var probe = new FakeProbe();
         var monitor = new HealthMonitor(probe);
         HealthReport r = monitor.Tick();
         var alerts = new List<LiveAlert>();
-        // 20 MB less every 5 s = 240 MB per minute: from 16 GB, the 1.6 GB danger line is about an hour away at first.
-        for (int i = 0; i < 12 * 50; i++)
+        HealthReport? firstForecast = null;
+        // 20 MB less every 5 s = 240 MB per minute, from 16 GB of 32 GB free.
+        for (int i = 0; i < 12 * 60 && alerts.Count == 0; i++)
         {
             probe.Advance(5);
             probe.FreeRam -= 20;
             r = monitor.Tick();
             alerts.AddRange(monitor.NewAlerts);
             if (r.Issues.Any(x => x.Key == "ram-forecast"))
-                break;
+                firstForecast ??= r;
+            else if (firstForecast is null)
+                Assert.Null(r.RamRunsOutIn);                              // plenty of memory: no forecast, however fast it falls
         }
 
-        var issue = r.Issues.Single(x => x.Key == "ram-forecast");
-        Assert.Equal(HealthLevel.Watch, issue.Level);                    // warned about half an hour ahead...
-        Assert.InRange(r.RamRunsOutIn!.Value.TotalMinutes, 25, 31);
-        Assert.True(r.FreeRamMb > 0.12 * 32_000);                        // ...while memory itself is not low yet
-        Assert.Contains("runs out in about", Assert.Single(alerts).Title);
+        // Shown in the panel once less than a quarter of the memory is free, without a notification...
+        Assert.NotNull(firstForecast);
+        Assert.True(firstForecast.FreeRamMb < 0.25 * 32_000);
+        Assert.Equal(HealthLevel.Watch, firstForecast.Issues.Single(x => x.Key == "ram-forecast").Level);
+        // ...and one notification when about ten minutes are left.
+        Assert.InRange(r.RamRunsOutIn!.Value.TotalMinutes, 8, 10.1);
+        Assert.Contains("still falling", Assert.Single(alerts).Title);
 
         // Memory that jitters without a trend gives no forecast.
         var calm = new FakeProbe();
@@ -75,6 +81,23 @@ public class HealthTests
             calm.FreeRam = 16_000 + (i % 2 == 0 ? 150 : -150);
             Assert.Null(calmMonitor.Tick().RamRunsOutIn);
         }
+    }
+
+    [Fact]
+    public void Models_too_large_together_are_a_quiet_issue_with_Autodesks_advice()
+    {
+        var monitor = new HealthMonitor(new FakeProbe());   // 32 GB
+        ModelLoad[] models = [new("A.rvt", 500, null, 0, 0, 0, "32 GB of RAM", false), new("B.rvt", 450, null, 0, 0, 0, "32 GB of RAM", false)];
+
+        var r = monitor.Tick(models);
+
+        var issue = r.Issues.Single(i => i.Key == "models-large");
+        Assert.Equal(HealthLevel.Watch, issue.Level);
+        Assert.Contains("2 open models are 950 MB on disk together", issue.Title);
+        Assert.Contains("64 GB of RAM", issue.Advice);
+        Assert.EndsWith("[Autodesk: Memory Usage and Instability]", issue.Advice);
+        Assert.Empty(monitor.NewAlerts);                                            // shown in the panel, no notification
+        Assert.DoesNotContain(monitor.Tick([models[0]]).Issues, i => i.Key == "models-large");
     }
 
     [Fact]

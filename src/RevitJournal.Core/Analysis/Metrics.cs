@@ -231,6 +231,13 @@ internal static class Metrics
             return facts;
         },
 
+        [DiskAdvice.AlmostFullRule] = (s, _, ctx) => ctx.Disk is { FreeMb: < DiskAdvice.AlmostFullMb } d ? DiskAdvice.Facts(s, d) : null,
+
+        [DiskAdvice.BelowMinimumRule] = (s, _, ctx) =>
+            ctx.Disk is { FreeMb: >= DiskAdvice.AlmostFullMb and < DiskAdvice.AutodeskMinimumMb } d ? DiskAdvice.Facts(s, d) : null,
+
+        [ModelSizeAdvice.Rule] = (s, _, ctx) => ModelSizeAdvice.Facts(s, ctx),
+
         [StartupAdvice.NotCompletedRule] = (s, status, ctx) =>
             StartupAdvice.NotCompleted(s, status) ? StartupAdvice.NotCompletedFacts(s, ctx) : null,
 

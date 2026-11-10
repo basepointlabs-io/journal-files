@@ -15,8 +15,6 @@ public static class StartupAdvice
     public static readonly TimeSpan RestartWindow = TimeSpan.FromMinutes(30);
     /// <summary>"Right after start-up": the journal stops within this time of the end of start-up.</summary>
     public static readonly TimeSpan AfterStartup = TimeSpan.FromSeconds(60);
-    /// <summary>Below this much free space on the journal's drive, the disk is the first suspect.</summary>
-    public const long LowDiskMb = 5 * 1024;
     private static readonly TimeSpan LastSeconds = TimeSpan.FromSeconds(10);
 
     /// <summary>The journal ends before Revit was ready, and the user had not asked for anything yet.</summary>
@@ -42,19 +40,9 @@ public static class StartupAdvice
     public static void Weigh(Finding f, JournalSession s, AnalysisContext ctx, EndKind endKind)
     {
         bool blockedRestart = f.Rule.Id == NotCompletedRule && s.LicenseReadyAt is null && SilentExitBefore(s, ctx) is not null;
-        if (ctx.Disk is { } disk && disk.FreeMb < LowDiskMb)
-        {
-            // A full disk explains both symptoms at once, so it goes first and is never played down.
-            f.Facts.Insert(0, $"Drive {disk.Name} had only {Fmt.Mb((int)Math.Min(disk.FreeMb, int.MaxValue))} free when this journal was analyzed ({Fmt.Stamp(disk.At)}). " +
-                              "Without free disk space Revit cannot write its journal, temporary files and caches: it can close without a message and fail to start.");
-            f.Steps.Insert(0, $"Free space on drive {disk.Name} first: empty %TEMP%, delete old local model copies and the collaboration cache you no longer need, then start Revit again. Keep at least 10 GB free.");
-            if (f.Severity < Rules.Severity.High)
-                f.Severity = Rules.Severity.High;
-            return;
-        }
         if (endKind == EndKind.Crash)
             f.Severity = Rules.Severity.Critical;
-        else if (endKind == EndKind.Unconfirmed && ctx.IsLocal && !blockedRestart)
+        else if (endKind == EndKind.Unconfirmed && ctx.IsLocal && !blockedRestart && ctx.Disk is not { FreeMb: < DiskAdvice.AlmostFullMb })
         {
             f.Severity = Rules.Severity.Medium;
             f.Facts.Add("Windows recorded no crash or hang of Revit.exe for this session, so it was most likely closed from outside: Task Manager, a script or security software.");
@@ -78,9 +66,7 @@ public static class StartupAdvice
 
         if (SilentExitBefore(s, ctx) is { } p)
             facts.Add($"The session before it ({p.Name}) ended without a shutdown record at {Fmt.Time(p.End)}, {Fmt.Duration(s.Start!.Value - p.End)} before this start. " +
-                      (s.LicenseReadyAt is null
-                          ? "Processes that session left behind are the most likely reason Revit does not start again."
-                          : "Processes that session left behind may still be in the way."));
+                      "This start came right after it; Autodesk's steps for a Revit that does not start again are below.");
         return facts;
     }
 
@@ -89,13 +75,18 @@ public static class StartupAdvice
         var steps = new List<string>();
         if (SilentExitBefore(s, ctx) is not null || s.LicenseReadyAt is null)
         {
-            steps.Add("Do not restart the computer yet. Open Task Manager (Ctrl+Shift+Esc) > Details and look for Revit.exe, RevitWorker.exe and CefSharp.BrowserSubprocess.exe left from the earlier session. Note which ones are there.");
-            steps.Add("End each of them (right-click > End task), then start Revit again. If it starts, the leftover processes were blocking it and a restart of the computer is not needed.");
-            steps.Add("If Revit still stops at the same point, ask IT to restart the Autodesk Desktop Licensing Service (services.msc), then start Revit again.");
+            steps.Add(AutodeskArticle.StoppedWorking.Cite(
+                $"Restart the computer. Then, before starting Revit, check that the folder {SessionFolder(s)} is empty: with no Revit open there should be nothing in it. If files are there, move them to another location (for example the Desktop) and start Revit."));
+            steps.Add(AutodeskArticle.NoResponseAtLaunch.Cite(
+                "Check the licensing services: type services.msc in Windows Search and verify that Autodesk Desktop Licensing Service, FLEXnet Licensing Service and FLEXnet Licensing Service 64 are listed as running. If they are disabled, Revit cannot start."));
         }
-        if (s.LicenseReadyAt is not null && s.AddIns.LastOrDefault(a => !a.IsAutodesk) is { } addIn)
-            steps.Add($"Revit stopped while loading add-ins. Disable \"{addIn.Name}\" first (the last third-party add-in that started) and start Revit again; then the ones that load after it.");
+        if (s.LicenseReadyAt is not null)
+            steps.Add(DisableAddInsStep(s, s.AddIns.LastOrDefault(a => !a.IsAutodesk) is { } addIn
+                ? $"Revit stopped while loading add-ins; the last third-party one that started was \"{addIn.Name}\". Disable the add-ins and start Revit again"
+                : "Revit stopped while loading add-ins. Disable the add-ins and start Revit again"));
         steps.Add(EventViewerStep(s));
+        steps.Add(AutodeskArticle.SplashScreen.Cite("If Revit still does not start: install missing Revit updates, then reinstall the Autodesk Desktop Licensing Service" +
+                                                    (Metrics.RunningYear(s) is >= 2024 or null ? " and the Autodesk Identity Manager component." : " and the Autodesk Single Sign-On component.")));
         return steps;
     }
 
@@ -114,15 +105,36 @@ public static class StartupAdvice
 
     public static List<string> ClosedAfterSteps(JournalSession s)
     {
-        var steps = new List<string> { EventViewerStep(s) };
         var active = LastActiveAddIns(s);
-        if (active.Count > 0)
-            steps.Add($"Disable these add-ins first and start Revit again: {string.Join(", ", active)}. Move their .addin files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\<year> and %AppData%\\Autodesk\\Revit\\Addins\\<year>; put them back one at a time to find the one that closes Revit.");
-        else
-            steps.Add("Start Revit without third-party add-ins: move the .addin files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\<year> and %AppData%\\Autodesk\\Revit\\Addins\\<year>, then put them back one at a time.");
-        steps.Add("If Windows recorded no error for Revit.exe at that time, something outside Revit ended the process: ask IT to check the antivirus / endpoint protection log for the same minute.");
-        steps.Add("If Revit does not start again afterwards, end leftover Revit.exe, RevitWorker.exe and CefSharp.BrowserSubprocess.exe in Task Manager > Details instead of restarting the computer.");
-        return steps;
+        return
+        [
+            EventViewerStep(s),
+            DisableAddInsStep(s, active.Count > 0
+                ? $"Disable the add-ins and start Revit again; the ones active when Revit closed were {string.Join(", ", active)}"
+                : "Disable the add-ins and start Revit again"),
+            AutodeskArticle.ClosedUnexpectedly.Cite("Make sure Revit has the latest update installed, and install pending Windows updates."),
+            AutodeskArticle.SplashScreen.Cite("Security software can conflict with Revit: ask IT to test with it disabled, then start Revit again."),
+            AutodeskArticle.StoppedWorking.Cite(
+                $"If Revit does not start again afterwards: restart the computer and check that the folder {SessionFolder(s)} is empty before starting Revit; move any files in it to another location."),
+        ];
+    }
+
+    /// <summary>Where Revit keeps the queues its helper process uses; leftovers of a session that vanished stay there.</summary>
+    private static string SessionFolder(JournalSession s) => Metrics.RunningYear(s) switch
+    {
+        >= 2024 => @"C:\ProgramData\boost_interprocess",
+        null => @"C:\ProgramData\boost_interprocess (Revit 2024 and later) or C:\ProgramData\RevitInterProcess (2023 and earlier)",
+        _ => @"C:\ProgramData\RevitInterProcess",
+    };
+
+    /// <summary>Autodesk's way to disable add-ins differs by version: the Add-Ins Manager from 2025.3, moving files before.</summary>
+    private static string DisableAddInsStep(JournalSession s, string what)
+    {
+        int? year = Metrics.RunningYear(s);
+        string how = year >= 2026 || (year == 2025 && s.Release is { } r && Version.TryParse(r, out var v) && v >= new Version(2025, 3))
+            ? "open the Add-ins Manager, click Disable all Add-ins (with cloud models: clear the check mark at the top of the column, then check Autodesk Collaborate again), click OK and restart Revit"
+            : $"close Revit and temporarily move the add-in files out of C:\\ProgramData\\Autodesk\\Revit\\Addins\\{year?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "[Version]"}; if you work with cloud models keep Autodesk.Collaborate.addin, ExportViewSelectorApp.addin and the ExportViewSelectorAddin folder there";
+        return AutodeskArticle.DisableAddIns.Cite($"{what}: {how}. Put them back one at a time to find the one responsible.");
     }
 
     /// <summary>Third-party add-ins Revit logged in the last seconds of the journal, most recent first.</summary>
@@ -140,7 +152,6 @@ public static class StartupAdvice
             .Take(6)];
     }
 
-    private static string EventViewerStep(JournalSession s) =>
-        $"Find out what ended Revit: Event Viewer > Windows Logs > Application, entries at {Fmt.Time(s.LastTimestamp)} with source \"Application Error\" (1000) or \".NET Runtime\" (1026) for Revit.exe. " +
-        "\"Faulting module name\" is the component that failed. When this journal is analyzed on the computer it came from, that event is shown in this report.";
+    private static string EventViewerStep(JournalSession s) => AutodeskArticle.EventViewer.Cite(
+        $"Look for what ended Revit: Windows Event Viewer > Custom Views > Administrative Events, entries for Revit.exe at {Fmt.Time(s.LastTimestamp)}. The entry names the faulting module.");
 }

@@ -40,12 +40,14 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
             Release = Release, Build = Build, BuildDate = BuildDate, UserName = UserName, MachineName = MachineName,
             Start = Start, LastTimestamp = LastTimestamp, EndedNormally = EndedNormally, ExitRequestedAt = ExitRequestedAt,
             IsPlayback = IsPlayback, LicenseReadyAt = LicenseReadyAt, StartupCompletedAt = StartupCompletedAt,
+            OpenViews = OpenViews, OpenProjects = OpenProjects,
             RuleHits = RuleHits?.ToDictionary(kv => kv.Key, kv => kv.Value.ToList(), StringComparer.Ordinal),
         };
         c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
         c.Dialogs.AddRange(Dialogs); c.LongOperations.AddRange(LongOperations); c.AddIns.AddRange(AddIns); c.Models.AddRange(Models);
         c.Exceptions.AddRange(Exceptions); c.Interactions.AddRange(Interactions); c.PostedMessages.AddRange(PostedMessages);
         c.Orphans.AddRange(Orphans); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
+        c.ModelFiles.AddRange(ModelFiles);
         c.Syncs.AddRange(Syncs.Select(s => s.Clone()));
         c.Opens.AddRange(Opens.Select(o => o.Clone()));
         c.LocalCopies.AddRange(LocalCopies.Select(o => o.Clone()));
@@ -71,6 +73,11 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     public DateTime? LicenseReadyAt { get; set; }
     /// <summary>"&lt;-desktop InitManagedInstance": all add-ins are loaded and Revit is ready for the user.</summary>
     public DateTime? StartupCompletedAt { get; set; }
+
+    /// <summary>View tabs open right now, as Revit last logged it ("[Jrn.TabbedViewAnalytics] ViewCount: N"); null before the first view.</summary>
+    public int? OpenViews { get; set; }
+    /// <summary>Models and families open right now ("[Jrn.TabbedViewAnalytics] ProjectCount: N").</summary>
+    public int? OpenProjects { get; set; }
 
     /// <summary>How many of the last add-in events are kept.</summary>
     public const int AddInActivitySize = 30;
@@ -100,6 +107,9 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     /// <summary>Tags/families whose host element was deleted in a linked model.</summary>
     public List<OrphanedHosted> Orphans { get; } = [];
     /// <summary>Cloud models appear in view directives as "[&lt;guid&gt;.rvt]"; this maps the guid file to the model name.</summary>
+    /// <summary>The .rvt files behind the session: the model being edited (with the size Revit logged) and every linked file it loaded.</summary>
+    public List<ModelFile> ModelFiles { get; } = [];
+
     public Dictionary<string, string> DocumentNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public string DocumentName(string? token) =>
@@ -198,5 +208,11 @@ public sealed record AddIn(int Line, string Name, string VendorId, string Vendor
 
 /// <summary>An add-in was active at this point: Revit logged an event registration or an external event for it.</summary>
 public sealed record AddInActivity(int Line, DateTime? Time, string Name);
+
+/// <summary>
+/// A model file on disk. For the edited model Revit logs size and element count ("File Size: ..., Element Count: ...");
+/// for a link only the path it was loaded from ("Load linked file: ..."), so the size has to come from the disk.
+/// </summary>
+public sealed record ModelFile(int Line, string Path, long? Bytes, int? Elements, bool IsLink);
 
 public sealed record ModelInfo(int Line, string Path, string? Worksharing, int? SavedInYear, string? SavedInBuild);
