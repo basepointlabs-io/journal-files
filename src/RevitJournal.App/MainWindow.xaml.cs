@@ -210,13 +210,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 [new DiskHealth("C:", 22_500, 476_000, HealthLevel.Watch)],
                 [new HealthIssue("disk:C:", HealthLevel.Watch, "Drive C: has only 22.0 GB free",
                     "Autodesk requires at least 30 GB of free disk space for Revit. Free up space: Windows Disk Cleanup, and the cloud model cache you no longer need."),
-                 new HealthIssue("models-large", HealthLevel.Watch, "2 open models are 1.7 GB on disk together",
-                    "Autodesk lists a single model of that size under 64 GB of RAM or more; this computer has 31.5 GB. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly. [Autodesk: Memory Usage and Instability]")],
+                 new HealthIssue("models-large", HealthLevel.Watch, "2 open models with their links are 4.8 GB on disk together",
+                    "Estimate on Autodesk's Memory Recommendations (RAM about 20 times the file size): about 96.9 GB of RAM; this computer has 31.5 GB. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly. [Autodesk: Memory Usage and Instability]")],
                 null, [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 14_000 - i * 140))]),
             [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 9_800, 32_212, null, 1,
-                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_280, 436_899, 13, 13, 2_150, "64 GB of RAM or more (the table ends at approximately 1 GB)", true), 9, 1),
+                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_780, 436_899, 13, 13, 2_150, "about 76.8 GB of RAM", true), 9, 1),
              new LiveStatus("2024", "", "Clinic_MEP.rvt", at, true, "Last sync OK at 10:15:02", 9_800, 32_212, null, 2,
-                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "32 GB of RAM", false), 3, 1)]);
+                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "about 20.1 GB of RAM", false), 3, 1)]);
         FollowRunningVersions(["2025", "2024"]);
         _demo = true;
         ShowHealth(demo);
@@ -227,13 +227,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             new HealthReport(at, HealthLevel.Danger, 32_212, 1_100, 40_000, 3_000, 20,
                 [new RevitHealth(1, "2025", at.AddHours(-2), true, 26_400, 1, 2_150, 900, HealthLevel.Ok)],
                 [new DiskHealth("C:", 3_200, 476_000, HealthLevel.Danger)],
-                [new HealthIssue("ram-low", HealthLevel.Danger, "Memory is almost full: 1.1 GB of 31.5 GB free",
+                [new HealthIssue("ram-low", HealthLevel.Danger, "RAM is almost full: 1.1 GB of 31.5 GB free",
                     "Save now. Close the Revit window you are not working in and other heavy programs; Revit can close unexpectedly when memory runs out."),
                  new HealthIssue("disk:C:", HealthLevel.Danger, "Drive C: has only 3.1 GB free",
                     "Free up space now: Revit needs room for temporary files, saves and the cloud model cache, and opening, saving and synchronizing fail when the drive is full. Autodesk requires at least 30 GB free.")],
                 TimeSpan.FromMinutes(4), [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 9_000 - i * 272))]),
             [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 1_100, 32_212, null, 1,
-                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_280, 436_899, 13, 13, 2_150, "64 GB of RAM or more (the table ends at approximately 1 GB)", true), 14, 1)]));
+                new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_780, 436_899, 13, 13, 2_150, "about 76.8 GB of RAM", true), 14, 1)]));
         await Task.Delay(800);
         SavePng(this, System.IO.Path.Combine(folder, "home-low.png"));
 

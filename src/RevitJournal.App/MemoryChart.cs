@@ -21,6 +21,11 @@ public sealed class MemoryChart : FrameworkElement
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
         nameof(Stroke), typeof(Brush), typeof(MemoryChart), new FrameworkPropertyMetadata(Brushes.SteelBlue, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>A small curve for a tile: no scale, no labels, only the curve, the low line and the latest reading.</summary>
+    public static readonly DependencyProperty SparklineProperty = DependencyProperty.Register(
+        nameof(Sparkline), typeof(bool), typeof(MemoryChart), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool Sparkline { get => (bool)GetValue(SparklineProperty); set => SetValue(SparklineProperty, value); }
     public MemoryChartData? Data { get => (MemoryChartData?)GetValue(DataProperty); set => SetValue(DataProperty, value); }
     public Brush Stroke { get => (Brush)GetValue(StrokeProperty); set => SetValue(StrokeProperty, value); }
 
@@ -33,12 +38,14 @@ public sealed class MemoryChart : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
-        double width = ActualWidth - Gutter, height = ActualHeight - Footer - Top;
+        bool full = !Sparkline;
+        double width = ActualWidth - (full ? Gutter : 5), height = ActualHeight - (full ? Footer + Top : 10);
         if (Data is not { TotalMb: > 0 } data || width <= 10 || height <= 10)
             return;
 
-        double Y(double mb) => Top + height * (1 - Math.Clamp(mb / data.TotalMb, 0, 1));
-        double bottom = Top + height;
+        double top = full ? Top : 5;
+        double Y(double mb) => top + height * (1 - Math.Clamp(mb / data.TotalMb, 0, 1));
+        double bottom = top + height;
         var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         void Text(string text, double x, double y, Brush brush, bool right = false)
         {
@@ -48,14 +55,20 @@ public sealed class MemoryChart : FrameworkElement
         }
 
         // Scale: the machine's RAM at the top, half of it, and the zone where memory counts as low.
-        dc.DrawLine(new Pen(Grid, 1), new Point(0, Y(data.TotalMb)), new Point(width, Y(data.TotalMb)));
-        dc.DrawLine(new Pen(Grid, 1), new Point(0, Y(data.TotalMb / 2.0)), new Point(width, Y(data.TotalMb / 2.0)));
+        if (full)
+        {
+            dc.DrawLine(new Pen(Grid, 1), new Point(0, Y(data.TotalMb)), new Point(width, Y(data.TotalMb)));
+            dc.DrawLine(new Pen(Grid, 1), new Point(0, Y(data.TotalMb / 2.0)), new Point(width, Y(data.TotalMb / 2.0)));
+        }
         double lowY = Y(data.LowMb);
         dc.DrawRectangle(LowFill, null, new Rect(0, lowY, width, bottom - lowY));
         dc.DrawLine(new Pen(Low, 1) { DashStyle = new DashStyle([3, 3], 0) }, new Point(0, lowY), new Point(width, lowY));
-        Text($"{data.TotalMb / 1024.0:0} GB", width + 6, Y(data.TotalMb) - 5, Label);
-        Text($"{data.TotalMb / 2048.0:0}", width + 6, Y(data.TotalMb / 2.0) - 7, Label);
-        Text("low", width + 6, lowY - 8, Low);
+        if (full)
+        {
+            Text($"{data.TotalMb / 1024.0:0} GB", width + 6, Y(data.TotalMb) - 5, Label);
+            Text($"{data.TotalMb / 2048.0:0}", width + 6, Y(data.TotalMb / 2.0) - 7, Label);
+            Text("low", width + 6, lowY - 8, Low);
+        }
 
         var history = data.History;
         if (history.Count >= 2)
@@ -83,7 +96,9 @@ public sealed class MemoryChart : FrameworkElement
             }
             line.Freeze();
             dc.DrawGeometry(null, new Pen(Stroke, 2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, line);
-            dc.DrawEllipse(Stroke, new Pen(Brushes.White, 2), points[^1], 4.5, 4.5);
+            dc.DrawEllipse(Stroke, new Pen(Brushes.White, full ? 2 : 1.5), points[^1], full ? 4.5 : 3.5, full ? 4.5 : 3.5);
+            if (!full)
+                return;
 
             int minutes = (int)Math.Round((history[^1].Time - history[0].Time).TotalMinutes);
             Text(minutes >= 1 ? $"{minutes} min ago" : "just started", 0, bottom + 3, Label);

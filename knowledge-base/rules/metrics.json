@@ -374,16 +374,16 @@
       "metric": {
         "type": "model_size_vs_ram",
         "threshold": 1,
-        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when the size exceeds, by more than 10 %, the size Autodesk's system requirements list for this computer's RAM (16 GB: ~300 MB, 32 GB: ~600 MB, 64 GB: ~1 GB), or when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer."
+        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations: RAM required is approximately 20 times the size of the compacted central file). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer. Also fire when 20 x (model + known links) exceeds the RAM; that figure is our estimate on Autodesk's factor and is labelled as one."
       },
-      "context": "Both Autodesk measures are estimates for a single model; Autodesk notes that individual models vary. What Revit actually used is measured separately (peak RAM, lowest free memory).",
+      "context": "Autodesk's figure is an approximation for the project file alone; Autodesk does not say how linked models add to it, but lists reducing loaded links among the ways to lower memory use. What Revit actually used is measured separately (peak RAM, lowest free memory).",
       "title": {
         "uk": "Модель більша, ніж Autodesk рекомендує для пам'яті цього комп'ютера",
         "en": "The model is larger than Autodesk's guidance for this computer's memory"
       },
       "cause": {
-        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цими оцінками модель із цієї сесії потребує більше пам'яті, ніж має комп'ютер, і це ще без урахування лінків. Коли пам'яті бракує, Revit працює повільно і може закритися.",
-        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By those estimates the model of this session needs more memory than this computer has, before counting linked models. When memory is short, Revit becomes slow and can close."
+        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цією оцінкою модель із цієї сесії разом із лінками потребує більше пам'яті, ніж має комп'ютер. Коли пам'яті бракує, Revit працює повільно і може закритися.",
+        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By that estimate the model of this session, with its linked models, needs more memory than this computer has. When memory is short, Revit becomes slow and can close."
       },
       "fix": {
         "uk": [
@@ -392,7 +392,7 @@
           "Обмежте кількість відкритих видів: вкладка View > панель Windows > Close Inactive. [Autodesk: Memory Usage and Instability]",
           "Очистіть невикористані об'єкти (Purge Unused). [Autodesk: Memory Usage and Instability]",
           "Регулярно перезапускайте Revit, а також перед друком, рендерингом, експортом чи оновленням моделей. [Autodesk: Memory Recommendations]",
-          "Запитайте в IT про більше пам'яті: 16 ГБ зазвичай достатньо для однієї моделі приблизно до 300 МБ на диску, 32 ГБ — до 600 МБ, 64 ГБ — до 1 ГБ. [Autodesk: System requirements for Revit 2025 products]"
+          "Запитайте в IT про більше пам'яті: потрібно приблизно в 20 разів більше оперативної пам'яті, ніж розмір стиснутої центральної моделі. [Autodesk: Memory Recommendations]"
         ],
         "en": [
           "Reduce the number of loaded DWG and RVT links. [Autodesk: Memory Usage and Instability]",
@@ -400,14 +400,10 @@
           "Limit the number of open views: View tab > Windows panel > Close Inactive. [Autodesk: Memory Usage and Instability]",
           "Purge unused objects. [Autodesk: Memory Usage and Instability]",
           "Restart Revit regularly, and before printing, rendering, exporting or upgrading models. [Autodesk: Memory Recommendations]",
-          "Ask IT about more memory: 16 GB of RAM is usually sufficient for a single model up to approximately 300 MB on disk, 32 GB up to approximately 600 MB, 64 GB up to approximately 1 GB. [Autodesk: System requirements for Revit 2025 products]"
+          "Ask IT about more memory: the RAM required is approximately 20 times the size of the compacted central file. [Autodesk: Memory Recommendations]"
         ]
       },
       "sources": [
-        {
-          "title": "Autodesk: System requirements for Revit 2025 products",
-          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/System-requirements-for-Revit-2025-products.html"
-        },
         {
           "title": "Autodesk Help: Memory Recommendations",
           "url": "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6"

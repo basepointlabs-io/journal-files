@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- Shown in the title bar, like the FlexiData Configurator's version. -->
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <Company>BasePoint Labs</Company>
     <Product>Revit Doctor</Product>
   </PropertyGroup>

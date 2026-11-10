@@ -115,11 +115,11 @@ public sealed class HealthMonitor(ISystemProbe probe)
         {
             if (now.FreeRamMb < Math.Max(RamDangerMb, RamDangerShare * now.TotalRamMb))
                 issues.Add(new HealthIssue("ram-low", HealthLevel.Danger,
-                    $"Memory is almost full: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
+                    $"RAM is almost full: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
                     "Save now. Close the Revit window you are not working in and other heavy programs; Revit can close unexpectedly when memory runs out."));
             else if (now.FreeRamMb < Math.Max(RamWatchMb, RamWatchShare * now.TotalRamMb))
                 issues.Add(new HealthIssue("ram-low", HealthLevel.Watch,
-                    $"Memory is getting low: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
+                    $"RAM is getting low: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
                     "Close views and programs you do not need. Restarting Revit frees the memory it has collected."));
         }
 
@@ -128,7 +128,7 @@ public sealed class HealthMonitor(ISystemProbe probe)
         TimeSpan? runsOut = now.Revits.Count > 0 && memoryShort ? Forecast(now) : null;
         if (runsOut is { } eta && eta <= ForecastWatch && !issues.Any(i => i is { Key: "ram-low", Level: HealthLevel.Danger }))
             issues.Add(new HealthIssue("ram-forecast", eta <= ForecastDanger ? HealthLevel.Danger : HealthLevel.Watch,
-                $"Memory is short and still falling: {Fmt.Mb((int)now.FreeRamMb)} free, about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min left at this rate",
+                $"RAM is short and still falling: {Fmt.Mb((int)now.FreeRamMb)} free, about {Math.Max(1, (int)Math.Round(eta.TotalMinutes))} min left at this rate",
                 "Save and synchronize now. Close the Revit window and views you do not need; Revit gives memory back only when restarted."));
 
         if (now.CommitLimitMb > 0 && now.CommitFreeMb < CommitWatchShare * now.CommitLimitMb)
@@ -147,9 +147,9 @@ public sealed class HealthMonitor(ISystemProbe probe)
 
         if (models is not null && ModelSizeAdvice.Combined(models, now.TotalRamMb) is var (totalModelsMb, neededRam))
             issues.Add(new HealthIssue("models-large", HealthLevel.Watch,
-                $"{models.Count} open models are {Fmt.Mb(totalModelsMb)} on disk together",
+                $"{models.Count} open models" + (models.Any(m => m.LinksMb > 0) ? " with their links" : "") + $" are {Fmt.Mb(totalModelsMb)} on disk together",
                 AutodeskArticle.MemoryInstability.Cite(
-                    $"Autodesk lists a single model of that size under {neededRam.Split(" (")[0]}; this computer has {Fmt.Mb((int)now.TotalRamMb)}. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly.")));
+                    $"Estimate on Autodesk's Memory Recommendations (RAM about 20 times the file size): {neededRam}; this computer has {Fmt.Mb((int)now.TotalRamMb)}. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly.")));
 
         var disks = new List<DiskHealth>();
         foreach (var d in now.Disks)

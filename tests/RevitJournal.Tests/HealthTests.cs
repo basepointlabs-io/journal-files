@@ -87,14 +87,14 @@ public class HealthTests
     public void Models_too_large_together_are_a_quiet_issue_with_Autodesks_advice()
     {
         var monitor = new HealthMonitor(new FakeProbe());   // 32 GB
-        ModelLoad[] models = [new("A.rvt", 500, null, 0, 0, 0, "32 GB of RAM", false), new("B.rvt", 450, null, 0, 0, 0, "32 GB of RAM", false)];
+        ModelLoad[] models = [new("A.rvt", 1_000, null, 0, 0, 0, "about 19.5 GB of RAM", false), new("B.rvt", 800, null, 0, 0, 0, "about 15.6 GB of RAM", false)];
 
         var r = monitor.Tick(models);
 
         var issue = r.Issues.Single(i => i.Key == "models-large");
         Assert.Equal(HealthLevel.Watch, issue.Level);
-        Assert.Contains("2 open models are 950 MB on disk together", issue.Title);
-        Assert.Contains("64 GB of RAM", issue.Advice);
+        Assert.Contains("2 open models are 1.8 GB on disk together", issue.Title);
+        Assert.Contains(": about 35.2 GB of RAM; this computer has", issue.Advice);
         Assert.EndsWith("[Autodesk: Memory Usage and Instability]", issue.Advice);
         Assert.Empty(monitor.NewAlerts);                                            // shown in the panel, no notification
         Assert.DoesNotContain(monitor.Tick([models[0]]).Issues, i => i.Key == "models-large");
