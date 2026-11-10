@@ -19,6 +19,22 @@ public static class JournalReader
             yield return line;
     }
 
+    /// <summary>The complete lines within the last <paramref name="maxBytes"/> of the file: how a journal ends, without reading it all.</summary>
+    public static List<string> ReadTail(string path, int maxBytes = 1 << 14)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        bool cut = stream.Length > maxBytes;
+        if (cut)
+            stream.Seek(-maxBytes, SeekOrigin.End);
+        using var reader = new StreamReader(stream, Encoding.GetEncoding(1252), detectEncodingFromByteOrderMarks: !cut);
+        var lines = new List<string>();
+        while (reader.ReadLine() is { } line)
+            lines.Add(line);
+        if (cut && lines.Count > 0)
+            lines.RemoveAt(0); // starts in the middle of a line
+        return lines;
+    }
+
     /// <summary>
     /// True when another process (Revit) still has the file open for writing — i.e. the session is running
     /// or Revit is hung. Opening with FileShare.Read fails if any writer holds the file.

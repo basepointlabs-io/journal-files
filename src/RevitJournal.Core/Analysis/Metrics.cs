@@ -119,8 +119,10 @@ internal static class Metrics
 
         ["metric-slow-startup"] = (s, _, _) =>
         {
-            var ready = s.UserActions.FirstOrDefault(a => a.CommandId is "ID_REVIT_MODEL_BROWSER_OPEN" or "ID_STARTUP_PAGE");
-            if (ready?.Time is not { } t || s.Start is not { } start || (t - start).TotalSeconds < 120)
+            // Revit marks the end of start-up itself; older journals only show the first Home-page command.
+            var ready = s.StartupCompletedAt
+                        ?? s.UserActions.FirstOrDefault(a => a.CommandId is "ID_REVIT_MODEL_BROWSER_OPEN" or "ID_STARTUP_PAGE")?.Time;
+            if (ready is not { } t || s.Start is not { } start || (t - start).TotalSeconds < 120)
                 return null;
             return [$"Revit needed {Fmt.Duration(t - start)} to start up."];
         },
@@ -228,6 +230,12 @@ internal static class Metrics
             facts.Add($"First error (line {firstError.Line}): {Fmt.Trim(firstError.Text, 200)}");
             return facts;
         },
+
+        [StartupAdvice.NotCompletedRule] = (s, status, ctx) =>
+            StartupAdvice.NotCompleted(s, status) ? StartupAdvice.NotCompletedFacts(s, ctx) : null,
+
+        [StartupAdvice.ClosedAfterRule] = (s, status, _) =>
+            StartupAdvice.ClosedRightAfter(s, status) ? StartupAdvice.ClosedAfterFacts(s) : null,
 
         ["metric-addin-failed-to-start"] = (s, _, _) =>
         {

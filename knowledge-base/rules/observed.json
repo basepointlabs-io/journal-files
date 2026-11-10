@@ -218,6 +218,158 @@
       ],
       "confidence": "official",
       "related": []
+    },
+    {
+      "id": "observed-startup-not-completed",
+      "category": "startup",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "startup_not_completed",
+        "threshold": 1,
+        "description": "The journal has no 'finished recording journal file', no exit request, no '<-desktop InitManagedInstance' (end of start-up), no model and no user command. Stage: before 'License initialization complete' = first start-up step; after it = loading add-ins (report the last 'Starting External Application'). If journal N-1 in the same folder also ends without shutdown lines at most 30 minutes before this start, report it: leftover processes of that session are the likely reason."
+      },
+      "context": "Seen in Revit 2024.3.6 on a virtual desktop: after Revit vanished without an error, the next two launches stopped within a second of '->desktop InitNativeInstance' (journals of about 13 lines) until the computer was restarted.",
+      "versions": "Seen in 2024.3.6",
+      "title": {
+        "uk": "Revit зупинився під час запуску",
+        "en": "Revit stopped while it was starting"
+      },
+      "cause": {
+        "uk": "Журнал обривається ще до того, як Revit закінчив запуск: ви не встигли відкрити модель чи виконати команду. Якщо перед цим інша сесія Revit зникла без нормального завершення, найімовірніше її процеси (Revit.exe, RevitWorker.exe) лишилися у пам'яті й заважають новому запуску. Якщо Revit зупинився під час завантаження add-in'ів, причиною може бути один із них. Журнал показує етап, але не доводить причину.",
+        "en": "The journal ends before Revit finished starting: you had not opened a model or run a command yet. If another Revit session vanished without a normal shutdown shortly before, its processes (Revit.exe, RevitWorker.exe) most likely stayed in memory and block the new start. If Revit stopped while loading add-ins, one of them may be the cause. The journal shows the stage; it does not prove the cause."
+      },
+      "fix": {
+        "uk": [
+          "Спершу перевірте вільне місце на диску C:. Revit пише туди журнал, тимчасові файли й кеш; коли диск заповнений, він може закритися без повідомлення і не запуститися знову. Тримайте вільними щонайменше 10 ГБ.",
+          "Не перезавантажуйте комп'ютер одразу: у Task Manager > Details завершіть процеси Revit.exe, RevitWorker.exe і CefSharp.BrowserSubprocess.exe, що лишилися, і запустіть Revit знову.",
+          "Коли жоден Revit не запущений, папка C:\\ProgramData\\boost_interprocess має бути порожньою (так описує Autodesk для Revit 2024 і новіших). Якщо в ній лишаються файли, повідомте IT.",
+          "Якщо Revit зупиняється під час завантаження add-in'ів, тимчасово вимкніть сторонні add-in'и і вмикайте їх по одному.",
+          "Подивіться в Event Viewer > Windows Logs > Application записи про Revit.exe за цей час: «Faulting module name» називає компонент, який дав збій."
+        ],
+        "en": [
+          "Check the free space on drive C: first. Revit writes its journal, temporary files and caches there; when the disk is full it can close without a message and fail to start again. Keep at least 10 GB free.",
+          "Do not restart the computer right away: in Task Manager > Details end the leftover Revit.exe, RevitWorker.exe and CefSharp.BrowserSubprocess.exe processes and start Revit again.",
+          "With no Revit running, the folder C:\\ProgramData\\boost_interprocess should be empty (Autodesk describes this for Revit 2024 and later). If files stay there, tell IT.",
+          "If Revit stops while loading add-ins, disable third-party add-ins temporarily and enable them one at a time.",
+          "Check Event Viewer > Windows Logs > Application for Revit.exe entries at that time: \"Faulting module name\" is the component that failed."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: \"Revit has stopped working\" and then Revit shuts down",
+          "url": "https://autodesk.com/support/technical/article/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down"
+        },
+        {
+          "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
+          "url": "https://autodesk.com/support/technical/article/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit"
+        },
+        {
+          "title": "Revit journal format reference (this project)",
+          "url": "https://github.com/basepointlabs-io/journal-files/blob/main/knowledge-base/notes/journal-format.md"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "observed-closed-right-after-startup",
+      "category": "startup",
+      "severity": "high",
+      "match": {},
+      "metric": {
+        "type": "closed_right_after_startup",
+        "threshold": 60,
+        "description": "The journal has '<-desktop InitManagedInstance' (start-up finished), ends at most 60 s later without 'finished recording journal file', and no model was opened. Report the third-party add-ins named in the last 10 s ('... event by application <name> (<guid>)', '[Jrn.ExternalEventExecution] Rvt.Attr.AddInName: <name>')."
+      },
+      "context": "Seen in Revit 2024.3.6 with 26 third-party add-ins: start-up took 7.5 minutes; the journal stops one second after 'appPriv idle', while add-ins were handling their first idle events. No crash record, no dump.",
+      "versions": "Seen in 2024.3.6",
+      "title": {
+        "uk": "Revit закрився сам одразу після запуску",
+        "en": "Revit closed by itself right after starting"
+      },
+      "cause": {
+        "uk": "Revit завершив запуск, і за кілька секунд журнал обривається без жодної помилки: ні вікна про збій, ні запису в журналі. Так буває, коли процес завершує не сам Revit: add-in, який падає одразу після запуску (у цей момент add-in'и виконують свої перші дії), або зовнішня програма, наприклад антивірус. Журнал називає add-in'и, які були активні в останні секунди, але це збіг у часі, а не доказ.",
+        "en": "Revit finished starting, and seconds later the journal stops with no error at all: no crash window and no crash record. This happens when something other than Revit's own error handling ends the process: an add-in that fails right after start-up (add-ins run their first actions at that moment), or an outside program such as antivirus software. The journal names the add-ins that were active in the last seconds; that is a coincidence in time, not proof."
+      },
+      "fix": {
+        "uk": [
+          "Спершу перевірте вільне місце на диску C:. Revit пише туди журнал, тимчасові файли й кеш; коли диск заповнений, він може закритися без повідомлення і не запуститися знову. Тримайте вільними щонайменше 10 ГБ.",
+          "Подивіться в Event Viewer > Windows Logs > Application записи «Application Error» або «.NET Runtime» для Revit.exe за цей час: «Faulting module name» називає компонент, який дав збій.",
+          "Тимчасово вимкніть add-in'и, названі нижче, і запустіть Revit знову; повертайте їх по одному.",
+          "Якщо Windows не записала жодної помилки, попросіть IT перевірити журнал антивіруса / захисту кінцевих точок за ту саму хвилину.",
+          "Якщо після цього Revit не запускається, завершіть процеси Revit.exe і RevitWorker.exe, що лишилися, у Task Manager замість перезавантаження."
+        ],
+        "en": [
+          "Check the free space on drive C: first. Revit writes its journal, temporary files and caches there; when the disk is full it can close without a message and fail to start again. Keep at least 10 GB free.",
+          "Check Event Viewer > Windows Logs > Application for \"Application Error\" or \".NET Runtime\" entries for Revit.exe at that time: \"Faulting module name\" is the component that failed.",
+          "Temporarily disable the add-ins named below and start Revit again; put them back one at a time.",
+          "If Windows recorded no error, ask IT to check the antivirus / endpoint protection log for the same minute.",
+          "If Revit does not start afterwards, end the leftover Revit.exe and RevitWorker.exe processes in Task Manager instead of restarting the computer."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk: \"A software problem has caused Revit to close unexpectedly\" when launching Revit or opening a project",
+          "url": "https://autodesk.com/support/technical/article/A-software-problem-has-caused-Revit-Version-to-close-unexpectedly-Error-when-opening-Revit"
+        },
+        {
+          "title": "Autodesk: \"Revit has stopped working\" and then Revit shuts down",
+          "url": "https://autodesk.com/support/technical/article/Error-Revit-has-stopped-working-and-then-Revit-2017-shuts-down"
+        },
+        {
+          "title": "Revit journal format reference (this project)",
+          "url": "https://github.com/basepointlabs-io/journal-files/blob/main/knowledge-base/notes/journal-format.md"
+        }
+      ],
+      "confidence": "community",
+      "related": []
+    },
+    {
+      "id": "observed-too-many-ribbon-tabs",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "TaskDialog \"Too many tabs have been created by the API"
+        ]
+      },
+      "context": "Shown once for every add-in that asks for its own ribbon tab after the limit is reached; each dialog waits for a click, which also delays start-up. The text is not translated in localized Revit.",
+      "versions": "R2020-R2026",
+      "title": {
+        "uk": "Забагато add-in'ів: Revit вичерпав ліміт власних вкладок стрічки",
+        "en": "Too many add-ins: Revit ran out of custom ribbon tabs"
+      },
+      "cause": {
+        "uk": "Add-in'и можуть створити щонайбільше 20 власних вкладок стрічки за сесію. Коли ліміт вичерпано, Revit показує це вікно для кожного наступного add-in'а, який просить свою вкладку. Кнопки такого add-in'а можуть не з'явитися, а запуск чекає, доки ви закриєте кожне вікно.",
+        "en": "Add-ins can create at most 20 custom ribbon tabs per session. Once the limit is reached, Revit shows this dialog for every further add-in that asks for its own tab. The buttons of that add-in may be missing, and start-up waits until you close each dialog."
+      },
+      "fix": {
+        "uk": [
+          "Видаліть або вимкніть add-in'и, якими не користуєтесь, доки їх вкладок не стане менше 20 (список сторонніх add-in'ів є в цьому звіті).",
+          "Якщо add-in дозволяє, перенесіть його кнопки на спільну вкладку Add-Ins у налаштуваннях add-in'а.",
+          "Якщо всі add-in'и потрібні, попросіть розробників розміщувати панелі на вкладці Add-Ins замість власної."
+        ],
+        "en": [
+          "Uninstall or disable add-ins you do not use until fewer than 20 of them create a tab (this report lists the third-party add-ins).",
+          "Where an add-in offers it, move its buttons to the shared Add-Ins tab in the add-in's settings.",
+          "If every add-in is needed, ask their developers to place their panels on the Add-Ins tab instead of a tab of their own."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Revit API reference: UIControlledApplication.CreateRibbonTab (maximum of 20 custom tabs)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-API-MainReference/files/html/8ce17489-75ee-ae81-306d-58f9c505c80c.htm"
+        },
+        {
+          "title": "McNeel forum: Rhino.Inside exception in Revit - too many tabs have been created",
+          "url": "https://discourse.mcneel.com/t/rhino-inside-exception-in-revit-2020-too-many-tabs-have-been-created/125804"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "metric-addin-inventory"
+      ]
     }
   ]
 }

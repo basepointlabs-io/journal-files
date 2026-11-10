@@ -130,6 +130,17 @@ public sealed class Analyzer(RuleSet rules)
         if (byId.TryGetValue("metric-sync-failed", out var syncFailed))
             syncFailed.Steps.AddRange(SyncAdvice.Steps(session));
 
+        if (byId.TryGetValue(StartupAdvice.NotCompletedRule, out var notStarted))
+        {
+            notStarted.Steps.AddRange(StartupAdvice.NotCompletedSteps(session, context));
+            StartupAdvice.Weigh(notStarted, session, context, endKind);
+        }
+        if (byId.TryGetValue(StartupAdvice.ClosedAfterRule, out var closedAfter))
+        {
+            closedAfter.Steps.AddRange(StartupAdvice.ClosedAfterSteps(session));
+            StartupAdvice.Weigh(closedAfter, session, context, endKind);
+        }
+
         var findings = MergeRelated(byId);
         var lastActions = session.UserActions.TakeLast(10).ToList();
 
@@ -214,6 +225,7 @@ public sealed class Analyzer(RuleSet rules)
         return [.. result
             .OrderByDescending(f => f.Severity)
             .ThenBy(f => SessionEndRules.Contains(f.Rule.Id))
+            .ThenByDescending(f => f.Rule.Id is StartupAdvice.NotCompletedRule or StartupAdvice.ClosedAfterRule) // why Revit is gone comes first
             .ThenByDescending(f => f.Rule.Confidence)
             .ThenByDescending(f => f.HitCount)];
     }

@@ -78,6 +78,12 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
     /// </summary>
     public IReadOnlyList<string> WorkerLogs { get; init; } = [];
 
+    /// <summary>How the journal with the previous number in the same folder ended; null when there is none or it is still open.</summary>
+    public PreviousSession? Previous { get; init; }
+
+    /// <summary>Free space on the journal's drive at analysis time; only for a journal in this computer's own journal folder.</summary>
+    public DiskSpace? Disk { get; init; }
+
     public static AnalysisContext ForFile(string journalPath)
     {
         string dir = Path.GetDirectoryName(journalPath) ?? ".";
@@ -92,9 +98,63 @@ public sealed record AnalysisContext(bool IsBeingWritten, IReadOnlyList<string> 
         return new AnalysisContext(File.Exists(journalPath) && Parsing.JournalReader.IsBeingWritten(journalPath), dumps)
         {
             WorkerLogs = workers,
+            Previous = PreviousSession.Of(journalPath),
+            Disk = local ? DiskSpace.Of(journalPath) : null,
             IsLocal = local,
             // Events of this computer say nothing about a journal that came from another one.
             CrashEvents = local ? WindowsCrashLog.Recent() : [],
         };
+    }
+}
+
+/// <summary>The end of the session recorded just before this one (journal.NNNN-1.txt).</summary>
+public sealed record PreviousSession(string Name, DateTime End, bool EndedNormally)
+{
+    public static PreviousSession? Of(string journalPath)
+    {
+        // journal.0047.txt -> journal.0046.txt
+        string[] parts = Path.GetFileName(journalPath).Split('.');
+        if (parts.Length != 3 || !int.TryParse(parts[1], out int number) || number <= 0)
+            return null;
+        string name = $"{parts[0]}.{(number - 1).ToString(new string('0', parts[1].Length), System.Globalization.CultureInfo.InvariantCulture)}.{parts[2]}";
+        string path = Path.Combine(Path.GetDirectoryName(journalPath) ?? ".", name);
+        try
+        {
+            if (!File.Exists(path) || Parsing.JournalReader.IsBeingWritten(path))
+                return null;
+            DateTime? end = null;
+            bool normal = false;
+            foreach (string line in Parsing.JournalReader.ReadTail(path))
+            {
+                if (!Parsing.JournalTimestamp.TryParse(line, out var t))
+                    continue;
+                end = t;
+                normal |= line.Contains("finished recording journal file", StringComparison.Ordinal);
+            }
+            return end is { } e ? new PreviousSession(name, e, normal) : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+}
+
+/// <summary>Free space of a drive ("C:") at one moment.</summary>
+public sealed record DiskSpace(string Name, long FreeMb, DateTime At)
+{
+    public static DiskSpace? Of(string path)
+    {
+        try
+        {
+            if (Path.GetPathRoot(Path.GetFullPath(path)) is not { Length: > 0 } root)
+                return null;
+            var drive = new DriveInfo(root);
+            return drive.IsReady ? new DiskSpace(root.TrimEnd('\\', '/'), drive.AvailableFreeSpace / (1024 * 1024), DateTime.Now) : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return null;
+        }
     }
 }

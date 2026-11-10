@@ -46,6 +46,8 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"User's Name ([^,]+), User's Machine Name ([^,]+),")] private static partial Regex UserTokenRegex();
     [GeneratedRegex(@"(?:System|Autodesk|Microsoft)\.[\w.]*Exception\b|Exception occurred|ExceptionCode=")] private static partial Regex ExceptionRegex();
 
+    [GeneratedRegex(@"by application (.+?) \([0-9a-fA-F-]{36}\)|Rvt\.Attr\.AddInName: (.+?) Rvt\.Attr\.")] private static partial Regex AddInActivityRegex();
+
     private static readonly string[] FailureDialogMarkers = ["Could_Not", "Fail", "Error", "Cannot", "Unable"];
 
     private readonly RuleMatcher? _matcher;
@@ -217,6 +219,22 @@ public sealed partial class JournalParser
             s.AddIns.Add(new AddIn(n, a.Groups[2].Value.Trim(), a.Groups[3].Value.Trim(), a.Groups[4].Value.Trim(), a.Groups[1].Value == "API_ERROR"));
         else if (line.Contains("API External Application added", StringComparison.Ordinal) && AddInLegacyRegex().Match(line) is { Success: true } la)
             s.AddIns.Add(new AddIn(n, la.Groups[1].Value.Trim(), la.Groups[2].Value.Trim(), la.Groups[2].Value.Trim(), false));
+
+        if ((line.Contains("by application ", StringComparison.Ordinal) || line.Contains("Rvt.Attr.AddInName:", StringComparison.Ordinal))
+            && AddInActivityRegex().Match(line) is { Success: true } act)
+        {
+            if (s.AddInActivity.Count == JournalSession.AddInActivitySize)
+                s.AddInActivity.RemoveAt(0);
+            s.AddInActivity.Add(new AddInActivity(n, _ts, (act.Groups[1].Success ? act.Groups[1] : act.Groups[2]).Value.Trim()));
+        }
+
+        if (s.StartupCompletedAt is null)
+        {
+            if (line.Contains("License initialization complete", StringComparison.Ordinal))
+                s.LicenseReadyAt ??= _ts;
+            else if (line.Contains("<-desktop InitManagedInstance", StringComparison.Ordinal))
+                s.StartupCompletedAt = _ts;
+        }
 
         if (line.Contains("[Jrn.BasicFileInfo]", StringComparison.Ordinal))
             AddModel(s, _seenModels, line, n);

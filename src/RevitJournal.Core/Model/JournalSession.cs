@@ -39,13 +39,13 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
             LineCount = LineCount, WorkerLogLines = WorkerLogLines, TailQueue = new Queue<string>(TailQueue),
             Release = Release, Build = Build, BuildDate = BuildDate, UserName = UserName, MachineName = MachineName,
             Start = Start, LastTimestamp = LastTimestamp, EndedNormally = EndedNormally, ExitRequestedAt = ExitRequestedAt,
-            IsPlayback = IsPlayback,
+            IsPlayback = IsPlayback, LicenseReadyAt = LicenseReadyAt, StartupCompletedAt = StartupCompletedAt,
             RuleHits = RuleHits?.ToDictionary(kv => kv.Key, kv => kv.Value.ToList(), StringComparer.Ordinal),
         };
         c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
         c.Dialogs.AddRange(Dialogs); c.LongOperations.AddRange(LongOperations); c.AddIns.AddRange(AddIns); c.Models.AddRange(Models);
         c.Exceptions.AddRange(Exceptions); c.Interactions.AddRange(Interactions); c.PostedMessages.AddRange(PostedMessages);
-        c.Orphans.AddRange(Orphans); c.FatalMarkers.AddRange(FatalMarkers);
+        c.Orphans.AddRange(Orphans); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
         c.Syncs.AddRange(Syncs.Select(s => s.Clone()));
         c.Opens.AddRange(Opens.Select(o => o.Clone()));
         c.LocalCopies.AddRange(LocalCopies.Select(o => o.Clone()));
@@ -66,6 +66,16 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     /// <summary>The user asked Revit to quit (ID_APP_EXIT or closing the main window).</summary>
     public DateTime? ExitRequestedAt { get; set; }
     public bool IsPlayback { get; set; }
+
+    /// <summary>"License initialization complete": the first start-up step that needs the licensing service is done.</summary>
+    public DateTime? LicenseReadyAt { get; set; }
+    /// <summary>"&lt;-desktop InitManagedInstance": all add-ins are loaded and Revit is ready for the user.</summary>
+    public DateTime? StartupCompletedAt { get; set; }
+
+    /// <summary>How many of the last add-in events are kept.</summary>
+    public const int AddInActivitySize = 30;
+    /// <summary>The last add-ins that did something (registered or dropped an event, ran an external event), oldest first.</summary>
+    public List<AddInActivity> AddInActivity { get; } = [];
 
     public List<RamSample> Ram { get; } = [];
     public List<GdiSample> Gdi { get; } = [];
@@ -185,5 +195,8 @@ public sealed record AddIn(int Line, string Name, string VendorId, string Vendor
     public bool IsAutodesk => VendorId.Equals("ADSK", StringComparison.OrdinalIgnoreCase)
                               || Vendor.Contains("Autodesk", StringComparison.OrdinalIgnoreCase);
 }
+
+/// <summary>An add-in was active at this point: Revit logged an event registration or an external event for it.</summary>
+public sealed record AddInActivity(int Line, DateTime? Time, string Name);
 
 public sealed record ModelInfo(int Line, string Path, string? Worksharing, int? SavedInYear, string? SavedInBuild);
