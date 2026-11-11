@@ -80,9 +80,11 @@ procedure CloseRunningApp();
 var
   ResultCode: Integer;
 begin
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitDoctor.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  // The installed copy of the former name; portable copies have other file names and are left alone.
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitJournalAnalyzer.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Every copy, portable ones too (RevitDoctor-0.5.0-portable-x64.exe): a copy left running would keep the
+  // single-instance lock, and starting the new version would only bring the old window to the front.
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitDoctor*', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Copies of the former name.
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitJournalAnalyzer*', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
