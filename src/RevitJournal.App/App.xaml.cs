@@ -111,7 +111,9 @@ public partial class App : Application
         var older = Process.GetProcesses()
             .Where(p => p.Id != me.Id && p.SessionId == me.SessionId &&
                         (p.ProcessName.StartsWith("RevitDoctor", StringComparison.OrdinalIgnoreCase) ||
-                         p.ProcessName.StartsWith("RevitJournalAnalyzer", StringComparison.OrdinalIgnoreCase)))
+                         p.ProcessName.StartsWith("RevitJournalAnalyzer", StringComparison.OrdinalIgnoreCase)) &&
+                        // The installer is RevitDoctor-x.y.z-setup.exe and carries the version too: never end it.
+                        !p.ProcessName.Contains("setup", StringComparison.OrdinalIgnoreCase))
             .Where(p => VersionOf(p) is { } v && v < mine)
             .ToList();
         if (older.Count == 0)

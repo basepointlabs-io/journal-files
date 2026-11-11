@@ -80,11 +80,13 @@ procedure CloseRunningApp();
 var
   ResultCode: Integer;
 begin
-  // Every copy, portable ones too (RevitDoctor-0.5.0-portable-x64.exe): a copy left running would keep the
-  // single-instance lock, and starting the new version would only bring the old window to the front.
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitDoctor*', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  // Copies of the former name.
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im RevitJournalAnalyzer*', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Every copy of the app, portable ones too (RevitDoctor-0.5.0-portable-x64.exe) and the former name: a copy left
+  // running keeps the single-instance lock, and starting the new version would only bring the old window forward.
+  // Not "taskkill /im RevitDoctor*": this setup is RevitDoctor-x.y.z-setup.exe (and runs as ...-setup.tmp), so that
+  // would end the installer itself. PowerShell lets the setup be left out.
+  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -NonInteractive -Command "Get-Process | Where-Object { $_.ProcessName -match ''^(RevitDoctor|RevitJournalAnalyzer)'' -and $_.ProcessName -notmatch ''setup'' } | ForEach-Object { try { $_.Kill(); $_.WaitForExit(5000) } catch {} }"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
