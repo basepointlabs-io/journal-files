@@ -23,6 +23,17 @@ public sealed class TrayAgent : IDisposable
     private HealthLevel? _shownLevel;
     private LiveAlert? _shownAlert;
     private bool _busy;
+    private HealthReport? _lastReport;
+
+    // Autodesk's public status page, read every few minutes. Nothing is sent but the request itself.
+    private readonly System.Net.Http.HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(20) };
+    private readonly DispatcherTimer _statusTimer = new() { Interval = AutodeskStatus.Interval };
+    private bool _statusBusy;
+
+    /// <summary>The latest reading of the Autodesk Health Dashboard; null until it has been read or while it cannot be reached.</summary>
+    public AutodeskStatusReport? Autodesk { get; private set; }
+    /// <summary>True once the page has been tried and could not be read the last time.</summary>
+    public bool AutodeskUnavailable { get; private set; }
 
     /// <summary>The full window was asked for (tray menu, or a notification without a specific answer).</summary>
     public event Action? OpenRequested;
@@ -74,19 +85,28 @@ public sealed class TrayAgent : IDisposable
         {
             if (_shownAlert is { } alert)
                 AlertClicked?.Invoke(alert);
+            else if (_shownLink is { } link)
+                OpenLink(link);
             else
                 OpenRequested?.Invoke();
         };
 
         _timer.Tick += async (_, _) => await TickAsync();
         _timer.Start();
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd($"RevitDoctor/{AppInfo.Version}");
+        _statusTimer.Tick += async (_, _) => await CheckAutodeskAsync();
+        _statusTimer.Start();
+        _ = CheckAutodeskAsync();
         // The first reading right away, so the overview is not empty for five seconds.
         _ = TickAsync();
     }
 
+    private string? _shownLink;
+
     public void ShowInfo(string title, string text)
     {
         _shownAlert = null;
+        _shownLink = null;
         _icon.ShowBalloonTip(5000, title, text, Forms.ToolTipIcon.Info);
     }
 
@@ -108,13 +128,18 @@ public sealed class TrayAgent : IDisposable
             StatusChanged?.Invoke(_monitor.Status);
             ResultsChanged?.Invoke(_monitor.Results);
             HealthChanged?.Invoke(report, _monitor.Status);
+            _lastReport = report;
             ShowLevel(report);
             if (alerts.Count > 0)
                 AlertsRaised?.Invoke(alerts);
             // Windows shows one notification at a time: show the most serious of this round.
             if (alerts.OrderByDescending(a => Priority(a.Kind)).FirstOrDefault() is { } alert)
             {
+                // A failed sync while Autodesk reports a problem with cloud worksharing: say it is not this computer.
+                if (alert.Kind == LiveAlertKind.SyncFailed && Autodesk?.Problems.FirstOrDefault(p => p.Service == "Revit Cloud Worksharing") is { } cloud)
+                    alert = alert with { Message = $"{alert.Message} Autodesk reports {cloud.StateText} of Revit Cloud Worksharing (EU) right now." };
                 _shownAlert = alert;
+                _shownLink = null;
                 _icon.ShowBalloonTip(15000, alert.Title, alert.Message,
                     alert.Kind is LiveAlertKind.SyncTakingLong ? Forms.ToolTipIcon.Info : Forms.ToolTipIcon.Warning);
             }
@@ -128,6 +153,63 @@ public sealed class TrayAgent : IDisposable
             _busy = false;
         }
     }
+
+    /// <summary>
+    /// Reads the Autodesk Health Dashboard. A notification appears once when a watched service gets a problem and
+    /// once when it recovers; while it lasts the overview shows it and the tray icon turns amber.
+    /// </summary>
+    private async Task CheckAutodeskAsync()
+    {
+        if (_statusBusy)
+            return;
+        _statusBusy = true;
+        try
+        {
+            var now = await AutodeskStatus.FetchAsync(_http);
+            AutodeskUnavailable = now is null;
+            if (now is null)
+                return; // keep the last known state; the overview says it could not be checked
+            var before = Autodesk;
+            Autodesk = now;
+            if (_lastReport is not null)
+                ShowLevel(_lastReport);
+
+            var (started, recovered) = AutodeskStatus.Changes(before, now);
+            if (started.Count > 0)
+            {
+                var first = started[0];
+                string text = string.Join("\n", started.Select(p => AutodeskStatus.Describe(p, now.Checked) + " (EU)"))
+                              + (first.Update is { } update ? $"\n{update}" : "")
+                              + "\nThis is not your computer.";
+                Notify("Autodesk reports a problem", text, first.Url, Forms.ToolTipIcon.Warning);
+            }
+            else if (recovered.Count > 0 && before is not null)
+            {
+                Notify("Autodesk: problem resolved", $"{string.Join(", ", recovered)} (EU) operational again.", AutodeskStatus.PageUrl, Forms.ToolTipIcon.Info);
+            }
+        }
+        finally
+        {
+            _statusBusy = false;
+        }
+    }
+
+    private void Notify(string title, string text, string link, Forms.ToolTipIcon icon)
+    {
+        _shownAlert = null;
+        _shownLink = link;
+        _icon.ShowBalloonTip(15000, title, text.Length > 255 ? text[..252] + "…" : text, icon);
+    }
+
+    private static void OpenLink(string url)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (System.ComponentModel.Win32Exception) { /* no browser */ }
+    }
+
+    /// <summary>The computer's level, raised to "keep an eye on it" while Autodesk reports a problem.</summary>
+    public HealthLevel LevelOf(HealthReport report) =>
+        Autodesk is { AllOperational: false } && report.Level == HealthLevel.Ok ? HealthLevel.Watch : report.Level;
 
     private static int Priority(LiveAlertKind k) => k switch
     {
@@ -143,12 +225,13 @@ public sealed class TrayAgent : IDisposable
     /// <summary>The icon's dot and tooltip say how things are without opening anything.</summary>
     private void ShowLevel(HealthReport report)
     {
-        if (_shownLevel != report.Level)
+        var level = LevelOf(report);
+        if (_shownLevel != level)
         {
-            _shownLevel = report.Level;
-            _icon.Icon = IconFor(report.Level);
+            _shownLevel = level;
+            _icon.Icon = IconFor(level);
         }
-        string state = report.Level switch
+        string state = level switch
         {
             HealthLevel.Danger => "Act now",
             HealthLevel.Watch => "Keep an eye on it",
@@ -199,6 +282,8 @@ public sealed class TrayAgent : IDisposable
     public void Dispose()
     {
         _timer.Stop();
+        _statusTimer.Stop();
+        _http.Dispose();
         _icon.Visible = false;
         _icon.Dispose();
         _monitor.Dispose();

@@ -226,18 +226,46 @@ public sealed class FindingView(Finding f, bool expanded)
 /// <summary>The overview of the computer and the running Revit sessions, as shown in the tray flyout and on the start screen.</summary>
 public sealed class HealthView
 {
-    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions)
+    /// <param name="autodesk">The latest reading of the Autodesk Health Dashboard; null while not read yet or not reachable.</param>
+    /// <param name="autodeskUnavailable">The dashboard could not be read the last time it was tried.</param>
+    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null, bool autodeskUnavailable = false)
     {
-        StatusKey = Key(r.Level);
-        StatusTitle = r.Level switch
+        // A problem on Autodesk's side raises an all-good computer to "keep an eye on it"; a problem here comes first.
+        bool autodeskProblem = autodesk is { AllOperational: false };
+        var level = autodeskProblem && r.Level == HealthLevel.Ok ? HealthLevel.Watch : r.Level;
+        StatusKey = Key(level);
+        StatusTitle = level switch
         {
             HealthLevel.Danger => "Act now",
             HealthLevel.Watch => "Keep an eye on it",
             _ => "All good",
         };
         StatusReason = r.Issues.Count > 0 ? r.Issues[0].Title
+            : autodeskProblem ? $"Autodesk reports a problem with {autodesk!.Problems[0].Service}"
             : r.Revits.Count == 0 ? "Revit is not running. The computer has enough resources."
             : $"{r.Revits.Count} Revit running. RAM, drawing resources and disk are fine.";
+
+        // Autodesk services: a coloured panel while something is wrong, otherwise one quiet line.
+        if (autodeskProblem)
+        {
+            AutodeskChecked = $"checked {autodesk!.Checked:HH:mm}";
+            AutodeskProblems = [.. autodesk.Problems.Select(p => new AutodeskProblemRow(
+                AutodeskStatus.Describe(p, autodesk.Checked),
+                p.Update ?? p.Incident ?? "No details from Autodesk yet.",
+                p.Url))];
+        }
+        else if (autodesk is not null)
+        {
+            AutodeskLine = "Autodesk services (EU): all operational" + (autodesk.Upcoming.FirstOrDefault() is { } m
+                ? $" · maintenance {AutodeskStatus.When(m.Start, autodesk.Checked)}{(m.End is { } end ? "–" + end.ToString("HH:mm", CultureInfo.InvariantCulture) : "")} ({string.Join(", ", m.Services)})"
+                : "");
+            AutodeskLineKey = autodesk.Upcoming.Count > 0 ? "pending" : "ok";
+        }
+        else if (autodeskUnavailable)
+        {
+            AutodeskLine = "Autodesk service status could not be checked (no connection to health.autodesk.com)";
+            AutodeskLineKey = "pending";
+        }
 
         long used = Math.Max(0, r.TotalRamMb - r.FreeRamMb);
         RamPercent = r.TotalRamMb > 0 ? 100.0 * used / r.TotalRamMb : 0;
@@ -324,6 +352,14 @@ public sealed class HealthView
     public bool HasRevitSummary { get; }
     public IReadOnlyList<HealthIssueRow> Issues { get; }
     public bool HasIssues { get; }
+    /// <summary>Watched Autodesk services with a problem right now; empty when all work.</summary>
+    public IReadOnlyList<AutodeskProblemRow> AutodeskProblems { get; } = [];
+    public bool HasAutodeskProblems => AutodeskProblems.Count > 0;
+    public string AutodeskChecked { get; } = "";
+    /// <summary>"Autodesk services (EU): all operational", or that the page could not be read; empty before the first try.</summary>
+    public string AutodeskLine { get; } = "";
+    public string AutodeskLineKey { get; } = "ok";
+    public bool HasAutodeskLine => AutodeskLine.Length > 0;
 
     /// <summary>"3 Revit running (2024 ×2, 2025) · 5 models, 31 links, 9.4 GB on disk · 12 views · 41.0 GB of RAM".</summary>
     private static string Summary(HealthReport r, IReadOnlyList<LiveStatus> sessions)
@@ -423,6 +459,9 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
 /// One thing to do, shown folded to its title. The overview is rebuilt every few seconds, so which ones the user
 /// unfolded is kept by the issue's key (its title carries live figures and changes).
 /// </summary>
+/// <summary>One Autodesk service with a problem: "Revit Cloud Worksharing: degraded performance since 10:12", Autodesk's latest word, and the incident page.</summary>
+public sealed record AutodeskProblemRow(string Title, string Detail, string Url);
+
 public sealed record HealthIssueRow(string Key, string LevelKey, string Title, string Advice)
 {
     private static readonly HashSet<string> Unfolded = [];

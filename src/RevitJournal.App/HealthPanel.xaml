@@ -58,6 +58,30 @@
       </StackPanel>
     </DockPanel>
 
+    <!-- Autodesk services (EU) with a problem right now, from the Autodesk Health Dashboard. -->
+    <Border Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1" CornerRadius="4" Padding="16,8" Margin="0,16,0,0"
+            Visibility="{Binding HasAutodeskProblems, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Right" Text="{Binding AutodeskChecked}" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center" TextWrapping="NoWrap" />
+          <TextBlock Text="Autodesk services (EU)" FontWeight="SemiBold" Foreground="#7A4D00" />
+        </DockPanel>
+        <ItemsControl ItemsSource="{Binding AutodeskProblems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type local:AutodeskProblemRow}">
+              <StackPanel Margin="0,8,0,0">
+                <TextBlock Text="{Binding Title}" Foreground="#7A4D00" TextWrapping="Wrap" />
+                <TextBlock FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap">
+                  <Run Text="{Binding Detail, Mode=OneWay}" />
+                  <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="Open on Autodesk" /></Hyperlink>
+                </TextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
     <!-- Three tiles: free RAM with its last half hour as a small curve, free disk space, Revit open.
          Each figure turns orange or red when it is low, with what it is measured against under it. -->
     <Grid Margin="0,16,0,0">
@@ -176,5 +200,12 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
     </StackPanel>
+
+    <!-- Autodesk services when nothing is wrong (or the page could not be read): one quiet line. -->
+    <DockPanel Margin="0,16,0,0" Visibility="{Binding HasAutodeskLine, Converter={StaticResource BoolToVisibility}}">
+      <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,4,8,0" VerticalAlignment="Top"
+               Fill="{Binding AutodeskLineKey, Converter={StaticResource StatusBrush}}" />
+      <TextBlock Text="{Binding AutodeskLine}" FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+    </DockPanel>
   </StackPanel>
 </UserControl>

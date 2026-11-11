@@ -86,7 +86,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (_demo)
                 return; // the snapshot run is showing made-up numbers
-            var view = new HealthView(report, sessions);
+            var view = new HealthView(report, sessions, agent.Autodesk, agent.AutodeskUnavailable);
             FollowRunningVersions([.. report.Revits.Select(p => p.Version).Where(v => v.Length > 0)]);
             ShowHealth(view);
             HealthCard.Visibility = Visibility.Visible;
@@ -216,7 +216,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 9_800, 32_212, null, 1,
                 new RevitJournal.Core.Analysis.ModelLoad("Tower_ARC.rvt", 1_780, 436_899, 13, 13, 2_150, "about 76.8 GB of RAM", true), 9, 1),
              new LiveStatus("2024", "", "Clinic_MEP.rvt", at, true, "Last sync OK at 10:15:02", 9_800, 32_212, null, 2,
-                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "about 20.1 GB of RAM", false), 3, 1)]);
+                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "about 20.1 GB of RAM", false), 3, 1)],
+            new AutodeskStatusReport(at, [], [new ServiceMaintenance("Planned maintenance", ["BIM 360 Docs"], at.Date.AddDays(1).AddHours(2), at.Date.AddDays(1).AddHours(4), AutodeskStatus.PageUrl)]));
         FollowRunningVersions(["2025", "2024"]);
         _demo = true;
         ShowHealth(demo);
@@ -243,6 +244,25 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         await Task.Delay(800);
         SavePng(demoFlyout, System.IO.Path.Combine(folder, "overview-demo.png"));
         demoFlyout.Close();
+
+        // Autodesk reports a problem while this computer is fine: the panel, and the overview turns amber.
+        var cloud = new AutodeskStatusReport(at,
+            [new ServiceProblem("Revit Cloud Worksharing", ServiceState.Degraded, "Slow synchronization of cloud models",
+                "Investigating: some users may see slow or failing syncs of cloud models.", AutodeskStatus.PageUrl, at.AddMinutes(-23))], []);
+        var outage = new HealthView(
+            new HealthReport(at, HealthLevel.Ok, 32_212, 21_800, 40_000, 25_000, 8,
+                [new RevitHealth(1, "2025", at.AddHours(-2), true, 6_200, 1, 1_300, 600, HealthLevel.Ok)],
+                [new DiskHealth("C:", 223_700, 476_000, HealthLevel.Ok)], [],
+                null, [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 22_000 - i * 7))]),
+            [new LiveStatus("2025", "", "Clinic_MEP.rvt", at, true, "", 21_800, 32_212, null, 1,
+                new RevitJournal.Core.Analysis.ModelLoad("Clinic_MEP.rvt", 410, 120_500, 4, 4, 620, "about 20.1 GB of RAM", false), 3, 1)],
+            cloud);
+        var outageFlyout = new HealthFlyout { ShowActivated = false, Left = -32000, Top = 0 };
+        outageFlyout.Update(outage);
+        outageFlyout.Show();
+        await Task.Delay(800);
+        SavePng(outageFlyout, System.IO.Path.Combine(folder, "overview-autodesk.png"));
+        outageFlyout.Close();
         if (_lastHealth is not null)
             ShowHealth(_lastHealth);
         _demo = false;

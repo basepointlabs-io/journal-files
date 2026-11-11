@@ -473,7 +473,7 @@
           </StackPanel>
           <StackPanel VerticalAlignment="Center">
             <TextBlock x:Name="StatusLine" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="Everything runs on this computer. Nothing is uploaded." Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="Everything runs on this computer. Reads Autodesk's public status page; sends nothing." Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </DockPanel>
       </Grid>
