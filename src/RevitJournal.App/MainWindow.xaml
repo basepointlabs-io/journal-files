@@ -4,7 +4,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:RevitJournal.App"
         Title="Revit Doctor" Width="1100" Height="840" MinWidth="1040" MinHeight="600"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterScreen" UseLayoutRounding="True"
         ExtendsContentIntoTitleBar="True" WindowBackdropType="None"
         Background="{StaticResource Ground}" Foreground="{StaticResource Ink}"
         FontFamily="{StaticResource AppFontFamily}" FontSize="13"
@@ -26,39 +26,39 @@
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
           <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2,0,0,2" />
-          <Expander Grid.Column="1" Style="{StaticResource PlainExpander}" IsExpanded="{Binding IsExpanded}" Padding="16,12">
+          <Expander Grid.Column="1" Style="{StaticResource PlainExpander}" IsExpanded="{Binding IsExpanded}" Padding="16,8">
             <Expander.Header>
               <StackPanel Orientation="Horizontal">
                 <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"
-                        Padding="6,1" Margin="0,0,12,0" VerticalAlignment="Center">
+                        Padding="8,0" Margin="0,0,8,0" VerticalAlignment="Center">
                   <TextBlock Text="{Binding SeverityText}" Foreground="White" FontSize="10" FontWeight="SemiBold" TextWrapping="NoWrap" />
                 </Border>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding Confidence}" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center"
-                           Margin="12,1,0,0" TextWrapping="NoWrap" />
+                           Margin="8,0,0,0" TextWrapping="NoWrap" />
               </StackPanel>
             </Expander.Header>
 
-            <StackPanel Margin="24,4,8,8">
+            <StackPanel Margin="16,0,8,8">
               <TextBlock Text="{Binding Cause}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
 
               <ItemsControl ItemsSource="{Binding Facts}" Margin="0,8,0,0"
                             Visibility="{Binding HasFacts, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding StringFormat='▸ {0}'}" FontWeight="SemiBold" Margin="0,2" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding StringFormat='▸ {0}'}" FontWeight="SemiBold" Margin="0" TextWrapping="Wrap" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
 
               <StackPanel Visibility="{Binding HasCaseSteps, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="What to do in your case" FontWeight="SemiBold" Margin="0,16,0,8" Foreground="{StaticResource Accent}" />
-                <Border Background="#EEF3FD" CornerRadius="2" Padding="12,8,12,8">
+                <Border Background="#EEF3FD" CornerRadius="2" Padding="8">
                   <ItemsControl ItemsSource="{Binding CaseSteps}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
                         <TextBox Text="{Binding Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                                 TextWrapping="Wrap" TextAlignment="Left" Margin="0,2" Padding="0" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
+                                 TextWrapping="Wrap" TextAlignment="Left" Margin="0" Padding="0" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
                                  Foreground="{StaticResource Ink}" />
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -70,14 +70,14 @@
               <ItemsControl ItemsSource="{Binding Steps}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding}" Margin="0" TextWrapping="Wrap" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
 
               <StackPanel Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{Binding EvidenceTitle}" FontWeight="SemiBold" Margin="0,16,0,8" />
-                <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="12,8">
+                <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="8">
                   <TextBox Text="{Binding Evidence, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
                            FontFamily="Cascadia Mono, Consolas" FontSize="11.5" TextWrapping="NoWrap" Padding="0"
                            HorizontalScrollBarVisibility="Auto" />
@@ -85,10 +85,10 @@
               </StackPanel>
 
               <TextBlock Margin="0,16,0,0" FontSize="12" Foreground="{StaticResource Hint}" Text="{Binding Source, Mode=OneWay}" />
-              <ItemsControl ItemsSource="{Binding Sources}" Margin="0,4,0,0">
+              <ItemsControl ItemsSource="{Binding Sources}" Margin="0">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0">
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0">
                       <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}">
                         <Run Text="{Binding Title, Mode=OneWay}" />
                       </Hyperlink>
@@ -103,7 +103,7 @@
     </DataTemplate>
 
     <DataTemplate x:Key="Bullets">
-      <BulletDecorator Margin="0,2">
+      <BulletDecorator Margin="0">
         <BulletDecorator.Bullet>
           <TextBlock Text="•" Foreground="{StaticResource Hint}" />
         </BulletDecorator.Bullet>
@@ -113,12 +113,12 @@
 
     <!-- Full report for one journal (History page). -->
     <DataTemplate DataType="{x:Type local:ReportView}">
-      <StackPanel Margin="24" MaxWidth="980" HorizontalAlignment="Left">
+      <StackPanel Margin="16" MaxWidth="980" HorizontalAlignment="Left">
         <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource Hint}" Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource Hint}" Margin="0" FontSize="12" TextWrapping="Wrap" />
 
         <TextBlock Text="WHAT HAPPENED" Style="{StaticResource SectionTitle}" />
-        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12">
+        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,8">
           <ItemsControl ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource Bullets}" />
         </Border>
 
@@ -130,11 +130,11 @@
 
         <StackPanel Visibility="{Binding ShowLastActions, Converter={StaticResource BoolToVisibility}}">
           <TextBlock Text="LAST USER ACTIONS" Style="{StaticResource SectionTitle}" />
-          <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12">
+          <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,8">
             <ItemsControl ItemsSource="{Binding LastActions}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="11.5" Margin="0,1" TextWrapping="NoWrap" />
+                  <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="11.5" Margin="0" TextWrapping="NoWrap" />
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -145,16 +145,16 @@
 
     <!-- Answer for a symptom. -->
     <DataTemplate DataType="{x:Type local:DiagnosisView}">
-      <StackPanel Margin="24" MaxWidth="980" HorizontalAlignment="Left">
+      <StackPanel Margin="16" MaxWidth="980" HorizontalAlignment="Left">
         <TextBlock FontSize="13" Foreground="{StaticResource Hint}">
           <Run Text="{Binding Icon, Mode=OneWay}" />
           <Run Text="{Binding SymptomTitle, Mode=OneWay}" />
         </TextBlock>
         <TextBlock Text="{Binding Headline}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap" />
-        <TextBlock Text="{Binding Source}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0,4,0,0"
+        <TextBlock Text="{Binding Source}" Foreground="{StaticResource Hint}" FontSize="12" Margin="0"
                    Visibility="{Binding HasSource, Converter={StaticResource BoolToVisibility}}" />
 
-        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,12" Margin="0,16,0,0"
+        <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="16,8" Margin="0,16,0,0"
                 Visibility="{Binding HasFacts, Converter={StaticResource BoolToVisibility}}">
           <ItemsControl ItemsSource="{Binding Facts}" ItemTemplate="{StaticResource Bullets}" />
         </Border>
@@ -164,20 +164,20 @@
           <ItemsControl ItemsSource="{Binding Findings}" />
         </StackPanel>
 
-        <TextBlock Text="{Binding NoCauseText}" Margin="0,24,0,0" FontSize="14"
+        <TextBlock Text="{Binding NoCauseText}" Margin="0,16,0,0" FontSize="14"
                    Visibility="{Binding ShowNoCause, Converter={StaticResource BoolToVisibility}}" />
         <TextBlock Text="{Binding ChecklistTitle}" Style="{StaticResource SectionTitle}" />
-        <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16,12">
+        <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16,8">
           <ItemsControl ItemsSource="{Binding Checklist}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <TextBlock Text="{Binding}" Margin="0,3" />
+                <TextBlock Text="{Binding}" Margin="0" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </Border>
 
-        <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
           <Button Content="Open the full report for this session" Click="OnOpenFullReport" Style="{StaticResource ToolbarButton}"
                   Visibility="{Binding HasSource, Converter={StaticResource BoolToVisibility}}" />
           <Button Content="Back to Right now" Click="OnHome" Style="{StaticResource ToolbarButton}" />
@@ -266,13 +266,13 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,4,0" ToolTip="Open a journal file from anywhere">
+          <Button Style="{StaticResource GroundButton}" Click="OnOpenFile" Margin="0,0,8,0" ToolTip="Open a journal file from anywhere">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="FolderOpen24" FontSize="16" Margin="0,0,8,0" />
               <TextBlock Text="Open…" VerticalAlignment="Center" TextWrapping="NoWrap" />
             </StackPanel>
           </Button>
-          <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="4,0,0,0" ToolTip="Read all journals again">
+          <Button Grid.Column="1" Style="{StaticResource GroundButton}" Click="OnRefresh" Margin="0" ToolTip="Read all journals again">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Margin="0,0,8,0" />
               <TextBlock Text="Refresh" VerticalAlignment="Center" TextWrapping="NoWrap" />
@@ -285,28 +285,28 @@
         <RadioButton x:Name="HomeNav" DockPanel.Dock="Top" Style="{StaticResource NavRow}" Click="OnHome" IsChecked="True"
                      Margin="0,8,0,0" ToolTip="The computer and every running Revit, live">
           <DockPanel>
-            <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Pulse24" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"
+            <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Pulse24" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"
                            Foreground="{StaticResource Accent}" />
             <Ellipse x:Name="HomeNavDot" DockPanel.Dock="Right" Width="8" Height="8" VerticalAlignment="Center" Margin="8,0,0,0"
                      Fill="{StaticResource Hint}" />
             <StackPanel>
               <TextBlock Text="Right now" FontWeight="SemiBold" />
               <TextBlock x:Name="HomeNavHint" Text="This computer and running Revit" FontSize="12" Foreground="{StaticResource Muted}"
-                         TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                         TextTrimming="CharacterEllipsis" Margin="0" />
             </StackPanel>
           </DockPanel>
         </RadioButton>
 
         <!-- Running Revit sessions, live from the tray agent -->
         <StackPanel DockPanel.Dock="Top">
-          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="12,16,0,4" Visibility="Collapsed" />
+          <TextBlock x:Name="LiveTitle" Text="RUNNING NOW" Style="{StaticResource SectionTitle}" Margin="8,16,0,0" Visibility="Collapsed" />
           <ItemsControl x:Name="LiveCards">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type local:LiveCardView}">
                 <Button Click="OnLiveCardClick" Tag="{Binding}" Cursor="Hand" HorizontalContentAlignment="Stretch">
                   <Button.Template>
                     <ControlTemplate TargetType="Button">
-                      <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="12,6">
+                      <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="8">
                         <ContentPresenter />
                       </Border>
                       <ControlTemplate.Triggers>
@@ -317,7 +317,7 @@
                     </ControlTemplate>
                   </Button.Template>
                   <DockPanel>
-                    <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,10,0" VerticalAlignment="Top"
+                    <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
                              Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
                     <StackPanel>
                       <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" />
@@ -328,7 +328,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Text="SESSIONS" Style="{StaticResource SectionTitle}" Margin="12,16,0,4" />
+          <TextBlock Text="SESSIONS" Style="{StaticResource SectionTitle}" Margin="8,16,0,0" />
         </StackPanel>
 
         <!-- Every session, grouped by day; selecting one opens its report in the card -->
@@ -344,14 +344,14 @@
                     <Setter.Value>
                       <!-- DataContext is the CollectionViewGroup; its Name is the shared DayGroup instance. -->
                       <ControlTemplate TargetType="GroupItem">
-                        <Expander Style="{StaticResource PlainExpander}" Padding="8,6"
+                        <Expander Style="{StaticResource PlainExpander}" Padding="8"
                                   IsExpanded="{Binding Name.IsExpanded, Mode=TwoWay}">
                           <Expander.Header>
                             <DockPanel LastChildFill="True">
                               <TextBlock DockPanel.Dock="Left" Text="{Binding Name.Icon}" FontSize="12" FontWeight="SemiBold" Width="14"
                                          TextAlignment="Center" VerticalAlignment="Center" TextWrapping="NoWrap"
                                          Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
-                              <StackPanel Margin="6,0,0,0">
+                              <StackPanel Margin="8,0,0,0">
                                 <TextBlock Text="{Binding Name.Label}" FontWeight="SemiBold" FontSize="14" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
                                 <TextBlock Text="{Binding Name.Summary}" FontSize="12" TextWrapping="Wrap"
                                            Foreground="{Binding Name.StatusKey, Converter={StaticResource StatusBrush}}" />
@@ -369,9 +369,9 @@
           </ListBox.GroupStyle>
           <ListBox.ItemTemplate>
             <DataTemplate DataType="{x:Type local:JournalItem}">
-              <Grid Margin="12,6,8,6">
+              <Grid Margin="8">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="14" />
+                  <ColumnDefinition Width="16" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,6,0,0"
@@ -402,33 +402,34 @@
             <!-- HOME: on the left what is going on right now, on the right the way to an answer -->
             <ScrollViewer x:Name="HomePage" VerticalScrollBarVisibility="Auto">
               <!-- Right now: the same overview the tray icon opens, and what the recent sessions say. -->
-              <StackPanel Margin="24" Width="680" HorizontalAlignment="Left">
+              <!-- Fills the card with the same 24 on both sides; at the smallest window it is about 680 wide. -->
+              <StackPanel Margin="16">
                 <TextBlock Text="Right now" FontSize="26" FontWeight="SemiBold" />
                 <TextBlock Text="This computer and every running Revit, read every 5 seconds." Foreground="{StaticResource Muted}"
-                           FontSize="14" Margin="0,4,0,0" />
+                           FontSize="14" Margin="0" />
                 <Border x:Name="HealthCard" Visibility="Collapsed" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2"
-                        Padding="20" Margin="0,16,0,16">
+                        Padding="16" Margin="0,16">
                   <local:HealthPanel x:Name="HomeHealth" Wide="True" />
                 </Border>
 
                 <Border x:Name="HintBanner" Visibility="Collapsed" Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1"
-                        CornerRadius="2" Padding="16,12" Margin="0,0,0,8">
+                        CornerRadius="2" Padding="16,8" Margin="0,0,0,8">
                   <DockPanel>
                     <Button DockPanel.Dock="Right" Content="See why" Click="OnHintClick" Style="{StaticResource ToolbarButton}"
-                            Margin="12,0,0,0" VerticalAlignment="Center" Background="White" />
+                            Margin="8,0,0,0" VerticalAlignment="Center" Background="White" />
                     <TextBlock x:Name="HintText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
                   </DockPanel>
                 </Border>
 
                 <!-- Shown when Revit crashed several times in the last week (metric-repeated-crashes). -->
                 <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="#FFF1F0" BorderBrush="#FFCECB" BorderThickness="1"
-                        CornerRadius="2" Padding="16,12" Margin="0,0,0,8">
+                        CornerRadius="2" Padding="16,8" Margin="0,0,0,8">
                   <StackPanel>
                     <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="#CF222E" />
-                    <ItemsControl x:Name="HistoryFacts" Margin="0,4,0,0">
+                    <ItemsControl x:Name="HistoryFacts" Margin="0">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding StringFormat='• {0}'}" Margin="0,1" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding StringFormat='• {0}'}" Margin="0" TextWrapping="Wrap" />
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -448,7 +449,7 @@
             <ScrollViewer x:Name="ReportPage" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
               <Grid>
                 <ContentControl x:Name="Report" />
-                <TextBlock x:Name="EmptyState" Margin="24" Foreground="{StaticResource Muted}" FontSize="14" Visibility="Collapsed" />
+                <TextBlock x:Name="EmptyState" Margin="16" Foreground="{StaticResource Muted}" FontSize="14" Visibility="Collapsed" />
               </Grid>
             </ScrollViewer>
           </Grid>
@@ -457,7 +458,7 @@
         <!-- Row on the ground under the card: status on the left, report actions on the right (report only) -->
         <DockPanel Grid.Row="1" Margin="0,8,0,0" Height="44">
           <StackPanel x:Name="ReportActions" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
-            <Button Style="{StaticResource GroundButton}" Click="OnShowInFolder" Width="150" Margin="0,0,4,0">
+            <Button Style="{StaticResource GroundButton}" Click="OnShowInFolder" Width="150" Margin="0,0,8,0">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Folder24" FontSize="16" Margin="0,0,8,0" />
                 <TextBlock Text="Show in folder" VerticalAlignment="Center" TextWrapping="NoWrap" />

@@ -372,7 +372,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             Answer.Content = new System.Windows.Controls.TextBlock
             {
-                Text = "Checking the Revit journals on this computer…", Margin = new Thickness(40, 32, 40, 0), FontSize = 16,
+                Text = "Checking the Revit journals on this computer…", Margin = new Thickness(16, 16, 16, 0), FontSize = 16,
             };
             await _analyzed.Task;
             if (_shownSymptom != symptom)

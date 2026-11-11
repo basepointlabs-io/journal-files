@@ -11,6 +11,12 @@ public partial class HealthFlyout : Window
     {
         InitializeComponent();
         VersionText.Text = AppInfo.Version;
+        // The overview grows when a Revit or a problem appears: keep the bottom edge above the tray and let it grow upwards.
+        SizeChanged += (_, _) =>
+        {
+            if (IsVisible && Left > -10000)
+                PlaceNearTray();
+        };
     }
 
     public void Update(HealthView view) => Panel.DataContext = view;
@@ -18,12 +24,20 @@ public partial class HealthFlyout : Window
     /// <summary>Shows the flyout in the bottom right corner of the work area, where the tray is.</summary>
     public void ShowNearTray()
     {
+        MaxHeight = Math.Min(760, SystemParameters.WorkArea.Height - 2 * Gap);
         Show();
         UpdateLayout();
-        var area = SystemParameters.WorkArea;
-        Left = area.Right - ActualWidth - 12;
-        Top = area.Bottom - ActualHeight - 12;
+        PlaceNearTray();
         Activate();
+    }
+
+    private const double Gap = 16;
+
+    private void PlaceNearTray()
+    {
+        var area = SystemParameters.WorkArea;
+        Left = area.Right - ActualWidth - Gap;
+        Top = Math.Max(area.Top + Gap, area.Bottom - ActualHeight - Gap);
     }
 
     private void OnOpenFull(object sender, RoutedEventArgs e)
@@ -31,6 +45,8 @@ public partial class HealthFlyout : Window
         Hide();
         OpenFullRequested?.Invoke();
     }
+
+    private void OnClose(object sender, RoutedEventArgs e) => Hide();
 
     private void OnDeactivated(object? sender, EventArgs e) => Hide();
 

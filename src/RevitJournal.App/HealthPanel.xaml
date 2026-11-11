@@ -8,7 +8,7 @@
   <StackPanel>
     <!-- Overall state -->
     <DockPanel>
-      <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Top"
+      <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="18" Margin="0,0,8,0" VerticalAlignment="Center"
               Background="{Binding StatusKey, Converter={StaticResource StatusBrush}}">
         <!-- The state as a sign as well as a colour: a check, a warning triangle, an alarm light. -->
         <Viewbox Width="22" Height="22">
@@ -52,9 +52,9 @@
           </Canvas>
         </Viewbox>
       </Border>
-      <StackPanel>
+      <StackPanel VerticalAlignment="Center">
         <TextBlock Text="{Binding StatusTitle}" FontSize="18" FontWeight="SemiBold" />
-        <TextBlock Text="{Binding StatusReason}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" />
+        <TextBlock Text="{Binding StatusReason}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0" />
       </StackPanel>
     </DockPanel>
 
@@ -63,31 +63,31 @@
     <Grid Margin="0,16,0,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="8" />
+        <ColumnDefinition Width="16" />
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="8" />
+        <ColumnDefinition Width="16" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="12,10">
+      <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
         <StackPanel>
-          <TextBlock Text="Free RAM" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" />
+          <TextBlock Text="Free RAM" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" />
           <TextBlock Text="{Binding RamNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
-          <local:MemoryChart Sparkline="True" Height="30" Margin="0,6,0,0" Data="{Binding RamChart}"
+          <local:MemoryChart Sparkline="True" Height="30" Margin="0,8,0,0" Data="{Binding RamChart}"
                              Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="12,10">
+      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
         <StackPanel>
-          <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" />
+          <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" />
           <TextBlock Text="{Binding DiskNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="12,10">
+      <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
         <StackPanel>
-          <TextBlock Text="Revit open" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0,2,0,0"  />
+          <TextBlock Text="Revit open" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0"  />
           <TextBlock Text="{Binding RevitNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
@@ -98,7 +98,7 @@
          and wraps long names; the others fit their content. Auto columns shrink to nothing for collapsed cells, so the
          narrow tray flyout shows only the model and the RAM columns. A coloured line only when something needs attention. -->
     <StackPanel Grid.IsSharedSizeScope="True" Margin="0,16,0,0" Visibility="{Binding HasRevits, Converter={StaticResource BoolToVisibility}}">
-      <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,6">
+      <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,8">
         <Grid TextElement.Foreground="{StaticResource Hint}" TextElement.FontSize="12">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -108,18 +108,18 @@
             <ColumnDefinition Width="Auto" SharedSizeGroup="C4" />
             <ColumnDefinition Width="Auto" SharedSizeGroup="C5" />
           </Grid.ColumnDefinitions>
-          <TextBlock Text="Model" Margin="16,0,12,0" />
-          <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0"><TextBlock Text="RAM used" /></Border>
-          <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0"><TextBlock Text="RAM needed*" /></Border>
-          <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="Model file" /></Border>
-          <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="Linked models" /></Border>
-          <Border Grid.Column="5" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="Open views" /></Border>
+          <TextBlock Text="Model" Margin="16,0,8,0" />
+          <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="RAM used" /></Border>
+          <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="RAM needed*" /></Border>
+          <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Model file" /></Border>
+          <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Linked models" /></Border>
+          <Border Grid.Column="5" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Open views" /></Border>
         </Grid>
       </Border>
       <ItemsControl ItemsSource="{Binding Revits}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type local:RevitHealthRow}">
-            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,10,0,10">
+            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,8">
               <StackPanel>
                 <Grid>
                   <Grid.ColumnDefinitions>
@@ -130,21 +130,21 @@
             <ColumnDefinition Width="Auto" SharedSizeGroup="C4" />
             <ColumnDefinition Width="Auto" SharedSizeGroup="C5" />
           </Grid.ColumnDefinitions>
-                  <DockPanel Margin="0,0,12,0">
+                  <DockPanel Margin="0,0,8,0">
                     <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
                              Fill="{Binding StatusKey, Converter={StaticResource StatusBrush}}" />
                     <StackPanel>
                       <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                      <TextBlock Text="{Binding Under}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                      <TextBlock Text="{Binding Under}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0" />
                     </StackPanel>
                   </DockPanel>
-                  <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0"><TextBlock Text="{Binding RamUsed}" /></Border>
-                  <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0"><TextBlock Text="{Binding RamNeeded}" Foreground="{Binding RamNeededKey, Converter={StaticResource ValueInk}}" /></Border>
-                  <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="{Binding ModelSize}" /></Border>
-                  <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="{Binding Links}" /></Border>
-                  <Border Grid.Column="5" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="12,0,12,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="{Binding Views}" /></Border>
+                  <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamUsed}" /></Border>
+                  <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamNeeded}" Foreground="{Binding RamNeededKey, Converter={StaticResource ValueInk}}" /></Border>
+                  <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding ModelSize}" /></Border>
+                  <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Links}" /></Border>
+                  <Border Grid.Column="5" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Views}" /></Border>
                 </Grid>
-                <TextBlock Text="{Binding Attention}" FontSize="12" Margin="16,4,0,0" TextWrapping="Wrap"
+                <TextBlock Text="{Binding Attention}" FontSize="12" Margin="16,0,0,0" TextWrapping="Wrap"
                            Foreground="{Binding AttentionKey, Converter={StaticResource StatusBrush}}"
                            Visibility="{Binding HasAttention, Converter={StaticResource BoolToVisibility}}" />
               </StackPanel>
@@ -152,22 +152,25 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
-      <TextBlock Text="{Binding TableNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+      <TextBlock Text="{Binding TableNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
                  Visibility="{Binding HasTableNote, Converter={StaticResource BoolToVisibility}}" />
     </StackPanel>
 
     <!-- What to do -->
     <StackPanel Visibility="{Binding HasIssues, Converter={StaticResource BoolToVisibility}}">
-      <TextBlock Text="WHAT TO DO" Style="{StaticResource SectionTitle}" Margin="0,12,0,8" />
+      <TextBlock Text="WHAT TO DO" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
       <ItemsControl ItemsSource="{Binding Issues}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type local:HealthIssueRow}">
-            <Border BorderThickness="3,0,0,0" Padding="12,0,0,0" Margin="0,0,0,12"
+            <Border BorderThickness="3,0,0,0" Padding="8,0,0,0" Margin="0,8,0,0"
                     BorderBrush="{Binding LevelKey, Converter={StaticResource StatusBrush}}">
-              <StackPanel>
-                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                <TextBlock Text="{Binding Advice}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
-              </StackPanel>
+              <!-- Folded to the title; a click on it shows the advice. -->
+              <Expander Style="{StaticResource PlainExpander}" IsExpanded="{Binding IsExpanded, Mode=TwoWay}" Padding="0">
+                <Expander.Header>
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                </Expander.Header>
+                <TextBlock Text="{Binding Advice}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" />
+              </Expander>
             </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>

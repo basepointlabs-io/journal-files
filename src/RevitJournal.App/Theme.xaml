@@ -175,7 +175,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="RadioButton">
-          <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="16,10" SnapsToDevicePixels="True">
+          <Border x:Name="row" Background="Transparent" CornerRadius="2" Padding="16,8" SnapsToDevicePixels="True">
             <ContentPresenter />
           </Border>
           <ControlTemplate.Triggers>
@@ -204,7 +204,7 @@
                 <ControlTemplate TargetType="ToggleButton">
                   <Border x:Name="hdr" Background="Transparent" Padding="{Binding Padding, RelativeSource={RelativeSource AncestorType=Expander}}">
                     <DockPanel>
-                      <ui:SymbolIcon x:Name="chev" DockPanel.Dock="Left" Symbol="ChevronRight16" FontSize="14" Margin="0,0,10,0"
+                      <ui:SymbolIcon x:Name="chev" DockPanel.Dock="Left" Symbol="ChevronRight16" FontSize="14" Margin="0,0,8,0"
                                      VerticalAlignment="Center" Foreground="{StaticResource Muted}" />
                       <ContentPresenter Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
                                         ContentTemplate="{Binding HeaderTemplate, RelativeSource={RelativeSource AncestorType=Expander}}"

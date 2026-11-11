@@ -264,7 +264,7 @@ public sealed class HealthView
                   + (r.RamRunsOutIn is { } left && left <= HealthMonitor.ForecastWatch ? $" · about {Math.Max(1, (int)Math.Round(left.TotalMinutes))} min left at this rate" : "");
 
         var disk = r.Disks.OrderBy(d => d.FreeMb).FirstOrDefault();
-        DiskLabel = disk is null ? "Free disk space" : $"Free disk space {disk.Name}";
+        DiskLabel = disk is null ? "Free disk" : $"Free disk {disk.Name}";
         DiskValue = disk is null ? "–" : Fmt.Mb((int)disk.FreeMb);
         DiskNote = disk is null ? "" : disk.Level != HealthLevel.Ok ? "Autodesk requires at least 30 GB" : $"of {Fmt.Mb((int)disk.TotalMb)}";
 
@@ -285,7 +285,7 @@ public sealed class HealthView
             : $"{r.Revits.Count} Revit" + (openViews > 0 ? $" · {openViews} views" : "") + $" · {Fmt.Mb((int)r.Revits.Sum(p => p.MemoryMb))} RAM";
         RevitSummary = Summary(r, sessions);
         HasRevitSummary = RevitSummary.Length > 0;
-        Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(Key(i.Level), i.Title, i.Advice))];
+        Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(i.Key, Key(i.Level), i.Title, i.Advice))];
         HasIssues = Issues.Count > 0;
     }
 
@@ -419,4 +419,17 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
         : Math.Max(p.GdiObjects, p.UserObjects) >= HealthMonitor.GuiWatch ? HealthLevel.Watch : HealthLevel.Ok);
 }
 
-public sealed record HealthIssueRow(string LevelKey, string Title, string Advice);
+/// <summary>
+/// One thing to do, shown folded to its title. The overview is rebuilt every few seconds, so which ones the user
+/// unfolded is kept by the issue's key (its title carries live figures and changes).
+/// </summary>
+public sealed record HealthIssueRow(string Key, string LevelKey, string Title, string Advice)
+{
+    private static readonly HashSet<string> Unfolded = [];
+
+    public bool IsExpanded
+    {
+        get => Unfolded.Contains(Key);
+        set { if (value) Unfolded.Add(Key); else Unfolded.Remove(Key); }
+    }
+}
