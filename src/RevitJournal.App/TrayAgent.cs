@@ -32,8 +32,6 @@ public sealed class TrayAgent : IDisposable
 
     /// <summary>The latest reading of the Autodesk Health Dashboard; null until it has been read or while it cannot be reached.</summary>
     public AutodeskStatusReport? Autodesk { get; private set; }
-    /// <summary>True once the page has been tried and could not be read the last time.</summary>
-    public bool AutodeskUnavailable { get; private set; }
 
     /// <summary>The full window was asked for (tray menu, or a notification without a specific answer).</summary>
     public event Action? OpenRequested;
@@ -166,9 +164,8 @@ public sealed class TrayAgent : IDisposable
         try
         {
             var now = await AutodeskStatus.FetchAsync(_http);
-            AutodeskUnavailable = now is null;
             if (now is null)
-                return; // keep the last known state; the overview says it could not be checked
+                return; // no connection: keep the last known state and say nothing
             var before = Autodesk;
             Autodesk = now;
             if (_lastReport is not null)

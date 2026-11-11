@@ -39,7 +39,9 @@ public sealed class MemoryChart : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         bool full = !Sparkline;
-        double width = ActualWidth - (full ? Gutter : 5), height = ActualHeight - (full ? Footer + Top : 10);
+        // The sparkline keeps room only for the dot (top and right) and reaches the bottom of its box, so the tile's
+        // padding is the same on every side.
+        double width = ActualWidth - (full ? Gutter : 5), height = ActualHeight - (full ? Footer + Top : 5);
         if (Data is not { TotalMb: > 0 } data || width <= 10 || height <= 10)
             return;
 

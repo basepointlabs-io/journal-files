@@ -227,8 +227,7 @@ public sealed class FindingView(Finding f, bool expanded)
 public sealed class HealthView
 {
     /// <param name="autodesk">The latest reading of the Autodesk Health Dashboard; null while not read yet or not reachable.</param>
-    /// <param name="autodeskUnavailable">The dashboard could not be read the last time it was tried.</param>
-    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null, bool autodeskUnavailable = false)
+    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null)
     {
         // A problem on Autodesk's side raises an all-good computer to "keep an eye on it"; a problem here comes first.
         bool autodeskProblem = autodesk is { AllOperational: false };
@@ -245,7 +244,7 @@ public sealed class HealthView
             : r.Revits.Count == 0 ? "Revit is not running. The computer has enough resources."
             : $"{r.Revits.Count} Revit running. RAM, drawing resources and disk are fine.";
 
-        // Autodesk services: a coloured panel while something is wrong, otherwise one quiet line.
+        // Autodesk services appear only while something is wrong; all working, or the page not reachable, says nothing.
         if (autodeskProblem)
         {
             AutodeskChecked = $"checked {autodesk!.Checked:HH:mm}";
@@ -253,18 +252,6 @@ public sealed class HealthView
                 AutodeskStatus.Describe(p, autodesk.Checked),
                 p.Update ?? p.Incident ?? "No details from Autodesk yet.",
                 p.Url))];
-        }
-        else if (autodesk is not null)
-        {
-            AutodeskLine = "Autodesk services (EU): all operational" + (autodesk.Upcoming.FirstOrDefault() is { } m
-                ? $" · maintenance {AutodeskStatus.When(m.Start, autodesk.Checked)}{(m.End is { } end ? "–" + end.ToString("HH:mm", CultureInfo.InvariantCulture) : "")} ({string.Join(", ", m.Services)})"
-                : "");
-            AutodeskLineKey = autodesk.Upcoming.Count > 0 ? "pending" : "ok";
-        }
-        else if (autodeskUnavailable)
-        {
-            AutodeskLine = "Autodesk service status could not be checked (no connection to health.autodesk.com)";
-            AutodeskLineKey = "pending";
         }
 
         long used = Math.Max(0, r.TotalRamMb - r.FreeRamMb);
@@ -304,6 +291,7 @@ public sealed class HealthView
 
         Revits = [.. r.Revits.Select(p => new RevitHealthRow(p, Match(p, r.Revits, sessions), r.TotalRamMb))];
         HasRevits = Revits.Count > 0;
+        ShowRamUsed = Revits.Count > 1;
         TableNote = Revits.Any(x => x.HasModel)
             ? "* Autodesk: RAM ≈ 20 × the model file size. With linked models it is our estimate."
             : "";
@@ -343,6 +331,8 @@ public sealed class HealthView
     public double DiskPercent { get; }
     public IReadOnlyList<RevitHealthRow> Revits { get; }
     public bool HasRevits { get; }
+    /// <summary>The "RAM used" column: only with two or more Revit, to see which one takes the memory; with one the "Revit open" tile says it.</summary>
+    public bool ShowRamUsed { get; }
     /// <summary>Under the table: what "RAM needed" means and how much the computer has; empty while no model size is known.</summary>
     public string TableNote { get; }
     public bool HasTableNote => TableNote.Length > 0;
@@ -356,10 +346,6 @@ public sealed class HealthView
     public IReadOnlyList<AutodeskProblemRow> AutodeskProblems { get; } = [];
     public bool HasAutodeskProblems => AutodeskProblems.Count > 0;
     public string AutodeskChecked { get; } = "";
-    /// <summary>"Autodesk services (EU): all operational", or that the page could not be read; empty before the first try.</summary>
-    public string AutodeskLine { get; } = "";
-    public string AutodeskLineKey { get; } = "ok";
-    public bool HasAutodeskLine => AutodeskLine.Length > 0;
 
     /// <summary>"3 Revit running (2024 ×2, 2025) · 5 models, 31 links, 9.4 GB on disk · 12 views · 41.0 GB of RAM".</summary>
     private static string Summary(HealthReport r, IReadOnlyList<LiveStatus> sessions)

@@ -59,7 +59,7 @@
     </DockPanel>
 
     <!-- Autodesk services (EU) with a problem right now, from the Autodesk Health Dashboard. -->
-    <Border Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1" CornerRadius="4" Padding="16,8" Margin="0,16,0,0"
+    <Border Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,16,0,0"
             Visibility="{Binding HasAutodeskProblems, Converter={StaticResource BoolToVisibility}}">
       <StackPanel>
         <DockPanel>
@@ -92,7 +92,7 @@
         <ColumnDefinition Width="16" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
+      <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="Free RAM" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           <TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" />
@@ -101,14 +101,14 @@
                              Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
+      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           <TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" />
           <TextBlock Text="{Binding DiskNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="8">
+      <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="Revit open" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           <TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0"  />
@@ -117,7 +117,8 @@
       </Border>
     </Grid>
 
-    <!-- Every running Revit in one table: the model (and the Revit and what it is doing under it), the RAM it uses and
+    <!-- RAM used only with two or more Revit: with one, the "Revit open" tile already says it.
+         Every running Revit in one table: the model (and the Revit and what it is doing under it), the RAM it uses and
          needs, and the files behind it, with a divider between columns. The model column takes the rest of the width
          and wraps long names; the others fit their content. Auto columns shrink to nothing for collapsed cells, so the
          narrow tray flyout shows only the model and the RAM columns. A coloured line only when something needs attention. -->
@@ -133,7 +134,7 @@
             <ColumnDefinition Width="Auto" SharedSizeGroup="C5" />
           </Grid.ColumnDefinitions>
           <TextBlock Text="Model" Margin="16,0,8,0" />
-          <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="RAM used" /></Border>
+          <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding DataContext.ShowRamUsed, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="RAM used" /></Border>
           <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="RAM needed*" /></Border>
           <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Model file" /></Border>
           <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Linked models" /></Border>
@@ -162,7 +163,7 @@
                       <TextBlock Text="{Binding Under}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0" />
                     </StackPanel>
                   </DockPanel>
-                  <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamUsed}" /></Border>
+                  <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding DataContext.ShowRamUsed, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamUsed}" /></Border>
                   <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamNeeded}" Foreground="{Binding RamNeededKey, Converter={StaticResource ValueInk}}" /></Border>
                   <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding ModelSize}" /></Border>
                   <Border Grid.Column="4" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Links}" /></Border>
@@ -200,12 +201,5 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
     </StackPanel>
-
-    <!-- Autodesk services when nothing is wrong (or the page could not be read): one quiet line. -->
-    <DockPanel Margin="0,16,0,0" Visibility="{Binding HasAutodeskLine, Converter={StaticResource BoolToVisibility}}">
-      <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,4,8,0" VerticalAlignment="Top"
-               Fill="{Binding AutodeskLineKey, Converter={StaticResource StatusBrush}}" />
-      <TextBlock Text="{Binding AutodeskLine}" FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
-    </DockPanel>
   </StackPanel>
 </UserControl>

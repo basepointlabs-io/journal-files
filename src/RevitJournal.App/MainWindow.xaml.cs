@@ -86,7 +86,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (_demo)
                 return; // the snapshot run is showing made-up numbers
-            var view = new HealthView(report, sessions, agent.Autodesk, agent.AutodeskUnavailable);
+            var view = new HealthView(report, sessions, agent.Autodesk);
             FollowRunningVersions([.. report.Revits.Select(p => p.Version).Where(v => v.Length > 0)]);
             ShowHealth(view);
             HealthCard.Visibility = Visibility.Visible;
