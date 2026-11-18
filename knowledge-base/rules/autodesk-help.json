@@ -1119,13 +1119,17 @@
           "Check free disk space — at least 5 GB is recommended. Open %TEMP% in Windows Explorer and delete files there if needed.",
           "If the file is workshared, recover it with the 'Recover a Workshared File' procedure (Restore Backup).",
           "If it is not workshared, open the most recent backup (<model_name>.<nnnn>.rvt in the same folder — highest number is newest) and save it under the original name (answer Yes to drop the 4-digit number). If that backup is also corrupt, try older ones.",
-          "If nothing works, gather the file and its 5 most recent journal files and open a support case with Autodesk."
+          "If nothing works, gather the file and its 5 most recent journal files and open a support case with Autodesk.",
+          "Check for a corrupt RVT link: Revit reports the corruption of a linked model while opening the host. Open the model with all worksets closed (a non-workshared model: copy it to a folder without its links); if it opens, the cause is in a link.",
+          "For a file-based workshared model: make sure every computer reaches the central model the same way (all through the same mapped drive, or all through the same network path) and runs the same Revit build."
         ],
         "uk": [
           "Перевірте вільне місце на диску — рекомендовано щонайменше 5 ГБ. Відкрийте %TEMP% у провіднику Windows і за потреби видаліть файли звідти.",
           "Якщо файл workshared — відновіть його за процедурою «Recover a Workshared File» (Restore Backup).",
           "Якщо файл не workshared — відкрийте найсвіжішу резервну копію (<назва_моделі>.<nnnn>.rvt у тій самій папці; найбільший номер — найновіша) і збережіть її під початковою назвою (на запитання про прибирання 4-значного номера відповідайте Yes). Якщо й вона пошкоджена — пробуйте старіші.",
-          "Якщо нічого не допомогло — зберіть файл і 5 останніх журналів і створіть звернення до підтримки Autodesk."
+          "Якщо нічого не допомогло — зберіть файл і 5 останніх журналів і створіть звернення до підтримки Autodesk.",
+          "Перевірте, чи не пошкоджений RVT-лінк: Revit повідомляє про пошкодження лінкованої моделі, коли відкриває основну. Відкрийте модель з усіма закритими робочими наборами (модель без спільної роботи — скопіюйте в папку без лінків); якщо відкрилась, причина в лінку.",
+          "Для моделі зі спільною роботою через файл: переконайтеся, що всі комп'ютери звертаються до центральної моделі однаково (усі через той самий підключений диск або всі через той самий мережевий шлях) і мають однакову збірку Revit."
         ]
       },
       "sources": [
@@ -1136,6 +1140,14 @@
         {
           "title": "Autodesk Help (Revit 2026 Troubleshooting) — Cannot Open a Model Using Audit",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-A5E9D895-E3D4-4C9A-8AEC-DB9022A4BD33.htm"
+        },
+        {
+          "title": "Autodesk Support — Data in File [name] Is Corrupt When Opening Files or Syncing to Central",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Data-in-Revit-file-is-corrupt-and-needs-to-be-manually-recovered.html"
+        },
+        {
+          "title": "Autodesk Support — Data in file is corrupt when opening a file-based workshared project",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Data-in-file-file-name-rvt-is-corrupt-and-needs-to-be-manually-recovered-when-opening-file-based-worshared-project-in-Revit.html"
         }
       ],
       "confidence": "official",
@@ -1149,10 +1161,14 @@
       "severity": "high",
       "match": {
         "any": [
-          "has become corrupt at some time before this session"
+          "has become corrupt at some time before this session",
+          "became corrupt at some time before this session"
         ],
         "regex": [
           "Element\\s*<?\\d*>?\\s*has become corrupt"
+        ],
+        "dialogs": [
+          "TaskDialog_Element_Corrupted"
         ]
       },
       "context": "Opening a Revit file.",
@@ -1169,19 +1185,25 @@
           "Write down the element ID from the message.",
           "Open the file with Audit (File > Open, tick Audit) and save the audited version.",
           "If problems continue, open a backup copy that does not show the error and use Manage > Inquiry > Select by ID with that ID to see which element it is.",
-          "If it is Project Information: open the audited file and a clean copy (backup, or for workshared models a local copy without the error) — only these two files. In the audited file run Manage > Transfer Project Standards, click Check None, select Project Info, OK, and choose Overwrite if asked. Close the backup and save the audited file."
+          "If it is Project Information: open the audited file and a clean copy (backup, or for workshared models a local copy without the error) — only these two files. In the audited file run Manage > Transfer Project Standards, click Check None, select Project Info, OK, and choose Overwrite if asked. Close the backup and save the audited file.",
+          "For a cloud workshared model, recover the model from a backup copy (recovery options for Revit cloud workshared models on BIM 360 and ACC)."
         ],
         "uk": [
           "Запишіть ID елемента з повідомлення.",
           "Відкрийте файл з Audit (File > Open, галочка Audit) і збережіть перевірену версію.",
           "Якщо проблеми лишаються — відкрийте резервну копію без цієї помилки й через Manage > Inquiry > Select by ID з цим ID подивіться, що це за елемент.",
-          "Якщо це Project Information: відкрийте перевірений файл і чисту копію (резервну або, для workshared, локальну копію без помилки) — лише ці два файли. У перевіреному файлі запустіть Manage > Transfer Project Standards, натисніть Check None, виберіть Project Info, OK, а за запитом — Overwrite. Закрийте резервну копію й збережіть перевірений файл."
+          "Якщо це Project Information: відкрийте перевірений файл і чисту копію (резервну або, для workshared, локальну копію без помилки) — лише ці два файли. У перевіреному файлі запустіть Manage > Transfer Project Standards, натисніть Check None, виберіть Project Info, OK, а за запитом — Overwrite. Закрийте резервну копію й збережіть перевірений файл.",
+          "Для хмарної моделі зі спільною роботою відновіть модель з резервної копії (варіанти відновлення хмарних моделей у BIM 360 та ACC)."
         ]
       },
       "sources": [
         {
           "title": "Autodesk Help (Revit 2026 Troubleshooting) — Error: Element Has Become Corrupt",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-84AE63C7-F02E-42F5-8D7C-D9442D338958.htm"
+        },
+        {
+          "title": "Autodesk Support — Element became corrupt at some time before this session in a Revit cloud workshared model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-Unrecoverable-error-and-Element-became-corrupt-error-on-one-C4R-project-one-user.html"
         }
       ],
       "confidence": "official"
@@ -1196,7 +1218,8 @@
           "Model is corrupt"
         ],
         "dialogs": [
-          "TaskDialog_Corrupt_Model_Detected_On_Save"
+          "TaskDialog_Corrupt_Model_Detected_On_Save",
+          "TaskDialog_Repair_Corrupt_Model_Successfully"
         ]
       },
       "context": "Saving a non-workshared model.",
@@ -1815,10 +1838,14 @@
       "match": {
         "any": [
           "could not create a local model",
-          "could not create a local file"
+          "could not create a local file",
+          "Revit cannot create a local copy"
         ],
         "regex": [
           "[Cc]ould not create (a )?(new )?local (model|file|copy)"
+        ],
+        "dialogs": [
+          "TaskDialog_Cannot_Create_Local_File"
         ]
       },
       "context": "Create New Local.",
@@ -1848,6 +1875,10 @@
         {
           "title": "Autodesk Help (Revit 2026 Troubleshooting) — Cannot Create New Local Model",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-3A80FF6E-82CD-45B7-A21E-D886171F9EA1.htm"
+        },
+        {
+          "title": "Autodesk Support — Revit cannot create a local copy of the central file",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-cannot-create-a-local-copy-of-the-central-file-path-when-opening-a-central-model-in-Revit.html"
         }
       ],
       "confidence": "official"
@@ -2080,6 +2111,7 @@
         "dialogs": [
           "TaskDialog_Central_Or_Local_File_Error",
           "TaskDialog_Corrupt_Model_Detected_On_Synchronize_With_Central",
+          "TaskDialog_Repair_Corrupt_Central_Model_Successfully",
           "TaskDialog_Warn_To_Repair_Corrupt_Central_Model"
         ],
         "translations": [
@@ -3024,7 +3056,11 @@
       "severity": "medium",
       "match": {
         "any": [
-          "Invalid Signature"
+          "Invalid Signature",
+          "This signed add-in has a security problem"
+        ],
+        "dialogs": [
+          "TaskDialog_Security_Invalid_Signature"
         ]
       },
       "context": "Loading an add-in or executable file.",
@@ -3039,17 +3075,23 @@
       "fix": {
         "en": [
           "Do not load the file.",
-          "Get the latest, correctly signed version from the add-in publisher and try again."
+          "Get the latest, correctly signed version from the add-in publisher and try again.",
+          "If this prompt appears at every Revit start, check whether it goes away with the anti-virus or security application turned off; Autodesk names such applications as a cause."
         ],
         "uk": [
           "Не завантажуйте цей файл.",
-          "Отримайте у розробника найновішу версію з правильним підписом і спробуйте знову."
+          "Отримайте у розробника найновішу версію з правильним підписом і спробуйте знову.",
+          "Якщо запит з'являється при кожному запуску Revit, перевірте, чи зникає він, коли вимкнути антивірус чи іншу програму безпеки; Autodesk називає їх однією з причин."
         ]
       },
       "sources": [
         {
           "title": "Autodesk Help (Revit 2026 Troubleshooting) — Security: Invalid Signature",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-A5654402-D25A-4993-9059-0486B36AA708.htm"
+        },
+        {
+          "title": "Autodesk Support — This signed add-in has a security problem pops up every time when launching Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Warning-message-This-signed-add-in-has-a-security-problem-What-do-you-want-to-do-pops-up-every-time-when-launching-Revit.html"
         }
       ],
       "confidence": "official"
@@ -3061,7 +3103,11 @@
       "match": {
         "any": [
           "Unsigned Add-In",
-          "Unsigned File"
+          "Unsigned File",
+          "The publisher of this add-in could not be verified"
+        ],
+        "dialogs": [
+          "TaskDialog_Security_Unsigned_File_Loading"
         ]
       },
       "context": "Loading an add-in or executable file that has no digital signature.",
@@ -3075,10 +3121,12 @@
       },
       "fix": {
         "en": [
-          "Choose Always Load or Load Once only if you trust the source; otherwise choose Do Not Load."
+          "Choose Always Load or Load Once only if you trust the source; otherwise choose Do Not Load.",
+          "If the prompt comes back at every start even after Always Load: make sure Revit has the latest update, then reinstall the add-in (or copy its files from a computer where it works); if you do not need the add-in, uninstall or disable it."
         ],
         "uk": [
-          "Обирайте Always Load або Load Once, лише якщо довіряєте джерелу; інакше — Do Not Load."
+          "Обирайте Always Load або Load Once, лише якщо довіряєте джерелу; інакше — Do Not Load.",
+          "Якщо запит з'являється при кожному запуску навіть після Always Load: перевірте, що Revit має останнє оновлення, потім перевстановіть додаток (або скопіюйте його файли з комп'ютера, де він працює); якщо додаток не потрібен, видаліть або вимкніть його."
         ]
       },
       "sources": [
@@ -3089,6 +3137,14 @@
         {
           "title": "Autodesk Help (Revit 2026 Troubleshooting) — About Digital Signatures",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-1C5947F2-4525-4B9F-9764-4D83D9FD2157.htm"
+        },
+        {
+          "title": "Autodesk Support — The publisher of this add-in could not be verified when starting Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Autodesk-Revit-reports-error-The-publisher-of-this-add-in-could-not-be-verified.html"
+        },
+        {
+          "title": "Autodesk Support — The code signing window always appears when launching Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-code-signing-window-always-appears-when-launching-Revit.html"
         }
       ],
       "confidence": "official"
@@ -3836,6 +3892,1722 @@
         {
           "title": "Autodesk Help (Revit 2023 Troubleshooting) — Serious Error when Opening a Revit Project, a View, or Reloading a Link",
           "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-D01948FC-570F-44B9-BFB2-3C5987FFE793.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "memory-virtual-high-usage",
+      "category": "memory",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "\"LowPhysicalMemoryWarning\""
+        ],
+        "dialogs": [
+          "TaskDialog_Virtual_Memory_High_Usage",
+          "TaskDialog_Virtual_Memory_High_Usage_In_LT"
+        ]
+      },
+      "context": "Any time during a session. In real journals Revit logs Jrn.Data \"Interrupt\", \"LowPhysicalMemoryWarning\" right before the dialog; the warning often repeats many times in one session and is often followed by slow syncs or a fatal-error crash.",
+      "title": {
+        "en": "\"Virtual Memory - High Usage\": the session uses more memory than the computer can support",
+        "uk": "«Virtual Memory - High Usage»: сеанс використовує більше пам'яті, ніж комп'ютер може ефективно забезпечити"
+      },
+      "cause": {
+        "en": "Revit is using more RAM than the computer has available, so it falls back to virtual memory (the page file on disk). Autodesk notes this is often combined with crashes with a fatal error, and on cloud workshared models it can show up as one member's synchronization taking far longer than everyone else's.",
+        "uk": "Revit використовує більше оперативної пам'яті, ніж є на комп'ютері, тож переходить на віртуальну пам'ять (файл підкачки на диску). Autodesk зазначає, що це часто супроводжується аварійним завершенням з fatal error, а для хмарних workshared-моделей може проявлятися тим, що синхронізація в одного учасника триває значно довше, ніж в інших."
+      },
+      "fix": {
+        "en": [
+          "Check whether the computer has enough RAM for the model: Revit generally uses up to 20 times the RVT file size in RAM, counting linked files too. In Task Manager (Ctrl+Shift+Esc > Performance) compare RAM in use after a restart, with your other programs open, and with Revit and the model open.",
+          "Run only one Revit session, avoid opening several large models at the same time, and keep other programs closed or to a minimum.",
+          "Open the model with fewer worksets: in the Open dialog choose Open > Specify and close the worksets you do not need.",
+          "Reduce the number of loaded DWG and RVT links, purge unused objects, and close inactive views (View tab > Windows panel > Close Inactive).",
+          "Restart Revit regularly to release memory.",
+          "If the computer supports more RAM, add RAM. For large cloud workshared models Autodesk reports that upgrading the affected machine to match other team members (e.g. 32 GB to 64 GB) cleared both the warning and the slow synchronization.",
+          "If Revit's memory keeps growing even when idle (reported on Windows 11 23H2), install the latest Windows 11 updates and disable add-ins."
+        ],
+        "uk": [
+          "Перевірте, чи вистачає оперативної пам'яті для моделі: Revit зазвичай використовує до 20 разів більше RAM, ніж розмір файлу RVT, разом із пов'язаними файлами. У Task Manager (Ctrl+Shift+Esc > Performance) порівняйте використання RAM після перезавантаження, з відкритими іншими програмами та з відкритими Revit і моделлю.",
+          "Запускайте лише один сеанс Revit, не відкривайте одночасно кілька великих моделей, а інші програми закрийте або зведіть до мінімуму.",
+          "Відкривайте модель з меншою кількістю робочих наборів: у діалозі Open виберіть Open > Specify і закрийте непотрібні.",
+          "Зменште кількість завантажених DWG- і RVT-зв'язків, виконайте Purge Unused і закрийте неактивні види (вкладка View > панель Windows > Close Inactive).",
+          "Регулярно перезапускайте Revit, щоб звільнити пам'ять.",
+          "Якщо комп'ютер підтримує більше RAM — додайте пам'ять. Для великих хмарних workshared-моделей Autodesk повідомляє, що збільшення RAM на проблемному комп'ютері до рівня колег (наприклад, з 32 до 64 ГБ) усунуло і попередження, і повільну синхронізацію.",
+          "Якщо пам'ять Revit постійно зростає навіть у простої (повідомлялося на Windows 11 23H2) — встановіть останні оновлення Windows 11 і вимкніть додатки."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Your current session is using more memory than your computer can efficiently support\" when working in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Your-current-session-is-using-more-memory-that-your-computer-can-efficiently-support-when-working-on-multiple-Revit-models.html"
+        },
+        {
+          "title": "Autodesk Support — \"Your current session is using more memory than your computer can efficiently support\" in Revit (memory grows when idle)",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Your-current-session-is-using-more-memory-than-your-computer-can-efficiently-support-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026) — Memory Usage and Instability",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "metric-ram-available-low",
+        "metric-revit-peak-ram-share-high",
+        "metric-model-size-vs-ram"
+      ]
+    },
+    {
+      "id": "memory-low-virtual-memory-os-limit",
+      "category": "memory",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Memory usage is approaching the operating system limit"
+        ],
+        "dialogs": [
+          "TaskDialog_Low_Virtual_Memory_Warning"
+        ]
+      },
+      "context": "Any time during a session, usually a long one or with many links/views open.",
+      "title": {
+        "en": "\"Low Virtual Memory Warning\": memory usage is approaching the operating system limit",
+        "uk": "«Low Virtual Memory Warning»: використання пам'яті наближається до межі операційної системи"
+      },
+      "cause": {
+        "en": "The Revit session has used almost all memory the operating system can give it. Revit may become unstable; continuing to work (and especially synchronizing) risks losing work.",
+        "uk": "Сеанс Revit використав майже всю пам'ять, яку може надати операційна система. Revit може стати нестабільним; подальша робота (особливо синхронізація) загрожує втратою даних."
+      },
+      "fix": {
+        "en": [
+          "Save your work as soon as possible and restart Revit. If the model is workshared, save the local file, restart Revit, and only then Synchronize with Central.",
+          "Reduce the number of loaded DWG and RVT links and purge unused objects.",
+          "Close inactive views (View tab > Windows panel > Close Inactive) and, for workshared files, open only the worksets you need (Open > Specify).",
+          "Verify that the Windows paging file size is optimized for your system (Autodesk topic \"Optimize your Operating System for Performance\").",
+          "Check installed RAM: Autodesk recommends 16 GB and roughly 20 times the size of the compacted central file."
+        ],
+        "uk": [
+          "Якнайшвидше збережіть роботу й перезапустіть Revit. Якщо модель workshared — збережіть локальний файл, перезапустіть Revit і лише потім виконуйте Synchronize with Central.",
+          "Зменште кількість завантажених DWG- і RVT-зв'язків і виконайте Purge Unused.",
+          "Закрийте неактивні види (вкладка View > панель Windows > Close Inactive), а для workshared-файлів відкривайте лише потрібні робочі набори (Open > Specify).",
+          "Перевірте, що розмір файлу підкачки Windows оптимальний для вашої системи (розділ Autodesk «Optimize your Operating System for Performance»).",
+          "Перевірте обсяг RAM: Autodesk рекомендує 16 ГБ і приблизно в 20 разів більше, ніж розмір стиснутого центрального файлу."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Memory Usage and Instability",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026) — Memory Recommendations",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "memory-virtual-high-usage"
+      ]
+    },
+    {
+      "id": "memory-exception-arr",
+      "category": "memory",
+      "severity": "high",
+      "match": {
+        "any": [
+          "A MemoryException is raised on line"
+        ],
+        "regex": [
+          "MemoryException is raised on line \\d+ of .*Foundation\\\\Utility\\\\Arr\\.cpp"
+        ]
+      },
+      "context": "Logged when Revit runs out of memory during an operation. Seen in real journals during Synchronize with Central, immediately before \"Data in file ... is corrupt\".",
+      "title": {
+        "en": "Revit ran out of memory (MemoryException in Arr.cpp)",
+        "uk": "Revit вичерпав пам'ять (MemoryException в Arr.cpp)"
+      },
+      "cause": {
+        "en": "Autodesk documents this journal line for Revit becoming unstable because the system is running out of memory. If it is followed by a \"Data in file is corrupt\" message, the save or sync failed while memory was exhausted.",
+        "uk": "Autodesk описує цей рядок журналу для випадків, коли Revit стає нестабільним через брак пам'яті в системі. Якщо після нього з'являється «Data in file is corrupt», збереження чи синхронізація не вдалися саме під час вичерпання пам'яті."
+      },
+      "fix": {
+        "en": [
+          "Increase the amount of RAM available to Revit, for example by closing other applications, then restart Revit before saving or synchronizing again.",
+          "Compare the model against Autodesk's memory recommendations: 16 GB is recommended, and the computer needs roughly 20 times the size of the compacted central file in RAM; add RAM if it falls short."
+        ],
+        "uk": [
+          "Збільште обсяг RAM, доступний Revit, — наприклад, закрийте інші програми, — і перезапустіть Revit перед повторним збереженням чи синхронізацією.",
+          "Порівняйте модель із рекомендаціями Autodesk щодо пам'яті: рекомендовано 16 ГБ, а комп'ютерові потрібно приблизно в 20 разів більше RAM, ніж розмір стиснутого центрального файлу; якщо не вистачає — додайте RAM."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Instabilities when working in Revit due to low memory",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Instabilities-when-working-in-Revit-due-to-low-memory.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026) — Memory Recommendations",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "data-in-file-corrupt",
+        "memory-virtual-high-usage"
+      ]
+    },
+    {
+      "id": "memory-not-enough-to-open-or-save",
+      "category": "memory",
+      "severity": "high",
+      "match": {
+        "any": [
+          "This computer does not have enough memory to"
+        ],
+        "dialogs": [
+          "TaskDialog_Insufficient_Memory_For_Load",
+          "TaskDialog_Memory_Issues",
+          "TaskDialog_Not_Enough_Memory_To_Save"
+        ]
+      },
+      "context": "Opening, saving or upgrading a specific model or family.",
+      "title": {
+        "en": "\"This computer does not have enough memory to open / save\" the model",
+        "uk": "«This computer does not have enough memory to open / save» — не вистачає пам'яті, щоб відкрити чи зберегти модель"
+      },
+      "cause": {
+        "en": "Insufficient RAM or virtual memory for this model. Autodesk also documents two specific causes: a large attached TIFF (or a dataset too big for the workstation), and — when the message appears while upgrading a model — a schedule with unexpectedly large element data.",
+        "uk": "Для цієї моделі не вистачає оперативної або віртуальної пам'яті. Autodesk також описує дві конкретні причини: великий вкладений TIFF (або набір даних, завеликий для робочої станції) і — якщо повідомлення з'являється під час оновлення моделі до нової версії — специфікація (schedule) з несподівано великим обсягом даних елементів."
+      },
+      "fix": {
+        "en": [
+          "Check whether the computer has enough RAM for the model (Autodesk's rule: about 20 times the compacted file size) and increase system RAM if you can.",
+          "Open the model with worksets turned off.",
+          "Restart the computer and run Revit by itself with no other programs; if the error then goes away, start the other programs one by one to find what is using the RAM.",
+          "Check linked and imported CAD files (and point clouds/IFC/Rhino): they can use a lot of memory. In Manage Links look for large files, especially TIFF images; replace a large TIFF with a smaller image file.",
+          "Clear the Windows temp folder and increase virtual memory (paging file).",
+          "If the message appears while upgrading a model: save a copy in the original version, remove all schedules and upgrade it. If it then saves, remove schedules one by one in another copy to find the faulty one, delete it from the original-version model, upgrade, and recreate the schedule."
+        ],
+        "uk": [
+          "Перевірте, чи вистачає RAM для моделі (правило Autodesk: приблизно в 20 разів більше за розмір стиснутого файлу), і за можливості збільште обсяг RAM.",
+          "Відкривайте модель з вимкненими робочими наборами.",
+          "Перезавантажте комп'ютер і запустіть лише Revit без інших програм; якщо помилки немає — запускайте інші програми по одній, щоб знайти ту, що займає RAM.",
+          "Перевірте пов'язані та імпортовані CAD-файли (а також хмари точок, IFC, Rhino): вони можуть займати багато пам'яті. У Manage Links шукайте великі файли, особливо TIFF; замініть великий TIFF меншим зображенням.",
+          "Очистіть тимчасову папку Windows і збільште віртуальну пам'ять (файл підкачки).",
+          "Якщо повідомлення з'являється під час оновлення моделі: збережіть копію у вихідній версії, видаліть усі специфікації й оновіть її. Якщо тепер зберігається — в іншій копії видаляйте специфікації по одній, щоб знайти проблемну, видаліть її з моделі у вихідній версії, оновіть модель і створіть специфікацію заново."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"This computer does not have enough memory...\" when opening or saving a specific model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/This-computer-does-not-have-enough-memory-to-open-save-file-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"This computer does not have enough memory to save\" after loading TIFF in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/This-computer-does-not-have-enough-memory-to-save-when-trying-to-save-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"This computer does not have enough memory...\" message when upgrading Revit model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/This-computer-does-not-have-enough-memory-to-open-to-save-message-when-saving-model-upgraded-to-Revit-2021.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026) — Memory Recommendations",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6.htm"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "forum-out-of-memory"
+      ]
+    },
+    {
+      "id": "cant-edit-element-until-user-resaves",
+      "category": "worksharing",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "resaves the element to central and relinquishes it",
+          "and relinquishes it and you Reload Latest"
+        ],
+        "translations": [
+          "\" in der Zentraldatei gespeichert und freigegeben wurde und Sie es erneut laden.",
+          "\" ne l'a pas réenregistré dans le fichier central et abandonné et jusqu'à ce",
+          "\" vuelva a guardar el elemento en el archivo central y lo ceda, y usted vuelva",
+          "\" non salva di nuovo l'elemento su centrale e lo rilascia e quindi si",
+          "\" salve novamente o elemento no arquivo central e que você recarregue o mais",
+          "\" es erneut in der Zentraldatei speichert und freigibt und Sie anschließend den",
+          "\" a abandonné l'élément après l'avoir enregistré dans le fichier central, puis",
+          "\" vuelva a guardarlo en el archivo central, lo ceda y usted seleccione Volver a",
+          "\" non salva di nuovo l'elemento su centrale, lo rilascia e si ricaricano le",
+          "\" o salve novamente no arquivo central, o libere, e o mais recente seja"
+        ]
+      },
+      "context": "Editing (or opening) a workshared model while another team member owns the element. Usually a routine borrowing conflict; when it appears while opening the model, or repeats many times for the same user, it needs the owner's or an admin's action.",
+      "title": {
+        "en": "\"Can't edit the element until <user> resaves the element to central and relinquishes it\"",
+        "uk": "«Can't edit the element until <user> resaves the element to central…» — елемент належить іншому користувачу"
+      },
+      "cause": {
+        "en": "Another team member owns (has borrowed) the element or its workset. Revit takes ownership automatically of every element an edit touches, including elements that change as a side effect, so your edit is blocked until the owner synchronizes and relinquishes. Views can also be owned this way. When it appears while opening the model, Revit needs to apply changes to elements another user has modified.",
+        "uk": "Елемент або його робочий набір належить (позичений) іншому учаснику. Revit автоматично бере у власність усі елементи, яких торкається редагування, зокрема ті, що змінюються побічно, тож ваша зміна заблокована, доки власник не синхронізується й не звільнить їх. Так само можуть бути зайняті й види. Якщо повідомлення з'являється під час відкриття моделі, Revit має застосувати зміни до елементів, які змінив інший користувач."
+      },
+      "fix": {
+        "en": [
+          "Ask the user named in the message to run Synchronize and Modify Settings with Borrowed Elements and User-created Worksets checked; then the other team members run Reload Latest.",
+          "Give each team member separate work-in-progress views: views can be owned by one user and stay uneditable for others until released.",
+          "If the named user cannot open the model either: everyone opens it with worksets closed and synchronizes (Borrowed Elements and User-created Worksets checked); then one user opens it normally, resolves any errors, synchronizes, and you confirm others can open it.",
+          "If the named user is not available, force-relinquish their elements (file-based / Revit Server: 'Relinquishing worksets of a specific Revit user'; cloud model: 'Relinquish Elements in a Workshared Cloud Model').",
+          "Last resort: open the model with Detach from Central and save it as a new central model. Existing local models cannot synchronize with the new central model.",
+          "Make sure everyone on the model has the latest Revit update installed; use Worksharing Display to see which elements are checked out and by whom."
+        ],
+        "uk": [
+          "Попросіть користувача, названого в повідомленні, виконати Synchronize and Modify Settings з увімкненими Borrowed Elements і User-created Worksets; після цього інші учасники виконують Reload Latest.",
+          "Кожен учасник має працювати у власних робочих видах: вид теж може належати одному користувачу й бути недоступним для редагування іншим, доки його не звільнять.",
+          "Якщо названий користувач теж не може відкрити модель: усі відкривають її із закритими робочими наборами й синхронізуються (Borrowed Elements і User-created Worksets увімкнені); потім один користувач відкриває модель звичайно, розв'язує помилки, синхронізується, і ви перевіряєте, що інші можуть її відкрити.",
+          "Якщо названого користувача немає, примусово звільніть його елементи (file-based / Revit Server: «Relinquishing worksets of a specific Revit user»; хмарна модель: «Relinquish Elements in a Workshared Cloud Model»).",
+          "Крайній захід: відкрийте модель з Detach from Central і збережіть її як нову центральну. Наявні локальні копії не зможуть синхронізуватися з новою центральною моделлю.",
+          "Переконайтеся, що всі учасники встановили останнє оновлення Revit; через Worksharing Display перегляньте, які елементи зайняті й ким."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Can't edit the element until [Username] resaves...\" when working in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Message-to-Relinquish-when-other-users-not-ever-in-file.html"
+        },
+        {
+          "title": "Autodesk Help — \"Can't edit the element until [Username] resaves...\" when opening a model in Revit",
+          "url": "https://help.autodesk.com/view/DOCS/ENU/?caas=caas%2Fsfdcarticles%2Fsfdcarticles%2FWhen-opening-Revit-model-the-following-error-is-received-Can-t-edit-element-until-user-resaves-the-element-to-central-and-relinquishes-it-and-you-Reload-Latest.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "now-own-element-file-out-of-date",
+      "category": "worksharing",
+      "severity": "low",
+      "match": {
+        "any": [
+          "You now own the element, but your file is out of date",
+          "You must Reload Latest before editing the element"
+        ],
+        "dialogs": [
+          "TaskDialog_File_Out_Of_Date"
+        ],
+        "translations": [
+          "Sie sind Eigentümer des Elements, aber Ihre Datei ist veraltet. Sie müssen neu",
+          "Vous êtes propriétaire de l'élément, mais votre fichier n'est pas à jour. Vous",
+          "El elemento es propiedad suya pero el archivo está desfasado. Antes de editar",
+          "Si è ora titolari dell'elemento, ma il file non è aggiornato. Ricaricare le",
+          "Você agora tem a propriedade do elemento, mas seu arquivo está desatualizado. É",
+          "Sie müssen Letzte neu laden ausführen, bevor Sie dieses Element bearbeiten.",
+          "Vous devez recharger les dernières modifications avant de modifier l'élément.",
+          "Debe seleccionar Volver a cargar lo más reciente antes de editar el elemento.",
+          "Prima di modificare l'elemento è necessario ricaricare le ultime modifiche.",
+          "É necessário recarregar o mais recente antes de editar o elemento.",
+          "Das Element muss vor der Bearbeitung neu geladen werden, Sie haben jedoch",
+          "Vous devez recharger les dernières modifications avant de modifier l'élément,",
+          "Antes de editar el elemento, debe seleccionar Volver a cargar lo más reciente,",
+          "È necessario ricaricare le ultime modifiche prima di modificare l'elemento, ma",
+          "É necessário recarregar o mais recente antes de editar o elemento, porém o",
+          "Sie müssen Letzte neu laden ausführen, bevor Sie dieses Element bearbeiten. Die",
+          "Antes de editar el elemento, debe seleccionar Volver a cargar lo más reciente.",
+          "Prima di modificare l'elemento è necessario ricaricare le ultime modifiche. Le",
+          "É preciso recarregar o mais recente antes de editar o elemento. As alterações"
+        ]
+      },
+      "context": "Editing or opening a workshared model (Autodesk documents it for Revit Cloud Worksharing) after other members have synchronized changes to the element. Routine once; hundreds of repeats in one session mean the local copy is never being brought up to date.",
+      "title": {
+        "en": "\"You now own the element, but your file is out of date. You must Reload Latest\"",
+        "uk": "«You now own the element, but your file is out of date» — потрібен Reload Latest"
+      },
+      "cause": {
+        "en": "Revit gave you ownership of the element, but your local copy does not yet contain the changes others have synchronized, so you must load them before editing. Autodesk lists as causes an outdated local copy of the cloud model, third-party add-ins, and DWGs loading through Desktop Connector. It can also show up as part of the \"Can't edit the element until <user> resaves…\" error.",
+        "uk": "Revit надав вам право власності на елемент, але ваша локальна копія ще не містить змін, які синхронізували інші, тож перед редагуванням їх треба завантажити. Autodesk називає причинами застарілу локальну копію хмарної моделі, сторонні додатки та DWG, що завантажуються через Desktop Connector. Повідомлення також може бути частиною помилки «Can't edit the element until <user> resaves…»."
+      },
+      "fix": {
+        "en": [
+          "Use Reload Latest to load the other users' changes.",
+          "If that is not enough, open the model with all worksets closed, then Synchronize with Central or Reload Latest.",
+          "If the message stays: save locally, close the model and reopen it.",
+          "Clear the damaged or outdated local collaboration cache for this model (Autodesk article 'How to clear damaged Revit cloud model cache'), then reopen.",
+          "Check whether add-ins cause it: disable them and retry.",
+          "Exit Desktop Connector from the system tray before opening the model; if that helps, clear the Desktop Connector caches or update it.",
+          "Make sure you have the latest update/hotfix for your Revit version.",
+          "Last resort: detach the model and create a new central model in the cloud, then create a new local copy, synchronize and publish it."
+        ],
+        "uk": [
+          "Виконайте Reload Latest, щоб завантажити зміни інших користувачів.",
+          "Якщо цього замало, відкрийте модель з усіма закритими робочими наборами й виконайте Synchronize with Central або Reload Latest.",
+          "Якщо повідомлення лишається: збережіть локально, закрийте модель і відкрийте знову.",
+          "Очистіть пошкоджений або застарілий локальний кеш цієї моделі (стаття Autodesk «How to clear damaged Revit cloud model cache») і відкрийте модель знову.",
+          "Перевірте, чи не спричиняють це додатки: вимкніть їх і повторіть.",
+          "Перед відкриттям моделі закрийте Desktop Connector через значок у системному треї; якщо це допомогло, очистіть кеші Desktop Connector або оновіть його.",
+          "Переконайтеся, що встановлено останнє оновлення/hotfix вашої версії Revit.",
+          "Крайній захід: від'єднайте модель і створіть нову центральну модель у хмарі, потім створіть нову локальну копію, синхронізуйтесь і опублікуйте її."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"You now own the element, but your file is out of date...\" appears when opening a cloud workshared file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/You-now-own-the-element-but-your-file-is-out-of-date-when-opening-a-Revit-cloud-workshared-file.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "checkout-large-number-of-elements",
+      "category": "worksharing",
+      "severity": "info",
+      "match": {
+        "any": [
+          "You are trying to checkout a large number of elements",
+          "Instead checkout the following"
+        ],
+        "translations": [
+          "Sie versuchen, eine große Anzahl von Elementen auszuchecken. Checken Sie",
+          "Vous essayez d'extraire un grand nombre d'éléments. Extrayez plutôt les",
+          "Está intentando aplicar check-out a una gran cantidad de elementos. En lugar de",
+          "Si sta tentando di estrarre una grande quantità di elementi. Verranno invece",
+          "Você está tentando fazer o check-out de um grande número de elementos. Em vez"
+        ]
+      },
+      "context": "A single command (a macro, a Fabrication database reload, a large edit) changes so many elements in a workshared model that Revit proposes checking out whole worksets instead of borrowing elements.",
+      "title": {
+        "en": "\"You are trying to checkout a large number of elements. Instead checkout the following worksets\"",
+        "uk": "«You are trying to checkout a large number of elements» — Revit пропонує взяти цілі робочі набори"
+      },
+      "cause": {
+        "en": "One command affects 4001 or more elements, so Revit offers to check out the listed worksets instead of borrowing each element. This is a prompt, not a failure. For BIM 360 cloud models before Revit 2022.0.1 there was a limit on items checked out at once, which made Fabrication database reloads fail this way.",
+        "uk": "Одна команда зачіпає 4001 або більше елементів, тож Revit пропонує взяти перелічені робочі набори замість позичання кожного елемента. Це запит, а не збій. Для хмарних моделей BIM 360 до Revit 2022.0.1 діяло обмеження на кількість одночасно взятих об'єктів, через що так збоїло перезавантаження Fabrication database."
+      },
+      "fix": {
+        "en": [
+          "Choose Check Out Worksets to let the command continue.",
+          "If it happens when reloading a Fabrication Database Configuration in a cloud model, install Revit 2021.1.4, 2022.0.1 or later.",
+          "Workaround on older versions: save a copy of the model locally, reload the configuration in the local file, collaborate the file back to the cloud and archive the previous cloud model (opening the cloud model with Audit and reloading the database may also help)."
+        ],
+        "uk": [
+          "Виберіть Check Out Worksets, щоб команда продовжила роботу.",
+          "Якщо це трапляється під час перезавантаження Fabrication Database Configuration у хмарній моделі, встановіть Revit 2021.1.4, 2022.0.1 або новіший.",
+          "Обхідний шлях для старих версій: збережіть копію моделі локально, перезавантажте конфігурацію в локальному файлі, знову виконайте Collaborate у хмару й заархівуйте попередню хмарну модель (також може допомогти відкриття хмарної моделі з Audit і перезавантаження бази)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"You are trying to checkout a large number of elements...\" when running the DeleteStandardMaterials Macro in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/You-are-trying-to-checkout-a-large-number-of-elements-Instead-checkout-the-following-worksets-when-running-the-DeleteStandardMaterials-Macro-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"You are trying to checkout a large number of elements...\" when reloading a Database in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/You-are-trying-to-checkout-a-large-number-of-elements-Instead-checkout-the-following-worksets-when-reloading-a-Database-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "sync-reminder-changes-not-synchronized",
+      "category": "worksharing",
+      "severity": "info",
+      "match": {
+        "dialogs": [
+          "TaskDialog_Changes_Not_Synchronized_With_Central"
+        ]
+      },
+      "context": "Periodic Synchronize with Central reminder while working in a local model (its options are 'Synchronize with central', '…and set reminder intervals', 'Do not synchronize and set reminder intervals'). If the journal ends abnormally soon after it, work since the last sync existed only in the local model.",
+      "title": {
+        "en": "Reminder: \"Changes Not Synchronized with Central\"",
+        "uk": "Нагадування: «Changes Not Synchronized with Central»"
+      },
+      "cause": {
+        "en": "Revit reminds you at a set interval to Synchronize with Central when the local model has changes that are not in the central model yet. It is a routine reminder, not an error.",
+        "uk": "Revit з заданим інтервалом нагадує виконати Synchronize with Central, коли локальна модель має зміни, яких ще немає в центральній. Це звичайне нагадування, а не помилка."
+      },
+      "fix": {
+        "en": [
+          "Choose Synchronize with central: your changes are saved to the central model and other members' saved changes are copied to your local model.",
+          "To change how often Revit reminds you, go to File > Options > General and set Synchronize with Central reminder interval."
+        ],
+        "uk": [
+          "Виберіть Synchronize with central: ваші зміни буде збережено в центральній моделі, а збережені зміни інших учасників — скопійовано у вашу локальну.",
+          "Щоб змінити частоту нагадувань, відкрийте File > Options > General і задайте Synchronize with Central reminder interval."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Options Dialog: General Tab",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-150AF853-2413-439F-B8FB-B3DBCB827EDD.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Collaborate) — Close Workshared Files without Saving",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Collaborate/files/GUID-B1922844-37B9-40D8-952C-CC9E72FFA8FA.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "close-local-changes-not-synchronized",
+      "category": "worksharing",
+      "severity": "info",
+      "match": {
+        "dialogs": [
+          "TaskDialog_Local_Changes_Not_Synchronized_With_Central"
+        ]
+      },
+      "context": "Closing a local model that has changes not yet synchronized (options: 'Synchronize with central' or 'Close the local file').",
+      "title": {
+        "en": "Closing with \"Local Changes Not Synchronized with Central\"",
+        "uk": "Закриття з «Local Changes Not Synchronized with Central»"
+      },
+      "cause": {
+        "en": "You are closing a local model whose changes are not in the central model. If you close without synchronizing, the changes are not shared with the team and you still own the elements you modified, so others cannot edit them.",
+        "uk": "Ви закриваєте локальну модель, зміни якої ще не потрапили в центральну. Якщо закрити без синхронізації, зміни не стануть доступні команді, а змінені елементи лишаться у вашій власності, тож інші не зможуть їх редагувати."
+      },
+      "fix": {
+        "en": [
+          "Choose Synchronize with central before closing: your changes are saved to the central model and other members' saved changes are copied to your local model.",
+          "If you close without synchronizing, remember that you keep ownership of the elements you modified: synchronize later, or relinquish unmodified elements and worksets so others can use them."
+        ],
+        "uk": [
+          "Перед закриттям виберіть Synchronize with central: ваші зміни буде збережено в центральній моделі, а збережені зміни інших учасників — скопійовано у вашу локальну.",
+          "Якщо закриваєте без синхронізації, пам'ятайте, що змінені елементи лишаються вашими: синхронізуйтеся пізніше або звільніть незмінені елементи й робочі набори, щоб ними могли користуватися інші."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Collaborate) — Close Workshared Files without Saving",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Collaborate/files/GUID-B1922844-37B9-40D8-952C-CC9E72FFA8FA.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "save-reminder-project-not-saved-recently",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "dialogs": [
+          "TaskDialog_Project_Not_Saved_Recently"
+        ]
+      },
+      "context": "Periodic save reminder (options: 'Save the project', 'Save the project and set reminder intervals', 'Do not save and set reminder intervals').",
+      "title": {
+        "en": "Reminder: \"Project Not Saved Recently\"",
+        "uk": "Нагадування: «Project Not Saved Recently»"
+      },
+      "cause": {
+        "en": "Revit reminds you at a set interval to save the open project. It is a routine reminder; many of them in one session simply mean the user often chose not to save.",
+        "uk": "Revit з заданим інтервалом нагадує зберегти відкритий проєкт. Це звичайне нагадування; багато таких за сесію означає лише, що користувач часто відмовлявся зберігати."
+      },
+      "fix": {
+        "en": [
+          "To change how often Revit reminds you, or to turn the reminder off, go to File > Options > General and set Save reminder Interval (or choose No reminders)."
+        ],
+        "uk": [
+          "Щоб змінити частоту нагадувань або вимкнути їх, відкрийте File > Options > General і задайте Save reminder Interval (або виберіть No reminders)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Define Save Reminders",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-GetStarted/files/GUID-AD7358A4-C614-4540-8D36-F2353AEE4C21.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-open-with-unsynced-saved-changes",
+      "category": "cloud",
+      "severity": "low",
+      "match": {
+        "dialogs": [
+          "TaskDialog_Unsubmitted_Changes"
+        ]
+      },
+      "context": "Opening a cloud workshared model whose local copy has saved changes that were never synchronized (options: 'Keep my changes and open the model' / 'Discard my changes and open the latest version of the model').",
+      "title": {
+        "en": "\"Saved Changes Not Synchronized\" when opening a cloud model",
+        "uk": "«Saved Changes Not Synchronized» під час відкриття хмарної моделі"
+      },
+      "cause": {
+        "en": "When you open a cloud workshared model Revit normally updates the local copy to the latest changes, but it skips this when the local copy contains changes that were never synchronized, so the local model is now out of date with the central model.",
+        "uk": "Під час відкриття хмарної моделі Revit зазвичай оновлює локальну копію до останніх змін, але пропускає це, якщо локальна копія містить ще не синхронізовані зміни, тож локальна модель відстає від центральної."
+      },
+      "fix": {
+        "en": [
+          "To keep your work, choose Keep my changes and open the model, then Reload Latest or Synchronize with Central soon: until then you cannot check out or edit elements or worksets you do not already own.",
+          "If the local changes are not needed, choose Discard my changes and open the latest version of the model to open it directly from the cloud."
+        ],
+        "uk": [
+          "Щоб зберегти роботу, виберіть Keep my changes and open the model, а потім якнайшвидше виконайте Reload Latest або Synchronize with Central: доти ви не зможете брати чи редагувати елементи й робочі набори, яких ще не маєте.",
+          "Якщо локальні зміни не потрібні, виберіть Discard my changes and open the latest version of the model, щоб відкрити модель напряму з хмари."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Saved Changes Not Synchronized",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-D591A2B5-EC7A-484F-A1F1-3472C9C55DAC.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cannot-find-central-model",
+      "category": "worksharing",
+      "severity": "high",
+      "match": {
+        "any": [
+          "cannot be found, perhaps due to a lost network connection"
+        ],
+        "dialogs": [
+          "TaskDialog_Cannot_Find_Central_Model"
+        ]
+      },
+      "context": "Opening a local model or Synchronize with Central in file-based worksharing; also when a file-based workshared model was uploaded directly to Autodesk Docs and opened through Desktop Connector.",
+      "title": {
+        "en": "\"Cannot Find Central Model … perhaps due to a lost network connection\"",
+        "uk": "«Cannot Find Central Model» — центральну модель не знайдено (можлива втрата мережі)"
+      },
+      "cause": {
+        "en": "Revit cannot reach the central model at the path stored in the local model: the network location is not accessible, the local model was created incorrectly and is orphaned from the central, or a file-based workshared model was uploaded directly to Autodesk Docs and opened through Desktop Connector. Until reconnected, changes to elements you do not own may be lost.",
+        "uk": "Revit не може дістатися центральної моделі за шляхом, записаним у локальній: мережеве розташування недоступне, локальну модель створено неправильно й вона «відірвана» від центральної, або file-based модель завантажили напряму в Autodesk Docs і відкрили через Desktop Connector. До відновлення зв'язку зміни в елементах, які вам не належать, можуть бути втрачені."
+      },
+      "fix": {
+        "en": [
+          "Find the central path: open Synchronize and Modify Settings, note the Central Model Location, and check in Windows Explorer that you can open that location; if not, work with your network support to get access.",
+          "If the location is reachable, open the central model there with Detach from Central, save it back to the same location under a different name, create a local from it and confirm the error no longer appears.",
+          "Create local copies correctly: File > Open, browse to the central model on the server, select it, make sure Create New Local is checked, click Open. If Create New Local is grayed out, another member may be syncing: wait and try again.",
+          "If the model was opened through Desktop Connector: for a non-workshared uploaded model, open it with Detach from Central and save it back; if it should be a cloud workshared model, open it with Detach from Central and Collaborate it to the cloud. Open cloud workshared models only from the Autodesk Docs tab on Revit Home."
+        ],
+        "uk": [
+          "Знайдіть шлях до центральної моделі: відкрийте Synchronize and Modify Settings, запишіть Central Model Location і перевірте в провіднику Windows, чи відкривається це розташування; якщо ні — зверніться до мережевої підтримки по доступ.",
+          "Якщо розташування доступне, відкрийте там центральну модель з Detach from Central, збережіть її в ту саму папку під іншою назвою, створіть з неї локальну копію й переконайтеся, що помилка зникла.",
+          "Створюйте локальні копії правильно: File > Open, перейдіть до центральної моделі на сервері, виділіть її, переконайтеся, що Create New Local увімкнено, натисніть Open. Якщо Create New Local неактивний, можливо, хтось саме синхронізується: зачекайте й повторіть.",
+          "Якщо модель відкрито через Desktop Connector: для не-workshared завантаженої моделі відкрийте її з Detach from Central і збережіть назад; якщо вона має бути хмарною workshared, відкрийте з Detach from Central і виконайте Collaborate у хмару. Хмарні workshared моделі відкривайте лише з вкладки Autodesk Docs на Revit Home."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The central model cannot be found, perhaps due to a lost network connection\" when opening a file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-central-model-cannot-be-found-perhaps-due-to-a-lost-network-connection-when-opening-a-file-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"The central model [path]\\[file name].rvt cannot be found, perhaps due to a lost network connection\" when syncing in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-The-central-model-cannot-be-found-perhaps-due-to-a-lost-network-connection-when-syncing-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-cache-location-changed",
+      "category": "cloud",
+      "severity": "info",
+      "match": {
+        "dialogs": [
+          "TaskDialog_Cache_Location_Sync_Local_Changes"
+        ]
+      },
+      "context": "The user changed the Cloud model cache location in Options > Cloud Model.",
+      "title": {
+        "en": "Cloud model cache location changed — sync local changes before closing",
+        "uk": "Змінено розташування кешу хмарних моделей — синхронізуйте зміни перед закриттям"
+      },
+      "cause": {
+        "en": "The new cloud model cache location takes effect the next time Revit starts. The old cache is not moved, and every cloud model opened in the new session is recreated from the cloud, so local changes that were not synchronized are no longer available.",
+        "uk": "Нове розташування кешу хмарних моделей діє з наступного запуску Revit. Старий кеш не переноситься, а кожна хмарна модель у новій сесії створюється з хмари наново, тож несинхронізовані локальні зміни стають недоступними."
+      },
+      "fix": {
+        "en": [
+          "Synchronize local changes in all your cloud models before closing this Revit session.",
+          "Pick a folder on a fast local drive with at least 30 GB free; not a USB flash drive, not a UNC path or a mapping of one, not a cloud storage path (Desktop Connector, Dropbox), not longer than 200 characters, and do not rename the cache folder afterwards."
+        ],
+        "uk": [
+          "Перед закриттям цієї сесії Revit синхронізуйте локальні зміни в усіх хмарних моделях.",
+          "Виберіть папку на швидкому локальному диску з щонайменше 30 ГБ вільного місця; не USB-флешку, не UNC-шлях чи його мапінг, не шлях хмарного сховища (Desktop Connector, Dropbox), не довший за 200 символів, і не перейменовуйте потім папку кешу."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Options Dialog: Cloud Model Tab",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-703D6F39-67BF-4DA1-843A-062ED7664FCE.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "backup-failed-before-save",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Revit failed to back up the file before saving"
+        ],
+        "dialogs": [
+          "TaskDialog_Backup_Failed"
+        ]
+      },
+      "context": "Saving a model or family (Save, not Sync). Autodesk documents it for files opened and saved directly on a network folder or SharePoint, and for paths longer than Windows allows.",
+      "title": {
+        "en": "\"Backup Failed\": Revit could not back up the file before saving",
+        "uk": "«Backup Failed»: Revit не зміг створити резервну копію перед збереженням"
+      },
+      "cause": {
+        "en": "Before saving, Revit renames the previous file into a backup. Autodesk documents two causes for this failing: saving a non-workshared model or a family directly to a network folder, and a file path plus name longer than Windows allows (254 characters). Autodesk warns that affected files may be corrupted when opened again.",
+        "uk": "Перед збереженням Revit перейменовує попередній файл на резервну копію. Autodesk описує дві причини збою: збереження non-workshared моделі чи сімейства безпосередньо в мережевій папці та надто довгий шлях разом з іменем файлу (понад 254 символи, обмеження Windows). Autodesk попереджає, що такі файли можуть виявитися пошкодженими під час наступного відкриття."
+      },
+      "fix": {
+        "en": [
+          "Check free disk space before answering Yes — the dialog itself asks for this.",
+          "If the file is on SharePoint or a deep folder, use a shorter file name, a shorter path, or both.",
+          "Work locally on non-workshared RVT and RFA files and copy them to the network afterwards, instead of saving them directly on the network folder.",
+          "Use Save As when saving changes to such files."
+        ],
+        "uk": [
+          "Перш ніж відповідати Yes, перевірте вільне місце на диску — про це просить сам діалог.",
+          "Якщо файл лежить у SharePoint або в глибоко вкладеній папці — скоротіть назву файлу, шлях або обидва.",
+          "Працюйте з non-workshared файлами RVT і RFA локально, а в мережу копіюйте їх потім, замість зберігати безпосередньо в мережевій папці.",
+          "Для збереження змін у таких файлах використовуйте Save As."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Revit failed to back up the file before saving\" when saving a file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-failed-to-back-up-the-file-before-saving-when-saving-a-file-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"Revit failed to back up the file before saving....Are you sure you want to overwrite 'File name'?\" when saving a file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-failed-to-back-up-the-file-before-saving-Are-you-sure-you-want-to-overwrite-File-name-when-saving-a-file-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "unresolved-references-links-not-found",
+      "category": "link-import",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Revit could not find or read"
+        ],
+        "dialogs": [
+          "TaskDialog_Image_File_Reload_Unsuccessful",
+          "TaskDialog_Unresolved_PDF_And_Images_References",
+          "TaskDialog_Unresolved_References"
+        ]
+      },
+      "context": "Opening a model that has linked files (Revit, CAD, DWF, IFC, ...).",
+      "title": {
+        "en": "\"Unresolved References\": Revit could not find or read linked files",
+        "uk": "«Unresolved References»: Revit не знайшов або не зміг прочитати пов'язані файли"
+      },
+      "cause": {
+        "en": "Revit cannot find the linked files at the path where the links were last saved: a linked file was moved or renamed, or the model was transmitted from another location without its links (or they were not repathed). For cloud models that fail on one computer only, Autodesk points to out-of-date Revit or Desktop Connector, add-ins, nested links or a damaged cloud model cache.",
+        "uk": "Revit не знаходить пов'язані файли за шляхом, з яким їх востаннє збережено: файл переміщено чи перейменовано, або модель передали з іншого місця без зв'язків (чи їх не перепрописали). Для хмарних моделей, коли проблема лише на одному комп'ютері, Autodesk називає застарілий Revit чи Desktop Connector, надбудови, вкладені зв'язки або пошкоджений кеш хмарних моделей."
+      },
+      "fix": {
+        "en": [
+          "In the dialog choose \"Open Manage Links to correct this problem\". Unresolved links show Not Found in the Status column.",
+          "Select each link that is not found, click Reload From... and browse to where the file is now.",
+          "If possible set Path Type to Relative so the link survives future moves.",
+          "If the link does not show up in Revit, check that you can still open that location outside of Revit.",
+          "Cloud model, only on one computer: update Revit and Desktop Connector to the latest version, then clear the damaged Revit cloud model cache and check if the link loads.",
+          "Still failing with Desktop Connector links: remove the project in Desktop Connector, add it back and link again."
+        ],
+        "uk": [
+          "У діалозі оберіть «Open Manage Links to correct this problem». Незнайдені зв'язки мають статус Not Found у стовпці Status.",
+          "Виберіть кожен незнайдений зв'язок, натисніть Reload From... і вкажіть, де файл лежить зараз.",
+          "За можливості встановіть Path Type = Relative, щоб зв'язок не губився під час майбутніх переміщень.",
+          "Якщо файл не видно в Revit — перевірте, чи відкривається це місце поза Revit.",
+          "Хмарна модель, лише на одному комп'ютері: оновіть Revit і Desktop Connector до останньої версії, потім очистіть пошкоджений кеш хмарних моделей Revit і перевірте, чи завантажується зв'язок.",
+          "Якщо зв'язки через Desktop Connector і далі не працюють — вилучіть проєкт у Desktop Connector, додайте знову і зв'яжіть повторно."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Revit could not find or read referenced files\" when opening a Revit model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/REVIT-how-to-resolve-issue-with-referenced-files-while-loading-revit-model.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2025) — Re-establish Unresolved References",
+          "url": "https://help.autodesk.com/cloudhelp/2025/ENU/Revit-Collaborate/files/GUID-C34BBB5A-F756-4AFF-9A2C-FF81124FD137.htm"
+        },
+        {
+          "title": "Autodesk Support — \"Revit could not find or read # references\" dialog appears for specific computer when opening cloud files in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-could-not-find-or-read-references-What-do-you-want-to-do-dialog-appears-for-specific-computer-when-opening-BIM-360-files-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "hardware-io-error-carchiveexception",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Encountered a hardware I/O error",
+          "\"CArchiveException\", code=1:"
+        ],
+        "regex": [
+          "CArchiveException\"?,\\s*code=1\\b"
+        ],
+        "translations": [
+          "Hardware-E/A-Fehler beim Zugriff auf",
+          "Une erreur d'E/S matérielle a été reportée lors de l'accès à",
+          "Error de E/S de hardware al obtener acceso a",
+          "Errore di I/O hardware durante l'accesso a",
+          "Um erro de E/S de hardware foi reportado ao acessar"
+        ]
+      },
+      "context": "Saving or synchronizing a model; the journal shows Save exception \"CArchiveException\", code=1.",
+      "title": {
+        "en": "Save failed with a hardware I/O error (CArchiveException code=1)",
+        "uk": "Збереження не вдалося через апаратну помилку вводу-виводу (CArchiveException code=1)"
+      },
+      "cause": {
+        "en": "Revit is receiving hardware input/output errors when accessing the project files: folder permissions, the connection to the server, a corrupted Windows user profile, a too-long path, a corrupted file, Windows Sync Center turned off, or a VPN used for worksharing.",
+        "uk": "Revit отримує апаратні помилки вводу-виводу під час доступу до файлів проєкту: права на папку, з'єднання із сервером, пошкоджений профіль користувача Windows, надто довгий шлях, пошкоджений файл, вимкнений Windows Sync Center або VPN для спільної роботи."
+      },
+      "fix": {
+        "en": [
+          "Make sure all users have permission/access to the folder where the Revit file is stored, and check network permissions.",
+          "Check the connection to the server.",
+          "Test with a new Windows user profile (the current one may be corrupted).",
+          "Check that the file path is not too long.",
+          "If the file itself is corrupted, recover a backup.",
+          "Check that Windows Sync Center has not been turned off.",
+          "If a VPN is used for worksharing, test with the VPN disabled."
+        ],
+        "uk": [
+          "Переконайтеся, що всі користувачі мають права/доступ до папки, де лежить файл Revit, і перевірте мережеві права.",
+          "Перевірте з'єднання із сервером.",
+          "Перевірте з новим профілем користувача Windows (поточний може бути пошкоджений).",
+          "Переконайтеся, що шлях до файлу не надто довгий.",
+          "Якщо пошкоджено сам файл — відновіть резервну копію.",
+          "Перевірте, чи не вимкнено Windows Sync Center.",
+          "Якщо для спільної роботи використовується VPN — перевірте з вимкненим VPN."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Encountered a hardware I/O error\" when attempting to save or sync a file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Encountered-a-hardware-I-O-error-when-attempting-to-save-a-file-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "archive-exception-corrupt-data",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "ArchiveException 105"
+        ],
+        "regex": [
+          "ArchiveException 105( corruptData)? is raised"
+        ]
+      },
+      "context": "Opening, Reload Latest / Synchronize with Central, or linking a model. Autodesk lists this journal line in its articles on corrupt data, on crashes opening cloud models, and on \"Element became corrupt\" in cloud workshared models.",
+      "title": {
+        "en": "Journal: \"ArchiveException 105 corruptData\" — Revit read corrupt data",
+        "uk": "Журнал: «ArchiveException 105 corruptData» — Revit прочитав пошкоджені дані"
+      },
+      "cause": {
+        "en": "Revit hit data it could not read while loading the model or data from central. Autodesk lists this line with corrupt model data, a corrupt linked model, corrupted cloud cache files and add-in conflicts. A corrupt link can trigger corruption messages even when the host model itself is fine.",
+        "uk": "Revit натрапив на дані, які не зміг прочитати під час завантаження моделі або даних із центральної. Autodesk наводить цей рядок разом із пошкодженими даними моделі, пошкодженим зв'язаним файлом, пошкодженими файлами хмарного кешу та конфліктом надбудов. Пошкоджений зв'язок може викликати повідомлення про пошкодження, навіть коли сама модель ціла."
+      },
+      "fix": {
+        "en": [
+          "Open the model with the Audit checkbox ticked.",
+          "Check available storage — low disk space causes corruption errors.",
+          "Check for corrupt RVT links: open a workshared model with all worksets closed (copy a non-workshared model to a folder without access to its links); if it opens, open the worksets one by one to find the link.",
+          "If a link is the culprit: open the linked model with Audit, synchronize it with Compact File, close it, publish it (cloud), then open the host again.",
+          "Cloud model: clear the damaged Revit cloud model cache, make sure Revit is up to date and test with add-ons disabled.",
+          "If the model itself is corrupt, recover a backup (local model: How to recover Revit model backup; cloud workshared model: the BIM 360/ACC recovery options)."
+        ],
+        "uk": [
+          "Відкрийте модель з позначкою Audit.",
+          "Перевірте вільне місце — брак місця на диску спричиняє помилки пошкодження.",
+          "Перевірте пошкоджені RVT-зв'язки: workshared модель відкрийте з усіма закритими worksets (non-workshared — скопіюйте в папку без доступу до зв'язків); якщо відкривається — відкривайте worksets по одному, щоб знайти зв'язок.",
+          "Якщо винен зв'язок: відкрийте зв'язану модель з Audit, синхронізуйте з Compact File, закрийте, опублікуйте (для хмари) і знову відкрийте основну модель.",
+          "Хмарна модель: очистіть пошкоджений кеш хмарних моделей Revit, оновіть Revit і перевірте з вимкненими надбудовами.",
+          "Якщо пошкоджена сама модель — відновіть резервну копію (локальна модель: How to recover Revit model backup; хмарна workshared модель: варіанти відновлення в BIM 360/ACC)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Revit: \"Data in File [name] Is Corrupt..\" When Opening Files or Syncing to Central",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Data-in-Revit-file-is-corrupt-and-needs-to-be-manually-recovered.html"
+        },
+        {
+          "title": "Autodesk Support — Revit crashes without error message when opening/linking cloud model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-crashes-opening-cloud-model.html"
+        },
+        {
+          "title": "Autodesk Support — \"Element became corrupt at some time before this session\" in a Revit cloud workshared model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-Unrecoverable-error-and-Element-became-corrupt-error-on-one-C4R-project-one-user.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "upgrade-corrupt-color-fill-data",
+      "category": "upgrade",
+      "severity": "high",
+      "match": {
+        "any": [
+          "can't fix the ordering of ColorFillData"
+        ]
+      },
+      "context": "Upgrading a model to Revit 2026 or later; \"Data in file ... is corrupt\" appears right after the upgrade starts. Matches only the ColorFillData journal line; the dialog itself (TaskDialog_Revit_File_Corrupted) is covered by data-in-file-corrupt.",
+      "title": {
+        "en": "Upgrade to Revit 2026+ fails: corrupt Color Fill scheme data",
+        "uk": "Оновлення до Revit 2026+ не вдається: пошкоджені дані Color Fill scheme"
+      },
+      "cause": {
+        "en": "The model contains corrupted Color Fill scheme data. Since Revit 2026, Revit tries to repair this automatically when the model opens; here the repair fails, so the upgrade fails.",
+        "uk": "Модель містить пошкоджені дані Color Fill scheme. Починаючи з Revit 2026, Revit намагається автоматично їх виправити під час відкриття; тут виправлення не вдається, тож оновлення зупиняється."
+      },
+      "fix": {
+        "en": [
+          "If only model geometry is needed: in the original Revit version create a new project, link the affected model, bind the link, save, then upgrade the new project to Revit 2026 or later. Views and other non-geometric data are not transferred.",
+          "If all model data must be kept, contact Autodesk Support to remove the corrupted data and upgrade the model."
+        ],
+        "uk": [
+          "Якщо потрібна лише геометрія: у вихідній версії Revit створіть новий проєкт, зв'яжіть уражену модель, виконайте Bind для зв'язку, збережіть і оновіть новий проєкт до Revit 2026 або новішої. Види та інші негеометричні дані не переносяться.",
+          "Якщо потрібно зберегти всі дані моделі — зверніться до Autodesk Support, щоб видалити пошкоджені дані й оновити модель."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Data in file [...].rvt is corrupt and needs to be manually recovered\" when trying to upgrade a model to Revit 2026 or later",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Data-in-file-rvt-is-corrupt-and-needs-to-be-manually-recovered-when-trying-to-upgrade-a-model-to-Revit-2026-or-later.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "too-many-elements-corrupted",
+      "category": "file-corruption",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "Too many elements are now corrupted"
+        ],
+        "dialogs": [
+          "TaskDialog_Elements_Corrupted"
+        ]
+      },
+      "context": "During work on a model; Revit tells you to stop working on the file and use a backup.",
+      "title": {
+        "en": "\"Elements Corrupted\": too many elements are now corrupted",
+        "uk": "«Elements Corrupted»: забагато пошкоджених елементів"
+      },
+      "cause": {
+        "en": "Elements are corrupt when they are changed to a state with properties or values they should not have. When there are too many, the current operation fails and Revit tries to restore a prior state. Autodesk lists as causes read/write failures of the storage media, Revit instability while writing the model, add-ins that change elements in ways the UI cannot, and untested operations such as cancelling a sync or using Undo after a sync.",
+        "uk": "Елементи пошкоджені, коли їх змінено до стану з властивостями чи значеннями, яких у них бути не повинно. Коли таких забагато, поточна операція не виконується, і Revit намагається повернутися до попереднього стану. Серед причин Autodesk називає збої читання/запису носія, нестабільність Revit під час запису моделі, надбудови, що змінюють елементи так, як не дозволяє інтерфейс, і неперевірені дії — наприклад скасування синхронізації або Undo після неї."
+      },
+      "fix": {
+        "en": [
+          "Stop working on this file. Open the most recent backup and save it; if that backup is also corrupt, try earlier ones.",
+          "If that does not help and you have an Autodesk maintenance plan, gather the corrupt file and its 5 most recent journal files and open a support case.",
+          "To prevent it: keep enough backups (more automatic backups than saves in one session, or manual backups) and audit the model about once a week.",
+          "Keep non-workshared and local files on the local drive (writing directly to a network path increases read/write failures), keep at least 5 GB free, and empty %TMP% periodically.",
+          "Install the latest Revit updates, and avoid Undo after synchronizing or cancelling a synchronize."
+        ],
+        "uk": [
+          "Припиніть роботу з цим файлом. Відкрийте найсвіжішу резервну копію і збережіть її; якщо вона теж пошкоджена — пробуйте старіші.",
+          "Якщо не допомогло і у вас є план обслуговування Autodesk — зберіть пошкоджений файл і 5 останніх журналів і створіть звернення до підтримки.",
+          "Для запобігання: майте достатньо резервних копій (автоматичних більше, ніж збережень за сесію, або ручні) і виконуйте Audit приблизно раз на тиждень.",
+          "Тримайте non-workshared і локальні файли на локальному диску (запис безпосередньо в мережу збільшує збої читання/запису), майте щонайменше 5 ГБ вільного місця і періодично очищайте %TMP%.",
+          "Встановлюйте останні оновлення Revit і не використовуйте Undo після синхронізації чи її скасування."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Best Practices: Preventing Data Corruption in Revit",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-CE42D9A5-A1F9-47D0-9F25-B338DC74AC38.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Error: Data in File Is Corrupt",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-03CABFE0-4A6B-4C1A-968F-57608192E96E.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "addin-assembly-version-conflict",
+      "category": "addin",
+      "severity": "info",
+      "match": {
+        "any": [
+          "Assembly version conflict in some references in"
+        ]
+      },
+      "context": "Revit start-up and add-in loading; logged as API_ERROR lines in the journal, often many times per session for Autodesk and third-party add-ins.",
+      "title": {
+        "en": "\"API_ERROR: Assembly version conflict\" lines in the journal (harmless)",
+        "uk": "Рядки «API_ERROR: Assembly version conflict» у журналі (нешкідливі)"
+      },
+      "cause": {
+        "en": "An add-in references a different version of a .NET module (for example System.Net.Http or Newtonsoft.Json) than the one Revit has already loaded. Autodesk states these are internal warnings: Revit behaves as designed and there is no known impact on users.",
+        "uk": "Додаток посилається на іншу версію модуля .NET (наприклад System.Net.Http або Newtonsoft.Json), ніж та, яку Revit уже завантажив. Autodesk зазначає, що це внутрішні попередження: Revit працює як задумано, відомого впливу на користувачів немає."
+      },
+      "fix": {
+        "en": [
+          "No action is needed for these lines alone — they do not affect how Revit works. Look elsewhere in the journal for the real cause of any problem."
+        ],
+        "uk": [
+          "Самі ці рядки не потребують жодних дій — вони не впливають на роботу Revit. Справжню причину проблеми шукайте в інших місцях журналу."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"API_Error : Assembly version conflicts\" reported in the Revit journal file",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/API-Error-Assembly-version-conflicts-reported-in-the-Revit-journal-file.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "addin-missing-third-party-updater",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Missing Third Party Updater"
+        ],
+        "dialogs": [
+          "TaskDialog_Missing_Third_Party_Updater",
+          "TaskDialog_Missing_Third_Party_Updaters"
+        ]
+      },
+      "context": "Opening a model, Synchronize with Central or Reload Latest.",
+      "title": {
+        "en": "\"Missing Third Party Updater\" — the model was edited with an add-in you don't have",
+        "uk": "«Missing Third Party Updater» — модель редагували з додатком, якого у вас немає"
+      },
+      "cause": {
+        "en": "The model was opened and edited on a computer where a third-party add-in or extension was installed, and that add-in is not available on this computer. If you keep editing, data maintained by that add-in will not be updated properly.",
+        "uk": "Модель відкривали й редагували на комп'ютері, де був встановлений сторонній додаток або розширення, а на цьому комп'ютері його немає. Якщо продовжити редагування, дані, які веде цей додаток, не оновлюватимуться належним чином."
+      },
+      "fix": {
+        "en": [
+          "Update Revit to the latest update for your version.",
+          "Install the third-party add-in named in the warning on this computer. Autodesk does not support third-party add-ins — contact its manufacturer for a download link or help.",
+          "If you just need to keep working, choose 'Continue working with the file' — the warning will reappear the next time the file is opened.",
+          "To stop the warning for this model, choose 'Do not warn about this updater again and continue working with the file' and save. For a workshared model, synchronize with central afterwards and then Publish the changes; the change affects other team members too.",
+          "Alternatively choose 'Close without saving', or 'Save the file under a different name' to keep the original untouched.",
+          "If the warning keeps returning after 'Do not warn…' and the add-in is no longer needed, uninstall that add-in from all workstations that open the model."
+        ],
+        "uk": [
+          "Оновіть Revit до останнього оновлення вашої версії.",
+          "Встановіть на цьому комп'ютері сторонній додаток, названий у попередженні. Autodesk не підтримує сторонні додатки — за посиланням для завантаження чи допомогою звертайтеся до їхнього виробника.",
+          "Якщо потрібно просто працювати далі, оберіть «Continue working with the file» — попередження з'явиться знову під час наступного відкриття файлу.",
+          "Щоб прибрати попередження для цієї моделі, оберіть «Do not warn about this updater again and continue working with the file» і збережіть файл. Для workshared-моделі після цього синхронізуйтеся з центральною, а потім виконайте Publish; зміна стосується й інших учасників команди.",
+          "Інакше оберіть «Close without saving» або «Save the file under a different name», щоб не змінювати оригінал.",
+          "Якщо попередження повертається навіть після «Do not warn…», а додаток більше не потрібен, видаліть цей додаток з усіх робочих станцій, які відкривають модель."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Missing third party updater\" error when opening model, syncing, or reloading latest in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Missing-Third-Party-Updater.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "addin-signed-not-trusted",
+      "category": "addin",
+      "severity": "info",
+      "match": {
+        "any": [
+          "This signed add-in has been found"
+        ],
+        "dialogs": [
+          "TaskDialog_Security_Signed_File_Not_In_Trusted_Folder"
+        ]
+      },
+      "context": "Revit start-up, loading a digitally signed add-in from a publisher other than Autodesk. Normal once per publisher; worth a look only if it appears at every start.",
+      "title": {
+        "en": "\"Security - Signed Add-In\" — Revit asked whether to trust a signed add-in",
+        "uk": "«Security - Signed Add-In» — Revit запитав, чи довіряти підписаному додатку"
+      },
+      "cause": {
+        "en": "The add-in has a valid digital signature from a trusted certificate authority, and Revit asks you to confirm you trust that publisher. This is expected the first time. If it comes back at every start even after 'Always Load', Autodesk names an outdated Revit build or a failure to store the publisher's certificate on this computer (the certificate is invalid, or the user may not add certificates).",
+        "uk": "Додаток має дійсний цифровий підпис від довіреного центру сертифікації, і Revit просить підтвердити довіру до видавця. Уперше це очікувано. Якщо запит з'являється під час кожного запуску навіть після «Always Load», Autodesk називає застарілу збірку Revit або невдале збереження сертифіката видавця на цьому комп'ютері (сертифікат недійсний або користувач не має права додавати сертифікати)."
+      },
+      "fix": {
+        "en": [
+          "Choose Always Load only if you trust the publisher — later add-ins signed with the same certificate then load without this dialog. Otherwise choose Do Not Load.",
+          "If the dialog returns at every start despite 'Always Load', check that Revit is updated to the latest build.",
+          "If it still returns, have your IT department distribute the certificate to the computers with Group Policy (or create an internal certificate as described in Autodesk's 'Making Your Own Certificate for Testing and Internal Use')."
+        ],
+        "uk": [
+          "Обирайте Always Load, лише якщо довіряєте видавцю, — тоді наступні додатки з тим самим сертифікатом завантажуватимуться без цього вікна. Інакше — Do Not Load.",
+          "Якщо вікно з'являється під час кожного запуску попри «Always Load», перевірте, що Revit оновлено до останньої збірки.",
+          "Якщо не допомогло, попросіть ІТ-відділ розповсюдити сертифікат на комп'ютери через Group Policy (або створити внутрішній сертифікат за статтею Autodesk «Making Your Own Certificate for Testing and Internal Use»)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Security: Signed File or Add-In",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-900A3EBF-A809-4A0E-96ED-5EEC965A2728.htm"
+        },
+        {
+          "title": "Autodesk Support — The code signing window always appears when launching Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-code-signing-window-always-appears-when-launching-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-model-moved-or-deleted",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Your model has been deleted or moved"
+        ],
+        "dialogs": [
+          "TaskDialog_Cloud_Model_Not_Found"
+        ]
+      },
+      "context": "Saving a (non-workshared) cloud model, or opening/saving one whose file was moved in Autodesk Docs.",
+      "title": {
+        "en": "\"Cloud Model Not Found\": the cloud model has been moved or deleted",
+        "uk": "«Cloud Model Not Found»: хмарну модель переміщено або видалено"
+      },
+      "cause": {
+        "en": "The model was moved or deleted in Autodesk Docs, so Revit cannot save your changes back to the cloud.",
+        "uk": "Модель переміщено або видалено в Autodesk Docs, тому Revit не може зберегти ваші зміни в хмару."
+      },
+      "fix": {
+        "en": [
+          "Use Save As to save the current model locally.",
+          "Open the local copy and save it to the cloud again. Note: previous link relationships are lost after saving locally."
+        ],
+        "uk": [
+          "Збережіть поточну модель локально через Save As.",
+          "Відкрийте локальну копію і знову збережіть її в хмару. Увага: попередні зв'язки (links) після локального збереження втрачаються."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Cloud Model Has Been Moved or Deleted (Cloud Models for Revit)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-3EF204CE-CF06-4AFA-98F7-353DE911650E.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-local-model-incompatible",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "Your local model is not compatible with the cloud model"
+        ],
+        "dialogs": [
+          "TaskDialog_Local_Model_Incompatible_With_Cloud_Model"
+        ]
+      },
+      "context": "Saving a cloud model.",
+      "title": {
+        "en": "\"Local Model Incompatible with Cloud Model\"",
+        "uk": "«Local Model Incompatible with Cloud Model» — локальна модель несумісна з хмарною"
+      },
+      "cause": {
+        "en": "Autodesk names one cause: the same cloud model is open in more than one Revit session (instance) at the same time.",
+        "uk": "Autodesk називає таку причину: та сама хмарна модель відкрита одночасно в кількох сеансах (екземплярах) Revit."
+      },
+      "fix": {
+        "en": [
+          "Close the other Revit instances that have this model open, then save the model again."
+        ],
+        "uk": [
+          "Закрийте інші екземпляри Revit, у яких відкрита ця модель, і збережіть модель ще раз."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Model is Incompatible (Cloud Models for Revit)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-91987AFC-7B92-4FDD-B9E0-9C047078073A.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-sign-in-required",
+      "category": "cloud",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "You will need to sign in before you can perform the requested action",
+          "You are not signed in. To access this model, you must sign in"
+        ],
+        "dialogs": [
+          "TaskDialog_Must_Sign_Into_A360",
+          "TaskDialog_Unauthenticated_User"
+        ]
+      },
+      "context": "Opening or saving a cloud model.",
+      "title": {
+        "en": "Sign in required to open or save a cloud model",
+        "uk": "Потрібно увійти в обліковий запис, щоб відкрити або зберегти хмарну модель"
+      },
+      "cause": {
+        "en": "You are not signed in to your Autodesk account. Opening or saving a cloud model requires being signed in.",
+        "uk": "Ви не ввійшли в обліковий запис Autodesk. Для відкриття або збереження хмарної моделі потрібно ввійти."
+      },
+      "fix": {
+        "en": [
+          "Close the dialog, click Sign In in the top-right corner of the Revit window and sign in to your Autodesk account.",
+          "Open or save the model again."
+        ],
+        "uk": [
+          "Закрийте діалог, натисніть Sign In у правому верхньому куті вікна Revit і ввійдіть у свій обліковий запис Autodesk.",
+          "Знову відкрийте або збережіть модель."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Sign in to Save a Cloud Model in Revit",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-B37E0110-BE46-468E-9C6F-700628314491.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Sign In to Open a Cloud Model (Cloud Models for Revit)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-EACF277F-E0CA-4E4A-99F0-B8590B3255CB.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "cloud-no-permission-subscription",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "You do not have permission to perform this action"
+        ],
+        "dialogs": [
+          "TaskDialog_Autodesk_360_Authorization"
+        ]
+      },
+      "context": "Opening a cloud model.",
+      "title": {
+        "en": "\"No Access to Model\": you don't have permission to perform this action",
+        "uk": "«No Access to Model»: немає дозволу на цю дію"
+      },
+      "cause": {
+        "en": "Opening a cloud model needs the matching subscription: Autodesk BIM Collaborate Pro for a workshared cloud model, Cloud Models for Revit for a non-workshared one.",
+        "uk": "Для відкриття хмарної моделі потрібна відповідна підписка: Autodesk BIM Collaborate Pro для workshared-моделі, Cloud Models for Revit — для моделі без worksharing."
+      },
+      "fix": {
+        "en": [
+          "Check that you have the required subscription: Autodesk BIM Collaborate Pro to open a workshared cloud model, or Cloud Models for Revit to open a non-workshared one (see Autodesk Help 'How Do I Access Cloud Models for Revit?')."
+        ],
+        "uk": [
+          "Перевірте, чи є у вас потрібна підписка: Autodesk BIM Collaborate Pro для workshared хмарної моделі або Cloud Models for Revit для моделі без worksharing (див. Autodesk Help «How Do I Access Cloud Models for Revit?»)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — You Don't Have Permission to Perform This Action (Cloud Models for Revit)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-721660DE-739C-4862-840F-B8FB7EAEF0B6.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "error-cut-join-geometry-fails",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Can't cut host with instance",
+          "The roof couldn't be cut",
+          "Can't cut joined element",
+          "Can't keep elements joined",
+          "The sub-divide can not be completed"
+        ],
+        "translations": [
+          "Das Dach konnte nicht ausgeschnitten werden.",
+          "Impossible de couper le toit.",
+          "No se ha podido cortar la cubierta.",
+          "Impossibile tagliare il tetto.",
+          "O telhado não pôde ser cortado.",
+          "Verbundenes Element kann nicht geschnitten werden.",
+          "Impossible de couper l'élément joint.",
+          "No es posible cortar elemento unido.",
+          "Impossibile tagliare un elemento unito",
+          "Não é possível cortar o elemento unido.",
+          "Basisbauteil kann nicht mit Exemplar geschnitten werden.",
+          "Impossible de couper l'hôte avec une occurrence.",
+          "No es posible cortar el anfitrión con el ejemplar.",
+          "Impossibile tagliare l'host con l'istanza.",
+          "Não é possível cortar o hospedeiro com a instância.",
+          "Bei der Unterteilungsaktion ist ein Fehler aufgetreten. Die Unterteilung kann",
+          "Une erreur est survenue lors de la sous-division. Elle n'a pas pu être terminée.",
+          "Se ha producido un error durante la acción de subdivisión, por lo que no puede",
+          "Si è verificato un errore durante l'azione di suddivisione. Impossibile",
+          "Ocorreu um erro durante a ação de subdivisão. Não é possível concluir a",
+          "Elemente können nicht verbunden bleiben.",
+          "Impossible de laisser les éléments attachés les uns aux autres.",
+          "No es posible mantener unidos los elementos.",
+          "Impossibile tenere gli elementi uniti.",
+          "Não é possível manter unidos os elementos.",
+          "Elemente können nicht verbunden bleiben. Treppen innerhalb von mehrgeschossigen",
+          "Impossible de laisser les éléments attachés les uns aux autres. Evitez la",
+          "No es posible mantener unidos los elementos. Evite convertir escaleras a",
+          "Impossibile tenere gli elementi uniti. Evitare di convertire le scale in",
+          "Não é possível manter unidos os elementos. Evite converter escada em componente"
+        ]
+      },
+      "context": "Posted while cutting or joining geometry, or splitting/sub-dividing/excavating a toposolid; logged in the journal after 'Error posted:'.",
+      "title": {
+        "en": "Cut or join geometry fails (\"Can't keep elements joined\", \"Can't cut joined element\"…)",
+        "uk": "Не вдається вирізати або з'єднати геометрію («Can't keep elements joined», «Can't cut joined element»…)"
+      },
+      "cause": {
+        "en": "Revit cannot regenerate valid geometry: elements must lie within a 20-mile cube, faces and edges must align accurately, and no resulting edge, width or radius may be smaller than about 1/32\" (0.79 mm). Toposolid split/sub-divide/excavate failures have the same causes.",
+        "uk": "Revit не може побудувати коректну геометрію: елементи мають бути в межах куба 20 миль, грані й ребра — точно вирівняні, а жодне ребро, ширина чи радіус результату не може бути меншим приблизно за 1/32\" (0,79 мм). Збої split/sub-divide/excavate для toposolid мають ті самі причини."
+      },
+      "fix": {
+        "en": [
+          "Move one of the joining/cutting elements so that the resulting geometry, and the geometry being cut, is larger than 1/32\" (0.79 mm).",
+          "Look for small inaccuracies: small fillets or chamfers, slightly misaligned cylindrical or rotated faces, slightly slanted top/bottom faces of roofs and floors that intersect very closely with other geometry, slightly off-axis sketch lines (use snaps to adjust).",
+          "Check that the distance between the relevant elements is less than 20 miles."
+        ],
+        "uk": [
+          "Посуньте один з елементів, що з'єднуються/вирізаються, щоб результат і геометрія, яку вирізають, були більшими за 1/32\" (0,79 мм).",
+          "Шукайте дрібні неточності: малі заокруглення чи фаски, трохи зміщені циліндричні або повернуті грані, трохи похилі верхні/нижні грані дахів і перекриттів, що дуже близько перетинаються з іншою геометрією, лінії ескізу трохи поза віссю (виправте за допомогою прив'язок).",
+          "Перевірте, що відстань між відповідними елементами менша за 20 миль."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Cut or Join Geometry Fails",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-DB17C879-3A44-471C-8C66-2A1CAD0A6C05.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Toposolid Split/Sub-Divide/Cut Fails",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-858EA2C5-9FE8-422C-981A-D9D017F82E3B.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "error-cant-cut-instance-out-of-wall",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Can't cut instance of"
+        ],
+        "translations": [
+          "kann nicht aus Wand ausgeschnitten werden.",
+          "Impossible de couper l'occurrence de",
+          "No es posible cortar del muro el ejemplar de",
+          "Impossibile tagliare l'istanza di",
+          "Não é possível cortar a instância de"
+        ]
+      },
+      "context": "Posted when a wall-hosted element (door, window…) is moved or its wall changed; logged after 'Error posted:'.",
+      "title": {
+        "en": "\"Can't cut instance of <family> out of wall\"",
+        "uk": "«Can't cut instance of <family> out of wall» — не вдається вирізати отвір у стіні"
+      },
+      "cause": {
+        "en": "Revit cannot regenerate the geometry of the moved hosted component — for example a window moved onto a door (both cannot cut at the same time), or the component moved outside a wall that can no longer host it.",
+        "uk": "Revit не може перебудувати геометрію переміщеного вбудованого компонента — наприклад, вікно посунули на двері (обидва не можуть вирізати одночасно) або компонент опинився поза стіною, яка вже не може бути для нього основою."
+      },
+      "fix": {
+        "en": [
+          "Cancel the change, or delete the instance."
+        ],
+        "uk": [
+          "Скасуйте зміну або видаліть цей екземпляр."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Can't Cut Instances Out of Wall",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-3C9C035F-BFA8-44A5-923A-C4E75F5D5E1C.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "warning-element-slightly-off-axis",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "is slightly off axis and may cause inaccuracies"
+        ]
+      },
+      "context": "Posted while sketching, rotating or aligning elements; logged after 'Error posted:'.",
+      "title": {
+        "en": "\"Element is slightly off axis and may cause inaccuracies\"",
+        "uk": "«Element is slightly off axis and may cause inaccuracies» — елемент трохи відхилений від осі"
+      },
+      "cause": {
+        "en": "A line-based element is misaligned by a tiny angle (up to 0.2°) from horizontal, vertical or 45°. Typical causes: sketching or rotating with angle snaps off, picking or aligning to off-axis references, exploded CAD imports. Revit then cannot dimension between such lines or join/cut faces that are slightly off-parallel.",
+        "uk": "Лінійний елемент відхилений на дуже малий кут (до 0,2°) від горизонталі, вертикалі або 45°. Типові причини: креслення чи поворот із вимкненими кутовими прив'язками, вибір або вирівнювання за відхиленими опорами, розібрані (exploded) CAD-імпорти. Тоді Revit не може ставити розміри між такими лініями чи з'єднувати/вирізати майже паралельні грані."
+      },
+      "fix": {
+        "en": [
+          "Drag the end of the off-axis element a short distance and let it snap to the axis.",
+          "Repeat the rotation with angle snaps turned on.",
+          "If the inaccuracy comes from pre-existing elements, correct them and repeat the operation.",
+          "If imported data causes it, correct it in the original software and re-import it."
+        ],
+        "uk": [
+          "Перетягніть кінець відхиленого елемента на невелику відстань, щоб він прив'язався до осі.",
+          "Повторіть поворот з увімкненими кутовими прив'язками.",
+          "Якщо неточність походить від наявних елементів — виправте їх і повторіть операцію.",
+          "Якщо причина в імпортованих даних — виправте їх у вихідній програмі й імпортуйте знову."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Element Is Slightly Off Axis",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-E8BF9268-4C26-439E-BB27-50EBF3638D3A.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "warning-cant-make-type",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Can't make type"
+        ],
+        "translations": [
+          "\" kann nicht erstellt werden. Der Typ wird gelöscht. Die Familie mit dem Fehler",
+          ". Il va être supprimé. La famille incorrecte a été enregistrée dans",
+          "\". Se suprimirá. La familia con fallo se ha guardado en \"",
+          "\", pertanto verrà eliminato. La famiglia che generava l'errore è stata salvata",
+          "\".  Ele será excluído.  A família com falha foi salva em \"",
+          "\" kann nicht erstellt werden.",
+          "Impossible de créer le type",
+          "No es posible crear tipo",
+          "Impossibile creare il tipo \"",
+          "Não é possível criar o tipo \"",
+          "\" kann nicht erstellt werden und wird gelöscht.",
+          "No se puede crear el tipo",
+          "\" kann nicht erstellt werden. Die Familie mit dem Fehler wurde unter \"",
+          ". La famille incorrecte a été enregistrée dans",
+          "\". La familia con fallo se ha guardado en \"",
+          "\". La famiglia che generava l'errore è stata salvata in \"",
+          "\". A família com falha foi salva em \""
+        ]
+      },
+      "context": "Posted when placing or regenerating a family instance; logged after 'Error posted:'.",
+      "title": {
+        "en": "\"Can't make type\": family geometry cannot be generated",
+        "uk": "«Can't make type» — не вдається побудувати геометрію типу родини"
+      },
+      "cause": {
+        "en": "When the family is placed in the project its geometry cannot be generated. Common culprits: constraints, formulas producing negative values, geometry that becomes invalid when flexed, voids leaving slivers under 1/32\" (0.79 mm), a different host condition, unconstrained arrays, grouped geometry.",
+        "uk": "Під час розміщення родини в проєкті її геометрію неможливо побудувати. Типові причини: обмеження (constraints), формули з від'ємним результатом, геометрія, що стає некоректною при зміні параметрів, порожнини (voids), які лишають шматки тонші за 1/32\" (0,79 мм), інші умови основи (host), необмежені масиви, згруповані елементи."
+      },
+      "fix": {
+        "en": [
+          "Open the family in the Family Editor, remove or change the problem elements (check constraints, formulas, geometry, voids, hosting behavior, arrays, groups) and reload it into the project; verify it works and repeat as needed."
+        ],
+        "uk": [
+          "Відкрийте родину у Family Editor, приберіть або змініть проблемні елементи (перевірте constraints, формули, геометрію, voids, умови hosting, масиви, групи) і завантажте її в проєкт знову; переконайтеся, що вона працює, і повторіть за потреби."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Troubleshooting: Can't Make Type",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-710974CA-EB89-44B0-A74E-4710C0909C17.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "error-floor-ceiling-sketch-invalid",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Floor sketch is invalid",
+          "Ceiling sketch is invalid"
+        ],
+        "translations": [
+          "Deckenskizze ist ungültig.",
+          "L'esquisse du plafond est incorrecte.",
+          "El boceto de techo no es válido.",
+          "Il disegno del controsoffitto non è valido.",
+          "O croqui do forro é inválido.",
+          "Geschossdeckenskizze ist ungültig.",
+          "L'esquisse du sol est incorrecte.",
+          "El boceto de suelo no es válido.",
+          "Il disegno del pavimento non è valido",
+          "O croqui do piso é inválido."
+        ]
+      },
+      "context": "Posted after an edit that forces a floor or ceiling to regenerate (often moving a wall an opening sketch is locked to); logged after 'Error posted:'.",
+      "title": {
+        "en": "\"Floor sketch is invalid\" / \"Ceiling sketch is invalid\"",
+        "uk": "«Floor sketch is invalid» / «Ceiling sketch is invalid» — ескіз перекриття/стелі некоректний"
+      },
+      "cause": {
+        "en": "Revit failed to regenerate the floor or ceiling geometry after the last action. One documented cause: an opening sketched in the floor/ceiling is locked to another element (e.g. a wall); moving that element moves the opening until it loses its host.",
+        "uk": "Revit не зміг перебудувати геометрію перекриття або стелі після останньої дії. Описана причина: отвір у ескізі перекриття/стелі заблоковано (locked) до іншого елемента, наприклад стіни; коли його рухають, отвір виходить за межі основи."
+      },
+      "fix": {
+        "en": [
+          "This cannot be ignored: cancel the action.",
+          "Edit the floor or ceiling sketch, then try the action again."
+        ],
+        "uk": [
+          "Це попередження не можна проігнорувати: скасуйте дію.",
+          "Відредагуйте ескіз перекриття або стелі й повторіть дію."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Floor Sketch Is Invalid",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-9E1787FC-E441-4239-ACB0-F43625E38FC0.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Ceiling Sketch Is Invalid",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-C03B0E5A-05E7-4EB5-AC94-4B0219E926A2.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "warning-multiple-rooms-same-region",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "are in the same enclosed region"
+        ],
+        "translations": [
+          "befinden sich im selben geschlossenen Bereich. Die korrekte Fläche und der",
+          "se trouvent dans la même zone fermée. La surface et le périmètre corrects vont",
+          "en la misma región cerrada. Se asignarán el área y el perímetro correctos a uno",
+          ". L'area e il perimetro corretti saranno assegnati ad un solo",
+          "estão na mesma região fechada.  A área e perímetro corretos serão atribuídos a"
+        ]
+      },
+      "context": "Posted when placing rooms/areas/spaces; logged after 'Error posted:'.",
+      "title": {
+        "en": "Multiple rooms are in the same enclosed region (\"Redundant Room\")",
+        "uk": "Кілька приміщень в одній замкненій області («Redundant Room»)"
+      },
+      "cause": {
+        "en": "Several rooms sit in one enclosed region. One gets the correct area and perimeter; the others show \"Redundant Room\" in schedules so the space is not counted twice.",
+        "uk": "У одній замкненій області кілька приміщень. Одне отримує правильну площу й периметр, інші в специфікаціях показують «Redundant Room», щоб площа не рахувалася двічі."
+      },
+      "fix": {
+        "en": [
+          "Divide the region with room-bounding model elements or room separation lines.",
+          "Or remove the extra rooms."
+        ],
+        "uk": [
+          "Розділіть область елементами з Room Bounding або лініями Room Separation.",
+          "Або видаліть зайві приміщення."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Multiple Rooms Are in the Same Enclosed Region",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-0DF409DD-3BBD-4488-B544-D075D1807747.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "warning-room-separation-lines-overlap",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Highlighted room separation lines overlap"
+        ],
+        "translations": [
+          "Die hervorgehobenen Raumtrennungslinien überlappen. Wenn Revit Raumbegrenzungen",
+          "Les pièces en surbrillance se chevauchent. L'une d'elles risque d'être ignorée",
+          "Las líneas de separación de habitación resaltadas se solapan. Puede que una de",
+          "Le linee di delimitazione dei locali evidenziate si sovrappongono. Una di esse",
+          "As linhas de separação de ambiente realçadas se sobrepõem. Uma delas pode ser"
+        ]
+      },
+      "context": "Posted when adding or moving a room separation line; logged after 'Error posted:'.",
+      "title": {
+        "en": "\"Highlighted room separation lines overlap\"",
+        "uk": "«Highlighted room separation lines overlap» — лінії розділення приміщень накладаються"
+      },
+      "cause": {
+        "en": "A room separation line overlaps an existing one; one of them may be ignored when Revit finds room boundaries.",
+        "uk": "Лінія розділення приміщень накладається на іншу; одну з них Revit може проігнорувати при визначенні меж приміщень."
+      },
+      "fix": {
+        "en": [
+          "Select one of the room separation lines and delete it, move it or change its length so it no longer overlaps.",
+          "If the lines are hard to find, override the <Room Separation> subcategory of Lines in Visibility/Graphics (Model Categories tab)."
+        ],
+        "uk": [
+          "Виділіть одну з ліній і видаліть, посуньте або змініть її довжину, щоб вона не накладалася.",
+          "Якщо лінії важко знайти — задайте перевизначення для підкатегорії <Room Separation> категорії Lines у Visibility/Graphics (вкладка Model Categories)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Highlighted Room Separation Lines Overlap",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-BAEDEC9D-BDBA-44A5-B611-BD5802F04A56.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "error-curtain-panel-too-small",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Can't create Curtain Panel"
+        ],
+        "translations": [
+          "Fassadenelement kann nicht erstellt werden. Ein Element oder ein Pfosten ist",
+          "Impossible de créer le panneau de mur-rideau. Un panneau ou un meneau est",
+          "No es posible crear un panel de muro cortina, debido probablemente a un panel o",
+          "Impossibile creare il pannello di facciata continua. Il pannello o il montante",
+          "Não é possível criar o painel cortina. Um painel ou montante provavelmente é",
+          "Fassadenelement kann nicht in Öffnung erstellt werden. Die Öffnung ist",
+          "Impossible de créer le panneau de mur-rideau dans l'ouverture. L'ouverture est",
+          "No es posible crear un panel de muro cortina en el hueco, probablemente porque",
+          "Impossibile creare il pannello di facciata continua. Probabilmente l'apertura è",
+          "Não é possível criar painel cortina na abertura. Esta abertura é provavelmente"
+        ]
+      },
+      "context": "Posted when placing or moving curtain grids on a curtain wall or sloped glazing; logged after 'Error posted:'.",
+      "title": {
+        "en": "Curtain panel cannot be created / invalid curtain panel",
+        "uk": "Не вдається створити панель навісної стіни / некоректна панель"
+      },
+      "cause": {
+        "en": "A horizontal and a vertical curtain grid do not meet exactly at a point, leaving a tiny triangular panel that is too small to regenerate.",
+        "uk": "Горизонтальна й вертикальна лінії сітки навісної стіни не сходяться точно в точці, і утворюється крихітна трикутна панель, яку неможливо перебудувати."
+      },
+      "fix": {
+        "en": [
+          "Cancel the placement or movement of the grid/panel.",
+          "When dividing panels (especially sloped glazing), place the horizontal curtain grids first, then snap the vertical grids to them."
+        ],
+        "uk": [
+          "Скасуйте розміщення або переміщення лінії сітки/панелі.",
+          "Ділячи панелі (особливо sloped glazing), спершу розставте горизонтальні лінії сітки, а потім прив'язуйте до них вертикальні."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Cannot Create Curtain Panel",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-04F21AE9-B17D-4E6E-8515-C810CCC9DFE4.htm"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Invalid Curtain Panel",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-6F9693F0-C355-4E9D-85F4-03BEB32243FD.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "warning-analytical-model-auto-detect-failed",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "cannot be created by the auto-detect method"
+        ],
+        "translations": [
+          "Das Berechnungsmodell für das Tragwerkselement kann nicht mithilfe der",
+          "Le modèle analytique de l'élément structurel ne peut pas être créé à l'aide de",
+          "El modelo analítico para el elemento estructural no se puede crear mediante el",
+          "Impossibile creare il modello analitico per l'elemento strutturale con il",
+          "O modelo analítico para o elemento estrutural não pode ser criado pelo método"
+        ]
+      },
+      "context": "Posted while editing structural walls or floors; logged after 'Error posted:'.",
+      "title": {
+        "en": "Analytical model cannot be created by auto-detect",
+        "uk": "Аналітичну модель не вдається створити методом auto-detect"
+      },
+      "cause": {
+        "en": "Revit cannot create an analytical surface for a structural wall or floor: the boundary degenerates to a line or point (e.g. a narrow floor along a wall), or it cannot be closed because the structural sketch has gaps.",
+        "uk": "Revit не може створити аналітичну поверхню для несучої стіни чи перекриття: контур вироджується в лінію або точку (напр. вузьке перекриття вздовж стіни) або не замикається через розриви в ескізі."
+      },
+      "fix": {
+        "en": [
+          "If you don't need the analytical model for structural analysis, turn off the Analytical Model parameter of the wall or floor.",
+          "If you need it, make sure the boundary sketch lines form a closed loop (small gaps between a line and an arc are not closed automatically).",
+          "For an analytical floor, select it and switch the edge's horizontal alignment from auto-detect to projection.",
+          "Or change the auto-detect horizontal tolerance in Structural Settings > Analytical Model (a global setting for the whole model)."
+        ],
+        "uk": [
+          "Якщо аналітична модель не потрібна для розрахунку — вимкніть параметр Analytical Model у стіні чи перекритті.",
+          "Якщо потрібна — переконайтеся, що лінії контуру ескізу утворюють замкнений контур (малі розриви між лінією та дугою автоматично не закриваються).",
+          "Для аналітичного перекриття виділіть його та змініть горизонтальне вирівнювання ребра з auto-detect на projection.",
+          "Або змініть горизонтальний допуск auto-detect у Structural Settings > Analytical Model (глобальне налаштування для всієї моделі)."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Error: The Analytical Model Cannot be Created by Auto-detect Methods",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-96AC228F-629D-4A35-A547-224076FE8452.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "error-design-option-insert-host-in-main-model",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "An insert in a design option cannot be hosted by an element in the Main Model"
+        ],
+        "translations": [
+          "Die Öffnung in einer Entwurfsoption kann nicht innerhalb eines Elements einer",
+          "Une insertion dans une variante ne peut être incorporée par un élément dans le",
+          "Una inserción de una opción de diseño no puede hospedarse en un elemento del",
+          "Un elemento inserito in una variante di progetto non può essere ospitato da un",
+          "Uma inserção em uma opção de projeto não pode ser hospedada por um elemento no"
+        ]
+      },
+      "context": "Posted when adding or moving a hosted component into a design option; logged after 'Error posted:'.",
+      "title": {
+        "en": "An insert in a design option cannot be hosted by an element in the main model",
+        "uk": "Вбудований елемент у design option не може мати основу в основній моделі"
+      },
+      "cause": {
+        "en": "A hosted component (window, skylight…) can be part of a design option only if its host is in the same design option.",
+        "uk": "Вбудований компонент (вікно, мансардне вікно…) може належати до design option, лише якщо його основа (host) теж у цій design option."
+      },
+      "fix": {
+        "en": [
+          "Move the host element into the design option first, then add the hosted component."
+        ],
+        "uk": [
+          "Спершу перенесіть елемент-основу в design option, а потім додайте вбудований компонент."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Inserts in Design Options",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-EC74A7A1-C97B-46DF-B630-4961F322A56B.htm"
         }
       ],
       "confidence": "official"

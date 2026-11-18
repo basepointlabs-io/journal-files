@@ -102,3 +102,28 @@ public class LanguageTests
         Assert.Contains(r.Findings, f => f.Rule.Id == "forum-out-of-memory");      // "Out of memory." in German
     }
 }
+
+/// <summary>Rules drafted from Autodesk support articles that quote journal lines; the lines follow a real night sync that failed.</summary>
+public class AutodeskJournalLineTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+    private static readonly AnalysisContext Closed = new(IsBeingWritten: false, DumpFiles: []);
+
+    [Fact]
+    public void A_sync_that_runs_out_of_memory_and_reads_corrupt_data_is_explained_by_Autodesk_articles()
+    {
+        var r = Analyzer.Analyze(JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+              ' 1:< SLOG $0a0a0a0a 2026-11-05 03:10:51.846 >STC:RL:Read
+              ' 0:< A MemoryException is raised on line 200 of F:\Ship\Source\Foundation\Utility\Arr.cpp
+              'C 05-Nov-2026 03:11:10.906;  DBG_INFO: An ArchiveException 105 corruptData is raised at line 50 of F:\Ship\Source\Foundation\Utility\Tasks\ExceptionCache.cpp: ExceptionCache::propagate
+              ' 3:< TaskDialog "Data in file Tower.rvt is corrupt and needs to be manually recovered."
+              'Id : TaskDialog_Revit_File_Corrupted
+            """, Fixtures.NormalEnd)), Closed);
+
+        foreach (string id in new[] { "memory-exception-arr", "archive-exception-corrupt-data", "data-in-file-corrupt" })
+        {
+            var f = r.Findings.Single(x => x.Rule.Id == id);
+            Assert.All(f.Rule.Sources, s => Assert.Contains("autodesk.com", s.Url, StringComparison.Ordinal));
+        }
+    }
+}

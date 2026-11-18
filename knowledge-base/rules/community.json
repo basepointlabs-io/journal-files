@@ -1427,8 +1427,7 @@
         ],
         "ignore_case": true,
         "dialogs": [
-          "TaskDialog_Export_Failed_Out_Of_Memory",
-          "TaskDialog_Insufficient_Memory_For_Load"
+          "TaskDialog_Export_Failed_Out_Of_Memory"
         ],
         "translations": [
           "Nicht genügend Speicher.",
@@ -1453,34 +1452,38 @@
         "en": "The model and its links need more RAM or virtual memory than available. Low free space on the system drive, other heavy apps, or one problem view or link make it worse."
       },
       "fix": {
-        "uk": [
-          "Закрийте інші важкі програми і звільніть місце на системному диску (кілька ГБ).",
-          "Якщо збій у конкретному виді: сховайте всі зв'язки у Visibility/Graphics, відкрийте вид знову і вмикайте зв'язки по одному, щоб знайти проблемний.",
-          "Відкрийте модель з Audit, виправте попередження, виконайте Purge Unused.",
-          "За потреби додайте оперативної пам'яті (орієнтовно в 20 разів більше за розмір файлу моделі)."
-        ],
         "en": [
-          "Close other heavy applications and free several GB on the system drive.",
-          "If one view crashes: hide all links in Visibility/Graphics, reopen the view and unhide links one by one to find the culprit.",
-          "Open with Audit, resolve warnings and run Purge Unused.",
-          "Add RAM if needed (a rule of thumb is about 20 times the model file size)."
+          "Increase the RAM available to Revit, for example by closing other applications.",
+          "Restart Revit regularly; when Revit says memory is approaching the operating system limit, save your work and restart it (in a workshared model: save the local file, restart, then synchronize).",
+          "If \"Out of memory.\" appears while opening a file in Revit 2023 or 2024, install the update that fixes it (Revit 2023.1.3, 2024.2) or move to Revit 2025.",
+          "Check the computer's RAM: Revit generally uses up to 20 times the RVT file size, and Autodesk counts the combined size of the files opened, including linked files."
+        ],
+        "uk": [
+          "Збільште доступну для Revit оперативну пам'ять, наприклад закрийте інші програми.",
+          "Регулярно перезапускайте Revit; коли Revit повідомляє, що пам'ять підходить до межі ОС, збережіть роботу й перезапустіть його (у моделі зі спільною роботою: збережіть локальну копію, перезапустіть, потім синхронізуйтесь).",
+          "Якщо «Out of memory.» з'являється при відкритті файлу в Revit 2023 чи 2024, встановіть оновлення, яке це виправляє (Revit 2023.1.3, 2024.2), або перейдіть на Revit 2025.",
+          "Перевірте RAM комп'ютера: Revit зазвичай використовує до 20 разів більше пам'яті, ніж розмір RVT-файлу, і Autodesk рахує сумарний розмір відкритих файлів разом із лінками."
         ]
       },
       "sources": [
         {
-          "title": "Autodesk Community: Revit crashes (solved by isolating links per view)",
-          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-crashes/m-p/6851787"
+          "title": "Autodesk Support — Instabilities when working in Revit due to low memory",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Instabilities-when-working-in-Revit-due-to-low-memory.html"
         },
         {
-          "title": "AUGI: Can anyone decipher this crashed journal file?",
-          "url": "https://forums.augi.com/archive/index.php/t-115340.html"
+          "title": "Autodesk Help (Revit 2026) — Memory Usage and Instability",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Customize/files/GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9.htm"
         },
         {
-          "title": "Autodesk Community: Revit 2023 Crashing multiple times",
-          "url": "https://forums.autodesk.com/t5/revit-architecture-forum/revit-2023-crashing-multiple-times/m-p/11388042"
+          "title": "Autodesk Support — Out of memory when opening file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Out-of-memory-when-opening-file-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — Your current session is using more memory than your computer can efficiently support when working in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Your-current-session-is-using-more-memory-that-your-computer-can-efficiently-support-when-working-on-multiple-Revit-models.html"
         }
       ],
-      "confidence": "community-verified"
+      "confidence": "official"
     },
     {
       "id": "forum-cefsharp-load-failure",
