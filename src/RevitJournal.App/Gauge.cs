@@ -36,26 +36,25 @@ public sealed class Gauge : FrameworkElement
     private static readonly Brush TickInk = Frozen(Color.FromRgb(0x5C, 0x63, 0x70));
 
     // No wider than the card: asking for more makes WPF clip the dial, numbers at its ends included.
-    protected override Size MeasureOverride(Size available) => new(Math.Min(180, available.Width), 104);
+    protected override Size MeasureOverride(Size available) =>
+        new(double.IsInfinity(available.Width) ? 200 : available.Width, double.IsInfinity(available.Height) ? 104 : Math.Min(available.Height, 104));
 
     protected override void OnRender(DrawingContext dc)
     {
         if (Data is not { } data || ActualWidth < 60 || ActualHeight < 40)
             return;
 
-        // The numbers of Autodesk's figures go just outside the dial; the dial is as large as leaves room for the widest
-        // of them at the sides ("max 95.8") and for one line of them above.
+        // The numbers of Autodesk's figures go just outside the dial. The dial fills the element, leaving the same room
+        // on every dial for a number at its ends ("95.8") and one above, so dials of the same size match. An upper bound
+        // is a plain number too: the red zone after it says that it is a maximum.
         var marks = data.Marks.OrderBy(m => m.Mb).ToList();
         var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var labels = marks.Select(m => new FormattedText((m.Maximum ? "max " : "") + Number(m.Mb), CultureInfo.InvariantCulture,
+        var labels = marks.Select(m => new FormattedText(Number(m.Mb), CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight, typeface, 11, TickInk, dip)).ToList();
-        // The same room on every dial, for the widest number any of them shows, so all dials are the same size.
-        var widest = new FormattedText("max 888.8", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11, TickInk, dip);
-        double side = widest.Width, top = widest.Height;
-        double r = Math.Min(ActualWidth / 2 - Thickness / 2 - side - 6, ActualHeight - Thickness / 2 - top - 6);
-        if (r < 20)
-            return;
+        var room = new FormattedText("88.8", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11, TickInk, dip);
+        double r = Math.Min(ActualWidth / 2 - Thickness / 2 - 4 - room.Width, ActualHeight - 6 - Thickness / 2 - 4 - room.Height);
+        r = Math.Max(r, 16);
         var centre = new Point(ActualWidth / 2, ActualHeight - 6);
         double scale = Math.Max(data.HaveMb, marks.Count > 0 ? marks[^1].Mb : 0) * 1.15;
         if (scale <= 0)
