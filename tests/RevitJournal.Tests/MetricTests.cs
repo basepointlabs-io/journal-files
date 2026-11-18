@@ -82,6 +82,26 @@ public class MetricTests
     }
 
     [Fact]
+    public void A_model_opened_from_a_file_is_sized_from_disk_and_its_links_stay_links()
+    {
+        // A model without worksharing: Revit logs only openFromModelPath, for the model and again for each link it loads.
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            ' 38.201259     3:<<FormOrAbandon::openFromModelPath [C:\Program Files\Autodesk\Revit 2025\Samples\Sample Structural.rvt]
+            '  0.406901       5:<<FormOrAbandon::openFromModelPath [K:\Project\Model\Site.ifc.RVT]
+            '  4.478525       5:<<Load linked file: K:\Project\Model\Site.ifc.RVT
+            '  0.100000       3:<<FormOrAbandon::openFromModelPath [C:\ProgramData\Autodesk\RVT 2025\Templates\English\Default.rte]
+            """));
+        long? OnDisk(string path) => path.EndsWith("Sample Structural.rvt", StringComparison.Ordinal) ? 60L * 1024 * 1024 : 200L * 1024 * 1024;
+
+        var load = ModelSizeAdvice.Load(session, OnDisk, ramMb: 16_000);
+
+        Assert.NotNull(load);
+        Assert.Equal("Sample Structural.rvt", load.Name);
+        Assert.Equal(60, load.ModelMb);
+        Assert.Equal((1, 200), (load.LinkCount, load.LinksMb));
+    }
+
+    [Fact]
     public void Open_views_and_models_are_the_counts_Revit_logged_last()
     {
         var s = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """

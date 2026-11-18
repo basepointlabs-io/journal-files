@@ -54,6 +54,7 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"<<Load linked file: (.+?\.rvt)\s*$", RegexOptions.IgnoreCase)] private static partial Regex LinkedFileRegex();
 
     [GeneratedRegex(@"SLOG\s+local=""(.+?\.rvt)""", RegexOptions.IgnoreCase)] private static partial Regex SlogLocalRegex();
+    [GeneratedRegex(@"openFromModelPath \[((?:[A-Za-z]:|\\\\).+?\.rvt)\]", RegexOptions.IgnoreCase)] private static partial Regex OpenFromPathRegex();
 
     [GeneratedRegex(@"\[Jrn\.TabbedViewAnalytics\] (ViewCount|ProjectCount): (\d+)")] private static partial Regex TabCountRegex();
 
@@ -245,9 +246,21 @@ public sealed partial class JournalParser
             int at = s.ModelFiles.FindIndex(m => m.Path.Equals(file.Path, StringComparison.OrdinalIgnoreCase));
             if (at >= 0) s.ModelFiles[at] = file; else s.ModelFiles.Add(file);
         }
-        else if (line.Contains("Load linked file:", StringComparison.Ordinal) && LinkedFileRegex().Match(line) is { Success: true } lf
-                 && !s.ModelFiles.Any(m => m.Path.Equals(lf.Groups[1].Value.Trim(), StringComparison.OrdinalIgnoreCase)))
-            s.ModelFiles.Add(new ModelFile(n, lf.Groups[1].Value.Trim(), null, null, true));
+        else if (line.Contains("Load linked file:", StringComparison.Ordinal) && LinkedFileRegex().Match(line) is { Success: true } lf)
+        {
+            // Revit logs openFromModelPath for a link just before "Load linked file": what looked like an opened model is a link.
+            string path = lf.Groups[1].Value.Trim();
+            int at = s.ModelFiles.FindIndex(m => m.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
+            if (at < 0)
+                s.ModelFiles.Add(new ModelFile(n, path, null, null, true));
+            else if (!s.ModelFiles[at].IsLink)
+                s.ModelFiles[at] = s.ModelFiles[at] with { IsLink = true };
+        }
+
+        else if (line.Contains("openFromModelPath [", StringComparison.Ordinal) && OpenFromPathRegex().Match(line) is { Success: true } op
+                 && !op.Groups[1].Value.Contains(@"\LinkedModels\", StringComparison.OrdinalIgnoreCase)
+                 && !s.ModelFiles.Any(m => m.Path.Equals(op.Groups[1].Value, StringComparison.OrdinalIgnoreCase)))
+            s.ModelFiles.Add(new ModelFile(n, op.Groups[1].Value, null, null, false)); // a model opened from a file: a non-workshared model logs no other path
 
         else if (line.Contains("SLOG  local=", StringComparison.Ordinal) && SlogLocalRegex().Match(line) is { Success: true } sl
                  && !sl.Groups[1].Value.Contains(@"\LinkedModels\", StringComparison.OrdinalIgnoreCase)

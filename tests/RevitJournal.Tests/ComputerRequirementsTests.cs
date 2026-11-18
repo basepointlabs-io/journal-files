@@ -75,6 +75,34 @@ public class ComputerRequirementsTests
     }
 
     [Fact]
+    public void A_small_page_file_is_flagged_when_Windows_runs_short_of_memory()
+    {
+        // 48 GB RAM + 3 GB page file, 4 GB of the 51 GB left: a larger page file would give Windows more room.
+        var page = Row(ComputerRequirements.Check(Computer(commitMb: 52_100) with { CommitFreeMb = 4_000 }, []), "Page file");
+        Assert.Equal(HealthLevel.Watch, page.Level);
+        Assert.StartsWith("Windows is short of memory: 3.9 GB of 50.9 GB (RAM + page file) left", page.Note);
+        Assert.StartsWith("Extra memory on disk", page.Explain);
+
+        // With room to spare the same page file is fine.
+        Assert.Equal(HealthLevel.Ok, Row(ComputerRequirements.Check(Computer(commitMb: 52_100) with { CommitFreeMb = 30_000 }, []), "Page file").Level);
+    }
+
+    [Fact]
+    public void Each_figure_comes_with_Autodesks_marks_for_the_bar()
+    {
+        var rows = ComputerRequirements.Check(Computer(), [Cloud(700, 1_000)]);
+
+        var ram = Row(rows, "RAM");
+        Assert.Equal(49_028, ram.HaveMb);
+        Assert.Equal(["16 Minimum", "32 Value", "64 Performance"], ram.Marks!.Select(m => m.Label));
+        Assert.Equal("64 Performance", ram.Marks!.Single(m => m.Target).Label);            // the tier the 700 MB model needs
+
+        Assert.Equal("30 required", Row(rows, "Free disk C:").Marks!.Single().Label);
+        Assert.Equal("16.6 needed", Row(rows, "Free disk C: for cloud models").Marks!.Single().Label);   // 20 x 700 + 3 x 1000 MB
+        Assert.Null(Row(rows, "Revit Personal Accelerator").HaveMb);                       // yes/no: no bar
+    }
+
+    [Fact]
     public void Too_little_space_for_the_cloud_model_becomes_an_issue_with_Autodesks_advice()
     {
         var probe = new FixedProbe(Computer(freeDiskMb: 40_000));

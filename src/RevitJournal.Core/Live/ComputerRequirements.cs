@@ -7,7 +7,14 @@ namespace RevitJournal.Core.Live;
 /// <param name="Value">What this computer has, e.g. "47.9 GB".</param>
 /// <param name="Autodesk">Autodesk's figure, e.g. "64 GB for a model up to about 1 GB (Performance)".</param>
 /// <param name="Note">How the two compare, in a few words; empty when they match.</param>
-public sealed record RequirementCheck(string Item, string Value, string Autodesk, HealthLevel Level, AutodeskArticle Source, string Note = "");
+/// <param name="HaveMb">The figure on a scale, for the bar; null for a yes/no line.</param>
+/// <param name="Marks">Autodesk's figures on the same scale, drawn as ticks on the bar.</param>
+/// <param name="Explain">What the item is, for readers who do not know the term.</param>
+public sealed record RequirementCheck(string Item, string Value, string Autodesk, HealthLevel Level, AutodeskArticle Source, string Note = "",
+    long? HaveMb = null, IReadOnlyList<RequirementMark>? Marks = null, string Explain = "");
+
+/// <summary>One of Autodesk's figures on a bar: "64 Performance". <paramref name="Target"/> marks the one that applies now.</summary>
+public sealed record RequirementMark(long Mb, string Label, bool Target = false);
 
 /// <summary>
 /// This computer against Autodesk's published figures, for the Revit versions that are running. Only Autodesk's own
@@ -63,14 +70,16 @@ public static class ComputerRequirements
                 rows.Add(CloudDisk(profile, cloud));
         }
 
-        if (now.TotalRamMb > 0 && now.CommitLimitMb > now.TotalRamMb)
-            rows.Add(PageFile(now.CommitLimitMb - now.TotalRamMb, now.TotalRamMb));
+        if (now.TotalRamMb > 0 && now.CommitLimitMb >= now.TotalRamMb)
+            rows.Add(PageFile(now));
 
         if (now.VideoMemoryMb is { } video)
             rows.Add(new RequirementCheck("Video memory", Fmt.Mb((int)video),
                 is2026 ? "4 GB (Minimum), 6 GB (Value), 8 GB (Performance)" : "at least 4 GB",
                 video < VideoMinimumMb * Installed ? HealthLevel.Watch : HealthLevel.Ok, requirements,
-                video < VideoMinimumMb * Installed ? "less than Autodesk asks for" : ""));
+                video < VideoMinimumMb * Installed ? "less than Autodesk asks for" : "", video,
+                is2026 ? [new(4 * Gb, "4 Minimum", true), new(6 * Gb, "6 Value"), new(8 * Gb, "8 Performance")] : [new(4 * Gb, "4 required", true)],
+                "Memory on the graphics card, used to draw views; Windows reads it from the driver."));
 
         if (now.AcceleratorRunning is { } running && loads.Any(l => l.IsCloud))
             rows.Add(new RequirementCheck("Revit Personal Accelerator", running ? "running" : "not running",
@@ -87,11 +96,13 @@ public static class ComputerRequirements
     private static RequirementCheck Ram(long ramMb, List<ModelLoad> loads, AutodeskArticle source)
     {
         string have = Fmt.Mb((int)ramMb);
+        List<RequirementMark> Marks(RamTier? target) =>
+            [.. Tiers.Select(t => new RequirementMark(t.RamMb, $"{t.RamMb / Gb} {t.Name}", t == target))];
         if (loads.Count == 0)
         {
             var below = ramMb < Tiers[0].RamMb * Installed;
             return new RequirementCheck("RAM", have, "16 GB for a model up to ~300 MB, 32 GB up to ~600 MB, 64 GB up to ~1 GB",
-                below ? HealthLevel.Watch : HealthLevel.Ok, source, below ? "less than Autodesk's minimum" : "");
+                below ? HealthLevel.Watch : HealthLevel.Ok, source, below ? "less than Autodesk's minimum" : "", ramMb, Marks(null));
         }
 
         var largest = loads.MaxBy(l => l.ModelMb)!;
@@ -103,7 +114,7 @@ public static class ComputerRequirements
             : $"{Fmt.Mb((int)tier.RamMb)} ({tier.Name}) for {largest.Name}, {Fmt.Mb(largest.ModelMb)}: up to ~{Fmt.Mb(tier.ModelMb)}";
         string note = !enough ? $"{Fmt.Mb((int)(tier.RamMb - ramMb))} short of Autodesk's figure"
             : beyond ? "Autodesk gives no figure for models this large" : "";
-        return new RequirementCheck("RAM", have, autodesk, enough && !beyond ? HealthLevel.Ok : HealthLevel.Watch, source, note);
+        return new RequirementCheck("RAM", have, autodesk, enough && !beyond ? HealthLevel.Ok : HealthLevel.Watch, source, note, ramMb, Marks(tier));
     }
 
     private static RequirementCheck Disk(DiskSample d, bool is2026, string version, AutodeskArticle source)
@@ -112,7 +123,10 @@ public static class ComputerRequirements
         var level = d.FreeMb < DiskRequiredMb ? HealthLevel.Watch : HealthLevel.Ok;
         string note = d.FreeMb < DiskRequiredMb ? $"below what {version} requires"
             : is2026 && d.FreeMb < DiskRecommended2026Mb ? "below the 100 GB Autodesk recommends" : "";
-        return new RequirementCheck($"Free disk {d.Name}", Fmt.Mb((int)Math.Min(d.FreeMb, int.MaxValue)), autodesk, level, source, note);
+        List<RequirementMark> marks = [new(DiskRequiredMb, "30 required", true)];
+        if (is2026)
+            marks.Add(new(DiskRecommended2026Mb, "100 recommended"));
+        return new RequirementCheck($"Free disk {d.Name}", Fmt.Mb((int)Math.Min(d.FreeMb, int.MaxValue)), autodesk, level, source, note, d.FreeMb, marks);
     }
 
     /// <summary>Autodesk: 20 x the model (unpacked to the temp folder on open) plus 3 x all linked RVT models (the cloud cache).</summary>
@@ -128,15 +142,29 @@ public static class ComputerRequirements
             $"{Fmt.Mb((int)Math.Min(need, int.MaxValue))} for {what}: 20 × the model + 3 × its links",
             short_ ? HealthLevel.Watch : HealthLevel.Ok, AutodeskArticle.CloudModelCorrupt,
             (short_ ? $"{Fmt.Mb((int)Math.Min(need - d.FreeMb, int.MaxValue))} short" : "") +
-            (linksUnknown ? (short_ ? "; " : "") + "links not found on this computer are not counted" : ""));
+            (linksUnknown ? (short_ ? "; " : "") + "links not found on this computer are not counted" : ""),
+            d.FreeMb, [new RequirementMark(need, $"{Gbs(need)} needed", true)]);
     }
 
-    private static RequirementCheck PageFile(long pageMb, long ramMb)
+    /// <summary>
+    /// The page file against Autodesk's bounds. The upper one (2 x RAM) is checked directly. The lower one is Windows'
+    /// own recommendation, which Windows does not expose; the line warns instead when Windows is actually short of
+    /// memory (RAM + page file) with a small page file, which is when a larger one helps.
+    /// </summary>
+    private static RequirementCheck PageFile(SystemSample now)
     {
+        long pageMb = now.CommitLimitMb - now.TotalRamMb, ramMb = now.TotalRamMb;
         bool over = pageMb > 2 * ramMb;
+        bool short_ = !over && now.CommitFreeMb < HealthMonitor.CommitWatchShare * now.CommitLimitMb;
+        string note = over ? "larger than Autodesk advises: system performance can degrade"
+            : short_ ? $"Windows is short of memory: {Fmt.Mb((int)now.CommitFreeMb)} of {Fmt.Mb((int)now.CommitLimitMb)} (RAM + page file) left; a larger page file gives more room"
+            : "";
         return new RequirementCheck("Page file", Fmt.Mb((int)pageMb),
             $"at least Windows' recommended size, at most 2 × RAM ({Fmt.Mb((int)(2 * ramMb))})",
-            over ? HealthLevel.Watch : HealthLevel.Ok, AutodeskArticle.OptimizeOs,
-            over ? "larger than Autodesk advises: system performance can degrade" : "");
+            over || short_ ? HealthLevel.Watch : HealthLevel.Ok, AutodeskArticle.OptimizeOs, note,
+            pageMb, [new RequirementMark(2 * ramMb, "max 2 × RAM", true)],
+            "Extra memory on disk: Windows moves memory there when RAM is full. RAM + page file is all the memory programs can get; when it runs out, Revit closes with \"out of memory\".");
     }
+
+    private static string Gbs(long mb) => (mb / 1024.0).ToString("0.#", CultureInfo.InvariantCulture);
 }

@@ -83,8 +83,19 @@
     </Border>
 
     <!-- Three tiles: free RAM with its last half hour as a small curve, free disk space, Revit open.
-         Each figure turns orange or red when it is low, with what it is measured against under it. -->
+         Each figure turns orange or red when it is low, with what it is measured against under it. In the narrow tray
+         flyout a long figure ("212.4 GB") shrinks to fit its tile instead of being cut off. Tray flyout only: the start
+         screen shows the same resources as bars against Autodesk's figures further down. -->
     <Grid Margin="0,16,0,0">
+      <Grid.Style>
+        <Style TargetType="Grid">
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}}" Value="True">
+              <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </Grid.Style>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="16" />
@@ -95,7 +106,7 @@
       <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="Free RAM" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-          <TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" />
+          <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" /></Viewbox>
           <TextBlock Text="{Binding RamNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
           <local:MemoryChart Sparkline="True" Height="30" Margin="0,8,0,0" Data="{Binding RamChart}"
                              Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
@@ -104,14 +115,14 @@
       <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-          <TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" />
+          <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" /></Viewbox>
           <TextBlock Text="{Binding DiskNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
       <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
         <StackPanel>
           <TextBlock Text="Revit open" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-          <TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0"  />
+          <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0"  /></Viewbox>
           <TextBlock Text="{Binding RevitNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
@@ -213,27 +224,36 @@
       <ItemsControl ItemsSource="{Binding Requirements}" Grid.IsSharedSizeScope="True">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type local:RequirementRow}">
+            <!-- Item | bar with Autodesk's figures as ticks | value; under the bar what Autodesk says, the note and the article. -->
             <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,8">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto" SharedSizeGroup="RqItem" />
-                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqValue" />
                   <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqValue" />
                 </Grid.ColumnDefinitions>
-                <DockPanel Margin="0,0,16,0">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,16,0" VerticalAlignment="Top">
                   <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
                            Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
                   <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="NoWrap" />
                 </DockPanel>
-                <TextBlock Grid.Column="1" Text="{Binding Value}" Margin="0,0,16,0" TextWrapping="NoWrap"
-                           Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
-                <StackPanel Grid.Column="2">
-                  <TextBlock TextWrapping="Wrap">
-                    <Run Text="Autodesk: " Foreground="{StaticResource Muted}" /><Run Text="{Binding Autodesk, Mode=OneWay}" />
-                  </TextBlock>
+                <local:ScaleBar Grid.Column="1" Data="{Binding Scale}" Fill="{Binding Fill}" Margin="0,2,0,0"
+                                Visibility="{Binding HasScale, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Grid.Column="2" Text="{Binding Value}" Margin="16,0,0,0" TextWrapping="NoWrap" HorizontalAlignment="Right"
+                           FontWeight="SemiBold" Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                  <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
+                             Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
+                  <TextBlock Text="{Binding Explain}" FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                             Visibility="{Binding HasExplain, Converter={StaticResource BoolToVisibility}}" />
                   <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
                              Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
-                  <TextBlock FontSize="12" TextWrapping="Wrap">
+                  <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Hint}">
+                    <Run Text="Autodesk: " /><Run Text="{Binding Autodesk, Mode=OneWay}" /><Run Text=" · " />
                     <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="{Binding Source, Mode=OneWay}" /></Hyperlink>
                   </TextBlock>
                 </StackPanel>

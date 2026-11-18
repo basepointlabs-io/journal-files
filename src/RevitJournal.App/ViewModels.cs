@@ -229,8 +229,6 @@ public sealed class HealthView
     /// <param name="autodesk">The latest reading of the Autodesk Health Dashboard; null while not read yet or not reachable.</param>
     public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null)
     {
-        Requirements = [.. (r.Requirements ?? []).Select(q => new RequirementRow(q.Item, q.Value, q.Autodesk, q.Note,
-            q.Level == HealthLevel.Ok ? "ok" : "warning", q.Source.Title, q.Source.Url))];
         // A problem on Autodesk's side raises an all-good computer to "keep an eye on it"; a problem here comes first.
         bool autodeskProblem = autodesk is { AllOperational: false };
         var level = autodeskProblem && r.Level == HealthLevel.Ok ? HealthLevel.Watch : r.Level;
@@ -305,6 +303,16 @@ public sealed class HealthView
         HasRevitSummary = RevitSummary.Length > 0;
         Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(i.Key, Key(i.Level), i.Title, i.Advice))];
         HasIssues = Issues.Count > 0;
+
+        // The RAM line also shows the memory in use now, as the darker part of its bar, with free RAM and its trend under it.
+        Requirements = [.. (r.Requirements ?? []).Select(q =>
+        {
+            bool ram = q.Item == "RAM" && r.TotalRamMb > 0;
+            var scale = q is { HaveMb: { } have, Marks: { Count: > 0 } marks }
+                ? new ScaleData(have, marks, ram ? Math.Max(0, r.TotalRamMb - r.FreeRamMb) : null) : null;
+            return new RequirementRow(q.Item, q.Value, q.Autodesk, q.Note, q.Level == HealthLevel.Ok ? "ok" : "warning",
+                q.Source.Title, q.Source.Url, scale, q.Explain, ram ? $"{RamFreeValue} free {RamNote}" : "", ram ? RamKey : "");
+        })];
     }
 
     public string StatusKey { get; }
@@ -456,9 +464,15 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
 public sealed record AutodeskProblemRow(string Title, string Detail, string Url);
 
 /// <summary>One line of "This computer and Autodesk's figures": what the computer has, Autodesk's figure, and the article.</summary>
-public sealed record RequirementRow(string Item, string Value, string Autodesk, string Note, string LevelKey, string Source, string Url)
+public sealed record RequirementRow(string Item, string Value, string Autodesk, string Note, string LevelKey, string Source, string Url,
+    ScaleData? Scale = null, string Explain = "", string Now = "", string NowKey = "")
 {
     public bool HasNote => Note.Length > 0;
+    /// <summary>"4.2 GB free of 8.0 GB · fell 3.2 GB in 6 min": the RAM line only.</summary>
+    public bool HasNow => Now.Length > 0;
+    public bool HasScale => Scale is not null;
+    public bool HasExplain => Explain.Length > 0;
+    public System.Windows.Media.Brush Fill => LevelKey == "ok" ? Palette.Green : Palette.Orange;
 }
 
 public sealed record HealthIssueRow(string Key, string LevelKey, string Title, string Advice)
