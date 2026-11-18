@@ -3,17 +3,18 @@ using RevitJournal.Core.Model;
 
 namespace RevitJournal.Core.Analysis;
 
-/// <summary>
-/// The size of the model on disk against the memory of the computer, by Autodesk's Memory Recommendations: the RAM
-/// required is "approximately 20 times the size of your compacted central project file". Autodesk gives the figure for
-/// the project file only. Linked models also take memory (Autodesk lists unloading them among the ways to save it), so
-/// the same factor is applied to the links found on this computer as our estimate, and always labelled as such.
-/// </summary>
 /// <summary>The model a Revit session has open and what Autodesk's guidance says about it.</summary>
-/// <param name="LinksMb">Size of the <paramref name="LinksKnown"/> linked files found on this computer.</param>
-/// <param name="NeededRam">20 x (model + known links), e.g. "about 22.0 GB of RAM": Autodesk's figure when no link is known, otherwise our estimate.</param>
+/// <param name="LinksMb">Size on disk of the <paramref name="LinksKnown"/> linked files found on this computer; shown, not counted in <paramref name="NeededRam"/>.</param>
+/// <param name="NeededRam">Autodesk's 20 x the model file, e.g. "about 22.0 GB of RAM".</param>
 public sealed record ModelLoad(string Name, int ModelMb, int? Elements, int LinkCount, int LinksKnown, int LinksMb, string NeededRam, bool OverGuidance);
 
+/// <summary>
+/// The size of the model on disk against the memory of the computer, by Autodesk's Memory Recommendations (and the
+/// Model Performance Technical Note, in the same words): the RAM required is "approximately 20 times the size of your
+/// compacted central project file". Both give the figure for the project file only and no figure for linked models;
+/// they say only that unloading links not in use limits the memory needed. So links are listed with their size on disk
+/// and are not multiplied into the figure.
+/// </summary>
 public static class ModelSizeAdvice
 {
     public const string Rule = "metric-model-size-vs-ram";
@@ -31,19 +32,19 @@ public static class ModelSizeAdvice
         var links = Links(s, fileSize);
         var known = links.Where(l => l.Bytes is not null).ToList();
         int linksMb = (int)(known.Sum(l => l.Bytes!.Value) / Mb);
-        bool over = ramMb is { } ram && Required(modelMb + linksMb) > ram;
-        return new ModelLoad(Name(s, host), modelMb, host.Elements, links.Count, known.Count, linksMb, Needed(modelMb + linksMb), over);
+        bool over = ramMb is { } ram && Required(modelMb) > ram;
+        return new ModelLoad(Name(s, host), modelMb, host.Elements, links.Count, known.Count, linksMb, Needed(modelMb), over);
     }
 
     /// <summary>
-    /// All models open in all running Revit sessions together, with their known links, against 20 x their total size
-    /// (our estimate on Autodesk's factor). Null when fewer than two models are known or the total still fits.
+    /// All models open in all running Revit sessions together: Autodesk's figure for each model, added up (links not
+    /// counted, as in Autodesk's figure). Null when fewer than two models are known or the total still fits.
     /// </summary>
     public static (int TotalMb, string NeededRam)? Combined(IReadOnlyCollection<ModelLoad> loads, long ramMb)
     {
         if (loads.Count < 2 || ramMb <= 0)
             return null;
-        int total = loads.Sum(l => l.ModelMb + l.LinksMb);
+        int total = loads.Sum(l => l.ModelMb);
         return Required(total) > ramMb ? (total, Needed(total)) : null;
     }
 
@@ -55,15 +56,14 @@ public static class ModelSizeAdvice
         var links = Links(s, ctx.FileSize);
         var known = links.Where(l => l.Bytes is not null).OrderByDescending(l => l.Bytes).ToList();
         int linksMb = (int)(known.Sum(l => l.Bytes!.Value) / Mb);
-        bool overModel = Required(modelMb) > ramMb, overWithLinks = Required(modelMb + linksMb) > ramMb;
-        if (!overModel && !overWithLinks)
+        if (Required(modelMb) <= ramMb)
             return null;
 
         var facts = new List<string>
         {
             $"{Name(s, host)} is {Fmt.Mb(modelMb)} on disk" + (host.Elements is { } e ? $" ({e.ToString("N0", CultureInfo.InvariantCulture)} elements)" : "") +
             $"; this computer has {Fmt.Mb(ramMb)} of RAM.",
-            $"Autodesk's Memory Recommendations: the RAM required is approximately 20 times the size of the compacted central file, here {Needed(modelMb)}" + (overModel ? ", more than this computer has." : "."),
+            $"Autodesk's Memory Recommendations: the RAM required is approximately 20 times the size of the compacted central file, here {Needed(modelMb)}, more than this computer has.",
         };
 
         if (links.Count > 0)
@@ -72,9 +72,8 @@ public static class ModelSizeAdvice
                 ? $"The session also loaded {links.Count} linked model(s); their sizes are not known here because the files are not on this computer. Autodesk's figure is for the project file alone."
                 : $"The session also loaded {links.Count} linked model(s); {known.Count} of them are on this computer and take {Fmt.Mb(linksMb)} on disk together " +
                   $"(largest: {string.Join(", ", known.Take(3).Select(l => $"{l.Name} {Fmt.Mb((int)(l.Bytes!.Value / Mb))}"))}).");
-            if (known.Count > 0)
-                facts.Add($"Estimate, not an Autodesk figure: the same factor applied to the model and these links ({Fmt.Mb(modelMb + linksMb)} together) gives {Needed(modelMb + linksMb)}" +
-                          (overWithLinks ? ", more than this computer has." : "."));
+            facts.Add("Autodesk gives no memory figure for linked models; its Model Performance Technical Note says to unload links " +
+                      "that are not used, which limits the memory needed to open the file.");
         }
 
         if (Metrics.PeakRevitRam(s) is { } peak && s.Ram.Count > 0)
@@ -89,18 +88,15 @@ public static class ModelSizeAdvice
         {
             AutodeskArticle.MemoryInstability.Cite("Reduce the number of loaded DWG and RVT links" +
                                                    (largest.Count > 0 ? $"; the largest linked models in this session were {string.Join(", ", largest)}." : ".")),
+            AutodeskArticle.PerformanceNote.Cite("Unload links that are not needed in the view and reload them when required."),
             AutodeskArticle.MemoryInstability.Cite("Limit the worksets you open: in the Open dialog choose Specify from the Open drop-down list and close the worksets you do not need."),
             AutodeskArticle.MemoryInstability.Cite("Limit the number of open views: View tab > Windows panel > Close Inactive."),
             AutodeskArticle.MemoryInstability.Cite("Purge unused objects."),
             AutodeskArticle.MemoryRecommendations.Cite("Restart Revit regularly, and before printing, rendering, exporting or upgrading models."),
         };
         if (Host(s, ctx.FileSize) is { Bytes: { } bytes })
-        {
-            int modelMb = (int)(bytes / Mb);
-            int linksMb = (int)(Links(s, ctx.FileSize).Sum(l => l.Bytes ?? 0) / Mb);
             steps.Add(AutodeskArticle.MemoryRecommendations.Cite("Ask IT about more memory: inadequate RAM can significantly hurt model performance. " +
-                $"A model of this size needs {Needed(modelMb)}" + (linksMb > 0 ? $"; with its links, by our estimate, {Needed(modelMb + linksMb)}." : ".")));
-        }
+                $"A model of this size needs {Needed((int)(bytes / Mb))}."));
         return steps;
     }
 

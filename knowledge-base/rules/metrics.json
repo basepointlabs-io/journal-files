@@ -374,20 +374,21 @@
       "metric": {
         "type": "model_size_vs_ram",
         "threshold": 1,
-        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations: RAM required is approximately 20 times the size of the compacted central file). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer. Also fire when 20 x (model + known links) exceeds the RAM; that figure is our estimate on Autodesk's factor and is labelled as one."
+        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations: RAM required is approximately 20 times the size of the compacted central file). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer. Links are listed with their size on disk but not multiplied: Autodesk gives the factor for the central file only (Memory Recommendations and the Model Performance Technical Note use the same words) and no figure for links."
       },
-      "context": "Autodesk's figure is an approximation for the project file alone; Autodesk does not say how linked models add to it, but lists reducing loaded links among the ways to lower memory use. What Revit actually used is measured separately (peak RAM, lowest free memory).",
+      "context": "Autodesk's figure is an approximation for the project file alone; Autodesk gives no figure for linked models, but says unloading links not in use limits the memory needed to open the file. What Revit actually used is measured separately (peak RAM, lowest free memory).",
       "title": {
         "uk": "Модель більша, ніж Autodesk рекомендує для пам'яті цього комп'ютера",
         "en": "The model is larger than Autodesk's guidance for this computer's memory"
       },
       "cause": {
-        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цією оцінкою модель із цієї сесії разом із лінками потребує більше пам'яті, ніж має комп'ютер. Коли пам'яті бракує, Revit працює повільно і може закритися.",
-        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By that estimate the model of this session, with its linked models, needs more memory than this computer has. When memory is short, Revit becomes slow and can close."
+        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цією оцінкою модель із цієї сесії потребує більше пам'яті, ніж має комп'ютер; лінки додають ще. Коли пам'яті бракує, Revit працює повільно і може закритися.",
+        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By that estimate the model of this session needs more memory than this computer has; linked models add to it. When memory is short, Revit becomes slow and can close."
       },
       "fix": {
         "uk": [
           "Зменште кількість завантажених лінків DWG і RVT. [Autodesk: Memory Usage and Instability]",
+          "Вивантажуйте лінки, не потрібні у виді, і завантажуйте їх, коли потрібно. [Autodesk: Model Performance Technical Note]",
           "Обмежте робочі набори, які відкриваєте: у вікні Open виберіть Specify у списку Open і закрийте непотрібні набори. [Autodesk: Memory Usage and Instability]",
           "Обмежте кількість відкритих видів: вкладка View > панель Windows > Close Inactive. [Autodesk: Memory Usage and Instability]",
           "Очистіть невикористані об'єкти (Purge Unused). [Autodesk: Memory Usage and Instability]",
@@ -396,6 +397,7 @@
         ],
         "en": [
           "Reduce the number of loaded DWG and RVT links. [Autodesk: Memory Usage and Instability]",
+          "Unload links that are not needed in the view and reload them when required. [Autodesk: Model Performance Technical Note]",
           "Limit the worksets you open: in the Open dialog choose Specify from the Open drop-down list and close the worksets you do not need. [Autodesk: Memory Usage and Instability]",
           "Limit the number of open views: View tab > Windows panel > Close Inactive. [Autodesk: Memory Usage and Instability]",
           "Purge unused objects. [Autodesk: Memory Usage and Instability]",
@@ -411,6 +413,10 @@
         {
           "title": "Autodesk Help: Memory Usage and Instability",
           "url": "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9"
+        },
+        {
+          "title": "Autodesk Revit Model Performance Technical Note",
+          "url": "https://download.autodesk.com/us/revit/revit_performance/autodesk_revit_2014_model_performance_technical_note.pdf"
         }
       ],
       "confidence": "official",

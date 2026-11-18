@@ -293,7 +293,7 @@ public sealed class HealthView
         HasRevits = Revits.Count > 0;
         ShowRamUsed = Revits.Count > 1;
         TableNote = Revits.Any(x => x.HasModel)
-            ? "* Autodesk: RAM ≈ 20 × the model file size. With linked models it is our estimate."
+            ? "* Autodesk: RAM ≈ 20 × the model file. Linked models are not counted: Autodesk gives no figure for them, only advice to unload the ones not in use."
             : "";
         NoRevit = r.Revits.Count == 0;
         int openViews = sessions.Sum(s => s.OpenViews ?? 0);
@@ -400,17 +400,19 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
         : $"Within Autodesk's memory guidance for this computer ({Fmt.Mb((int)totalRamMb)})";
     public string GuidanceKey => Load?.OverGuidance == true ? "warning" : "pending";
 
-    /// <summary>Autodesk's 20 x rule for the model alone; with links it is our estimate and says so.</summary>
-    private static string Needs(Core.Analysis.ModelLoad m) => m.LinksKnown > 0
-        ? $"Estimate with links (Autodesk's 20× rule): {m.NeededRam}"
-        : $"Autodesk: {m.NeededRam} for this model";
+    /// <summary>Autodesk's 20 x rule, for the model alone as Autodesk gives it.</summary>
+    private static string Needs(Core.Analysis.ModelLoad m) => $"Autodesk: {m.NeededRam} for this model";
 
     // The columns of the table of running Revits.
     // The model on the first line (it may wrap), the Revit version and what it is doing under it.
     public string Name => session?.Model is { Length: > 0 } m ? m : "No model open";
     public string Under => (p.Version.Length > 0 ? $"Revit {p.Version}" : "Revit") + " · " + char.ToLowerInvariant(State[0]) + State[1..];
     public string RamUsed => Fmt.Mb((int)p.MemoryMb);
-    public string RamNeeded => Load is { } m ? "≈ " + Fmt.Mb((int)Math.Min(Core.Analysis.ModelSizeAdvice.Required(m.ModelMb + m.LinksMb), int.MaxValue)) : "–";
+    public string RamNeeded => Load is { } m ? "≈ " + Fmt.Mb((int)Math.Min(Core.Analysis.ModelSizeAdvice.Required(m.ModelMb), int.MaxValue)) : "–";
+    /// <summary>"+ 12 linked models, 5.6 GB on disk": shown under the model in the compact table, where the links column is hidden.</summary>
+    public string LinksLine => Load is not { } m || m.LinkCount == 0 ? ""
+        : $"+ {m.LinkCount} linked model{(m.LinkCount == 1 ? "" : "s")}" + (m.LinksKnown > 0 ? $", {Fmt.Mb(m.LinksMb)} on disk" : "");
+    public bool HasLinksLine => LinksLine.Length > 0;
     public string RamNeededKey => Load?.OverGuidance == true ? "warning" : "ok";
     public string ModelSize => Load is { } m ? Fmt.Mb(m.ModelMb) : "–";
     public string Links => Load is not { } m || m.LinkCount == 0 ? "–"

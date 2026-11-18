@@ -161,6 +161,18 @@
                     <StackPanel>
                       <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
                       <TextBlock Text="{Binding Under}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0" />
+                      <TextBlock Text="{Binding LinksLine}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="{Binding HasLinksLine, Converter={StaticResource BoolToVisibility}}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
                     </StackPanel>
                   </DockPanel>
                   <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Padding="8,0" Visibility="{Binding DataContext.ShowRamUsed, RelativeSource={RelativeSource AncestorType=local:HealthPanel}, Converter={StaticResource BoolToVisibility}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding RamUsed}" /></Border>

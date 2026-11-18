@@ -30,6 +30,9 @@ public sealed record AutodeskArticle(string Title, string Url)
     public static readonly AutodeskArticle MemoryInstability = new("Memory Usage and Instability",
         "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9");
 
+    public static readonly AutodeskArticle PerformanceNote = new("Model Performance Technical Note",
+        "https://download.autodesk.com/us/revit/revit_performance/autodesk_revit_2014_model_performance_technical_note.pdf");
+
     /// <summary>The step followed by where Autodesk recommends it.</summary>
     public string Cite(string step) => $"{step} [Autodesk: {Title}]";
 }
