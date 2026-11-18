@@ -11,13 +11,15 @@
           "A fatal error has occurred",
           "fatal/unrecoverable error",
           "has encountered a fatal",
-          "The application will be terminated"
+          "The application will be terminated",
+          "Revit has experienced a fatal error and cannot continue"
         ],
         "regex": [
           "[Ff]atal(/| )[Uu]nrecoverable [Ee]rror",
           "A fatal error has occurred\\.\\s+The application will be terminated"
         ],
         "dialogs": [
+          "TaskDialog_Fatal_Error_Occured",
           "TaskDialog_Unrecoverable_Error"
         ],
         "translations": [
@@ -68,6 +70,10 @@
         {
           "title": "Autodesk Help (Revit LT 2026 Troubleshooting) — Revit Has Encountered a Fatal/Unrecoverable Error and Cannot Continue",
           "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+        },
+        {
+          "title": "Autodesk Support — Revit has experienced a fatal error when carrying out various operations in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-has-experienced-a-fatal-error-when-carrying-out-various-operations-in-Revit.html"
         }
       ],
       "confidence": "official"
@@ -5679,6 +5685,236 @@
         {
           "title": "Autodesk Support — Error: \"Unexpected errors occurred while exporting these elements to the IFC file.\" in Revit",
           "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-in-exporting-IFC-from-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "crash-exception-code-0xe0434352",
+      "category": "crash",
+      "severity": "high",
+      "match": {
+        "any": [
+          "ExceptionCode=0xe0434352"
+        ]
+      },
+      "context": "Logged by Revit just before a crash with a Customer Error Report (CER); Autodesk names it especially when opening views or models, and it can stop any cloud model from opening.",
+      "title": {
+        "en": "Crash with ExceptionCode=0xe0434352",
+        "uk": "Аварійне завершення з ExceptionCode=0xe0434352"
+      },
+      "cause": {
+        "en": "Autodesk documents this journal entry for Revit crashes with a Customer Error Report, especially when opening views or models; it can make every cloud model impossible to open. Named causes: conflicting add-ins, or a corrupt user.config file.",
+        "uk": "Autodesk описує цей запис журналу для аварійних завершень Revit зі звітом Customer Error Report, особливо під час відкриття видів або моделей; через це може не відкриватися жодна хмарна модель. Названі причини: конфлікт додатків (add-ins) або пошкоджений файл user.config."
+      },
+      "fix": {
+        "en": [
+          "Install the latest updates for your Revit version.",
+          "Disable add-ins and test whether the crash still happens.",
+          "Recreate the user.config file. Revit 2025 and later: in %LOCALAPPDATA% rename the folders that start with DefaultDomain_Path_ (e.g. add _OLD), restart Revit and open a cloud model; Revit recreates the folder for the active version, then rename the other DefaultDomain_Path_ folders back. Revit 2024 and earlier: rename the %LOCALAPPDATA%\\Autodesk,_Inc folder (e.g. Autodesk,_Inc_OLD), restart Revit and open a cloud model.",
+          "Install Windows updates."
+        ],
+        "uk": [
+          "Встановіть останні оновлення для вашої версії Revit.",
+          "Вимкніть додатки (add-ins) і перевірте, чи аварійне завершення повторюється.",
+          "Створіть заново файл user.config. Revit 2025 і новіші: у %LOCALAPPDATA% перейменуйте папки, що починаються з DefaultDomain_Path_ (наприклад, додайте _OLD), перезапустіть Revit і відкрийте хмарну модель; Revit створить папку для активної версії, після чого поверніть інші папки DefaultDomain_Path_ до початкових назв. Revit 2024 і старіші: перейменуйте папку %LOCALAPPDATA%\\Autodesk,_Inc (наприклад, на Autodesk,_Inc_OLD), перезапустіть Revit і відкрийте хмарну модель.",
+          "Встановіть оновлення Windows."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Revit: Crash with ExceptionCode=0xe0434352",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-journal-records-ExceptionCode-0xe0434352.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "dwg-numerical-data-out-of-range",
+      "category": "link-import",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "numerical data within the imported file was out of range",
+          "This numerical data has been truncated"
+        ],
+        "translations": [
+          "Einige nummerische Daten in der importierten Datei lagen außerhalb des",
+          "Certaines données numériques du fichier importé étaient hors plage. Ces données",
+          "El archivo importado contiene datos numéricos fuera de rango. Dichos datos se",
+          "Alcuni dati numerici del file importato non rientravano nell'intervallo e",
+          "Alguns dados numéricos dentro do arquivo importado estavam fora da faixa.  Este"
+        ]
+      },
+      "context": "Importing or linking a DWG, or opening a model that has a linked DWG. Revit 2025 shows this dialog without a TaskDialog Id (RevitRes.dll string 8716).",
+      "title": {
+        "en": "\"Some numerical data within the imported file was out of range\" (DWG)",
+        "uk": "«Some numerical data within the imported file was out of range» (DWG)"
+      },
+      "cause": {
+        "en": "The DWG is damaged or contains data with very high coordinate values (for example hatches, arc radii, block base points), the drawing lies far from 0,0,0 (beyond Revit's limit), or it was exported from Vectorworks 2019 SP3. Autodesk notes this can make the project slow or crash.",
+        "uk": "DWG пошкоджений або містить дані з дуже великими координатами (наприклад, штрихування, радіуси дуг, базові точки блоків), креслення розташоване далеко від 0,0,0 (поза межею Revit) або експортоване з Vectorworks 2019 SP3. Autodesk зазначає, що це може сповільнювати проєкт або спричиняти аварійне завершення."
+      },
+      "fix": {
+        "en": [
+          "In AutoCAD, move the drawing near 0,0,0, select all blocks (Quick Select) and explode them, then save the DWG. In Revit, move the Project Base Point away from the original point, leave the Survey Point there, and link the DWG with positioning Auto - Origin to Origin.",
+          "In AutoCAD, check the hatches for high coordinate values, delete those, save the DWG as a new file, then add it in Revit via Manage > Manage Links > Add.",
+          "Check the DWG for corruption: turn on, thaw and unlock all layers, detach all xrefs, and WBLOCK the entire drawing out to a new DWG.",
+          "If the DWG was exported from Vectorworks 2019 SP3: install AutoCAD Express Tools, run BURST on the drawing, save it and link/import it again.",
+          "If the Revit model will not open at all: File > Open > Specify, close the workset that holds the DWG (or all worksets), then unload or remove the DWG in Manage Links until it is fixed."
+        ],
+        "uk": [
+          "В AutoCAD перемістіть креслення ближче до 0,0,0, виділіть усі блоки (Quick Select) і розбийте їх (explode), збережіть DWG. У Revit відсуньте Project Base Point від початкової точки, Survey Point залиште на місці й зв'яжіть DWG з розташуванням Auto - Origin to Origin.",
+          "В AutoCAD перевірте штрихування на великі значення координат, видаліть такі, збережіть DWG як новий файл і додайте його в Revit через Manage > Manage Links > Add.",
+          "Перевірте DWG на пошкодження: увімкніть, розморозьте й розблокуйте всі шари, від'єднайте всі xref і запишіть усе креслення в новий DWG командою WBLOCK.",
+          "Якщо DWG експортовано з Vectorworks 2019 SP3: встановіть AutoCAD Express Tools, виконайте BURST для креслення, збережіть його і знову зв'яжіть/імпортуйте.",
+          "Якщо модель Revit взагалі не відкривається: File > Open > Specify, закрийте робочий набір з DWG (або всі робочі набори), а тоді вивантажте чи видаліть DWG у Manage Links, доки його не виправлять."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Some numerical data within the imported file was out of range\" while importing a DWG or opening a model with a linked DWG in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-Importing-a-DWG-into-Revit-prompts-warning-Some-numerical-data-within-the-imported-file-was-out-of-range-This-numerical-data-has-been-truncated.html"
+        }
+      ],
+      "confidence": "official",
+      "related": [
+        "cad-extents-greater-than-20-miles"
+      ]
+    },
+    {
+      "id": "dwg-elements-lost-on-import",
+      "category": "link-import",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Some elements were lost during import",
+          "ActiveX and some proprietary components cannot be imported",
+          "ActiveX® and some proprietary components cannot be imported"
+        ],
+        "dialogs": [
+          "TaskDialog_Elements_Lost_On_Import"
+        ]
+      },
+      "context": "Linking or importing a DWG, or opening, linking or reloading a model that contains a DWG link.",
+      "title": {
+        "en": "\"Elements Lost on Import\" (DWG: ActiveX / proprietary components)",
+        "uk": "«Elements Lost on Import» (DWG: ActiveX / пропрієтарні компоненти)"
+      },
+      "cause": {
+        "en": "Some content of the DWG could not be imported. Autodesk names these causes: the DWG was saved in a later format than the Revit release, the DWG was not purged and contains OLE objects, the DWG failed to upload to the cloud (broken icon), or it is not synced via Desktop Connector.",
+        "uk": "Частину вмісту DWG не вдалося імпортувати. Autodesk називає причини: DWG збережено у новішому форматі, ніж реліз Revit; DWG не очищено (purge) і він містить OLE-об'єкти; DWG не завантажився в хмару (іконка пошкодженого файлу) або не синхронізований через Desktop Connector."
+      },
+      "fix": {
+        "en": [
+          "Unlink all DWG files and reload them one by one to find which ones cause the message.",
+          "In AutoCAD, Save As the DWG in a format equal to or older than the Revit version (e.g. AutoCAD 2013 format for Revit 2017), then link it again.",
+          "In AutoCAD, purge the DWG and remove OLE images, then link it again.",
+          "For a DWG in BIM 360 / Autodesk Forma: in AutoCAD purge, audit, explode and overkill the DWG, upload it again and relink. If it still fails, in Windows Explorer choose 'Always keep on this device' on the DWG in the Autodesk Forma workspace; if that does not help, reset Desktop Connector."
+        ],
+        "uk": [
+          "Від'єднайте всі DWG-файли й перезавантажуйте їх по одному, щоб знайти ті, що викликають повідомлення.",
+          "В AutoCAD збережіть DWG (Save As) у форматі, рівному або старішому за версію Revit (наприклад, формат AutoCAD 2013 для Revit 2017), і зв'яжіть знову.",
+          "В AutoCAD очистьте DWG (purge) і видаліть OLE-зображення, потім зв'яжіть знову.",
+          "Для DWG у BIM 360 / Autodesk Forma: в AutoCAD виконайте purge, audit, explode і overkill, завантажте файл знову і перезв'яжіть. Якщо не допомогло — у провіднику Windows виберіть «Always keep on this device» для DWG у робочій папці Autodesk Forma; якщо й це не допомогло — скиньте Desktop Connector."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Some elements were lost during import. ActiveX and...\" while linking or importing a DWG in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-ActiveX-and-some-proprietary-components-cannot-be-imported-while-linking-or-importing-a-DWG-in-Revi.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "workset-file-already-exists",
+      "category": "worksharing",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "If you replace it, you will lose all of its backup versions"
+        ],
+        "dialogs": [
+          "TaskDialog_Workset_File_Already_Exists"
+        ]
+      },
+      "context": "Saving a workshared model over an existing RVT. Check the TaskDialogResult line right after the dialog in the journal to see whether Yes was chosen.",
+      "title": {
+        "en": "\"Workset File Already Exists\" — replacing it deletes its backups",
+        "uk": "«Workset File Already Exists» — заміна видаляє резервні копії"
+      },
+      "cause": {
+        "en": "Revit was asked to save a workshared model over an existing RVT file. If Yes is chosen, the existing RVT file and its associated backups are gone.",
+        "uk": "Revit отримав команду зберегти workshared-модель поверх наявного файлу RVT. Якщо вибрати Yes, наявний файл RVT разом із пов'язаними резервними копіями буде втрачено."
+      },
+      "fix": {
+        "en": [
+          "If the file was replaced by mistake, check whether Windows keeps a previous version of the file that can be restored.",
+          "If the file is on a cloud-synchronized drive (e.g. BIM 360 Document Management, Dropbox, Box, Google Drive), look for backups in that service's web interface.",
+          "If the RVT was overwritten outside Revit and has not been opened since: copy its backup folder to another location, run Restore Backup in Revit and answer Yes when asked to recover; the latest version is restored next to the backup folder."
+        ],
+        "uk": [
+          "Якщо файл замінили помилково — перевірте, чи Windows зберігає попередню версію файлу, яку можна відновити.",
+          "Якщо файл лежить на диску з хмарною синхронізацією (наприклад, BIM 360 Document Management, Dropbox, Box, Google Drive) — пошукайте резервні копії у вебінтерфейсі цього сервісу.",
+          "Якщо RVT перезаписали поза Revit і відтоді не відкривали: скопіюйте його папку резервних копій в інше місце, запустіть Restore Backup у Revit і на запит про відновлення відповідайте Yes; найновішу версію буде відновлено поруч із папкою резервних копій."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Recovering latest model after workshared file is overwritten by older copy or incomplete local file in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Recovering-latest-model-after-workshared-Revit-file-is-overwritten-by-older-copy.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "print-settings-incompatible-with-printer",
+      "category": "printing-export",
+      "severity": "low",
+      "match": {
+        "any": [
+          "The <in-session> print settings will be used"
+        ],
+        "translations": [
+          "verwendet werden. Der <als Standard definierte> Drucker wird verwendet.",
+          ". Les paramètres d'impression <en cours de session> seront utilisés.",
+          "no puede usarse con la configuración de impresión",
+          ". Saranno utilizzate le impostazioni di stampa <sessione>.",
+          "configurações de impressão. As configurações de impressão <na sessão> serão"
+        ]
+      },
+      "context": "Printing or exporting (including NWC export to Navisworks). Revit 2025 logs this dialog without a TaskDialog Id (RevitRes.dll string 8199: '<printer> cannot be used with <saved print setting> print settings. The <in-session> print settings will be used.'). Note the German text says the default printer is used instead.",
+      "title": {
+        "en": "Saved print setting cannot be used with this printer",
+        "uk": "Збережене налаштування друку не підходить для цього принтера"
+      },
+      "cause": {
+        "en": "A print setting saved in the model does not fit the current printer, so Revit falls back to the <in-session> print settings. Autodesk names the cause for saved settings shown as incompatible: the paper size in the saved print setting is not defined for the current printer. During export to Navisworks Autodesk calls the repeated dialogs a known behavior; the export completes once they are dismissed.",
+        "uk": "Збережене в моделі налаштування друку не підходить для поточного принтера, тож Revit використовує налаштування <in-session>. Autodesk називає причину для несумісних збережених налаштувань: розмір паперу зі збереженого налаштування не визначено для поточного принтера. Під час експорту в Navisworks Autodesk вважає повторювані діалоги відомою поведінкою; експорт завершується після їх закриття."
+      },
+      "fix": {
+        "en": [
+          "Open the printer Properties from the Print dialog and add a paper size that matches the width/height of the paper size in the saved print setting.",
+          "Before using Batch Print, make sure the print settings saved in the model are compatible with the default printer."
+        ],
+        "uk": [
+          "Відкрийте Properties принтера з діалогу Print і додайте розмір паперу, що відповідає ширині/висоті розміру паперу зі збереженого налаштування друку.",
+          "Перед використанням Batch Print переконайтеся, що збережені в моделі налаштування друку сумісні з принтером за замовчуванням."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Setting incompatible with printer\" selecting print settings in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Setting-incompatible-with-printer-selecting-print-settings-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2020 Add-Ins) — Known Issues for Batch Print",
+          "url": "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-A50C38D6-5D19-42F6-827F-73F60D3D1BBA"
+        },
+        {
+          "title": "Autodesk Support — \"Printer cannot be used with print settings...\" error when exporting or converting model from Revit to Navisworks",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Printer-cannot-be-used-with-print-settings-when-exporting-or-converting-model-from-Revit-to-Navisworks.html"
         }
       ],
       "confidence": "official"
