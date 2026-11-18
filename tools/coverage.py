@@ -170,7 +170,10 @@ def main():
         out = Path(args[i + 1])
         del args[i:i + 2]
     folders = [Path(a) for a in args] or [ROOT / "samples"]
-    files = sorted({p for f in folders for p in f.rglob("journal.*.txt") if not p.name.endswith(".copy.txt")})
+    # A crash copy (journal.NNNN.txt.copy.txt) counts when the journal itself is gone, as in the app.
+    files = sorted({p for f in folders for p in f.rglob("journal.*.txt")
+                    if re.fullmatch(r"journal\.\d+\.txt", p.name)
+                    or (p.name.endswith(".txt.copy.txt") and not p.with_name(p.name[:-len(".copy.txt")]).exists())})
     rules = load_rules()
     signals = defaultdict(Signal)
     abnormal = sum(0 if scan(p, rules, signals) else 1 for p in files)

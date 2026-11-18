@@ -94,7 +94,7 @@ public sealed partial record AnalysisContext(bool IsBeingWritten, IReadOnlyList<
     public static AnalysisContext ForFile(string journalPath)
     {
         string dir = Path.GetDirectoryName(journalPath) ?? ".";
-        string stem = Path.GetFileNameWithoutExtension(journalPath); // journal.0117
+        string stem = JournalLocator.Stem(journalPath); // journal.0117, also for a crash copy journal.0117.txt.copy.txt
         var dumps = Directory.Exists(dir)
             ? Directory.EnumerateFiles(dir, stem + "*.dmp").ToList()
             : [];
@@ -137,12 +137,15 @@ public sealed record PreviousSession(string Name, DateTime End, bool EndedNormal
 {
     public static PreviousSession? Of(string journalPath)
     {
-        // journal.0047.txt -> journal.0046.txt
-        string[] parts = Path.GetFileName(journalPath).Split('.');
-        if (parts.Length != 3 || !int.TryParse(parts[1], out int number) || number <= 0)
+        // journal.0047.txt -> journal.0046.txt, or its crash copy journal.0046.txt.copy.txt when the journal is gone
+        string[] parts = JournalLocator.Stem(journalPath).Split('.');
+        if (parts.Length != 2 || !int.TryParse(parts[1], out int number) || number <= 0)
             return null;
-        string name = $"{parts[0]}.{(number - 1).ToString(new string('0', parts[1].Length), System.Globalization.CultureInfo.InvariantCulture)}.{parts[2]}";
-        string path = Path.Combine(Path.GetDirectoryName(journalPath) ?? ".", name);
+        string dir = Path.GetDirectoryName(journalPath) ?? ".";
+        string name = $"{parts[0]}.{(number - 1).ToString(new string('0', parts[1].Length), System.Globalization.CultureInfo.InvariantCulture)}.txt";
+        string path = Path.Combine(dir, name);
+        if (!File.Exists(path) && File.Exists(path + ".copy.txt"))
+            (name, path) = (name + ".copy.txt", path + ".copy.txt");
         try
         {
             if (!File.Exists(path) || Parsing.JournalReader.IsBeingWritten(path))
