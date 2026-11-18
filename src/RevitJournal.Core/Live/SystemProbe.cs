@@ -17,9 +17,13 @@ public sealed record DiskSample(string Name, long FreeMb, long TotalMb);
 /// <summary>A reading of the computer's resources. Nothing here comes from the journal: it is the state at this second.</summary>
 /// <param name="CommitLimitMb">RAM plus page file: all the memory Windows can promise to programs.</param>
 /// <param name="CpuIdleSeconds">Idle and total processor time since boot, summed over all cores.</param>
+/// <param name="VideoMemoryMb">Dedicated memory of the largest graphics card; null when Windows does not say.</param>
+/// <param name="AcceleratorRunning">Whether Revit Personal Accelerator (RevitAccelerator.exe) runs; null when not checked.</param>
+/// <param name="ProfileDrive">The drive of the user profile, where the cloud model cache is ("C:").</param>
 public sealed record SystemSample(DateTime Time, long TotalRamMb, long FreeRamMb, long CommitLimitMb, long CommitFreeMb,
     double CpuIdleSeconds, double CpuTotalSeconds, int ProcessorCount,
-    IReadOnlyList<RevitProcessSample> Revits, IReadOnlyList<DiskSample> Disks);
+    IReadOnlyList<RevitProcessSample> Revits, IReadOnlyList<DiskSample> Disks,
+    long? VideoMemoryMb = null, bool? AcceleratorRunning = null, string? ProfileDrive = null);
 
 public interface ISystemProbe
 {
@@ -45,7 +49,57 @@ public sealed class WindowsSystemProbe : ISystemProbe
         }
         return new SystemSample(DateTime.Now,
             Mb(mem.ullTotalPhys), Mb(mem.ullAvailPhys), Mb(mem.ullTotalPageFile), Mb(mem.ullAvailPageFile),
-            idle, total, Environment.ProcessorCount, Revits(), Disks());
+            idle, total, Environment.ProcessorCount, Revits(), Disks(),
+            VideoMemory.Value, AcceleratorRunning(),
+            Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData))?.TrimEnd('\\'));
+    }
+
+    /// <summary>Read once: the graphics card does not change while the app runs.</summary>
+    private static readonly Lazy<long?> VideoMemory = new(ReadVideoMemory);
+
+    /// <summary>
+    /// Dedicated video memory of the largest display adapter, from the driver's entry in the registry
+    /// (HardwareInformation.qwMemorySize, or the older 32-bit MemorySize). Local read only.
+    /// </summary>
+    private static long? ReadVideoMemory()
+    {
+        if (!OperatingSystem.IsWindows())
+            return null;
+        try
+        {
+            using var cls = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}");
+            if (cls is null)
+                return null;
+            long best = 0;
+            foreach (string name in cls.GetSubKeyNames().Where(n => n.All(char.IsDigit)))
+            {
+                using var key = cls.OpenSubKey(name);
+                long bytes = Bytes(key?.GetValue("HardwareInformation.qwMemorySize")) ?? Bytes(key?.GetValue("HardwareInformation.MemorySize")) ?? 0;
+                best = Math.Max(best, bytes);
+            }
+            return best > 0 ? best / (1024 * 1024) : null;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return null;
+        }
+
+        static long? Bytes(object? v) => v switch
+        {
+            long l => l,
+            int i => (uint)i,
+            byte[] { Length: >= 8 } b => BitConverter.ToInt64(b, 0),
+            byte[] { Length: >= 4 } b => BitConverter.ToUInt32(b, 0),
+            _ => null,
+        };
+    }
+
+    private static bool AcceleratorRunning()
+    {
+        var found = Process.GetProcessesByName("RevitAccelerator");
+        foreach (var p in found)
+            p.Dispose();
+        return found.Length > 0;
     }
 
     [SupportedOSPlatform("windows")]

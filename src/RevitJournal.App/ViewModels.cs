@@ -229,6 +229,8 @@ public sealed class HealthView
     /// <param name="autodesk">The latest reading of the Autodesk Health Dashboard; null while not read yet or not reachable.</param>
     public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null)
     {
+        Requirements = [.. (r.Requirements ?? []).Select(q => new RequirementRow(q.Item, q.Value, q.Autodesk, q.Note,
+            q.Level == HealthLevel.Ok ? "ok" : "warning", q.Source.Title, q.Source.Url))];
         // A problem on Autodesk's side raises an all-good computer to "keep an eye on it"; a problem here comes first.
         bool autodeskProblem = autodesk is { AllOperational: false };
         var level = autodeskProblem && r.Level == HealthLevel.Ok ? HealthLevel.Watch : r.Level;
@@ -345,6 +347,9 @@ public sealed class HealthView
     /// <summary>Watched Autodesk services with a problem right now; empty when all work.</summary>
     public IReadOnlyList<AutodeskProblemRow> AutodeskProblems { get; } = [];
     public bool HasAutodeskProblems => AutodeskProblems.Count > 0;
+    /// <summary>This computer against Autodesk's published requirements; shown on the start screen only.</summary>
+    public IReadOnlyList<RequirementRow> Requirements { get; }
+    public bool HasRequirements => Requirements.Count > 0;
     public string AutodeskChecked { get; } = "";
 
     /// <summary>"3 Revit running (2024 ×2, 2025) · 5 models, 31 links, 9.4 GB on disk · 12 views · 41.0 GB of RAM".</summary>
@@ -449,6 +454,12 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
 /// </summary>
 /// <summary>One Autodesk service with a problem: "Revit Cloud Worksharing: degraded performance since 10:12", Autodesk's latest word, and the incident page.</summary>
 public sealed record AutodeskProblemRow(string Title, string Detail, string Url);
+
+/// <summary>One line of "This computer and Autodesk's figures": what the computer has, Autodesk's figure, and the article.</summary>
+public sealed record RequirementRow(string Item, string Value, string Autodesk, string Note, string LevelKey, string Source, string Url)
+{
+    public bool HasNote => Note.Length > 0;
+}
 
 public sealed record HealthIssueRow(string Key, string LevelKey, string Title, string Advice)
 {

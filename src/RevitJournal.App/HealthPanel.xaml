@@ -193,6 +193,57 @@
                  Visibility="{Binding HasTableNote, Converter={StaticResource BoolToVisibility}}" />
     </StackPanel>
 
+    <!-- This computer against Autodesk's published figures, one line each with the article; start screen only. -->
+    <StackPanel>
+      <StackPanel.Style>
+        <Style TargetType="StackPanel">
+          <Setter Property="Visibility" Value="Collapsed" />
+          <Style.Triggers>
+            <MultiDataTrigger>
+              <MultiDataTrigger.Conditions>
+                <Condition Binding="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}}" Value="True" />
+                <Condition Binding="{Binding HasRequirements}" Value="True" />
+              </MultiDataTrigger.Conditions>
+              <Setter Property="Visibility" Value="Visible" />
+            </MultiDataTrigger>
+          </Style.Triggers>
+        </Style>
+      </StackPanel.Style>
+      <TextBlock Text="THIS COMPUTER AND AUTODESK'S FIGURES" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
+      <ItemsControl ItemsSource="{Binding Requirements}" Grid.IsSharedSizeScope="True">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type local:RequirementRow}">
+            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,8">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqItem" />
+                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqValue" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <DockPanel Margin="0,0,16,0">
+                  <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
+                           Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
+                  <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="NoWrap" />
+                </DockPanel>
+                <TextBlock Grid.Column="1" Text="{Binding Value}" Margin="0,0,16,0" TextWrapping="NoWrap"
+                           Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
+                <StackPanel Grid.Column="2">
+                  <TextBlock TextWrapping="Wrap">
+                    <Run Text="Autodesk: " Foreground="{StaticResource Muted}" /><Run Text="{Binding Autodesk, Mode=OneWay}" />
+                  </TextBlock>
+                  <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
+                             Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+                  <TextBlock FontSize="12" TextWrapping="Wrap">
+                    <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="{Binding Source, Mode=OneWay}" /></Hyperlink>
+                  </TextBlock>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
     <!-- What to do -->
     <StackPanel Visibility="{Binding HasIssues, Converter={StaticResource BoolToVisibility}}">
       <TextBlock Text="WHAT TO DO" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />

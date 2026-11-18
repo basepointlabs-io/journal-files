@@ -6,7 +6,9 @@ namespace RevitJournal.Core.Analysis;
 /// <summary>The model a Revit session has open and what Autodesk's guidance says about it.</summary>
 /// <param name="LinksMb">Size on disk of the <paramref name="LinksKnown"/> linked files found on this computer; shown, not counted in <paramref name="NeededRam"/>.</param>
 /// <param name="NeededRam">Autodesk's 20 x the model file, e.g. "about 22.0 GB of RAM".</param>
-public sealed record ModelLoad(string Name, int ModelMb, int? Elements, int LinkCount, int LinksKnown, int LinksMb, string NeededRam, bool OverGuidance);
+/// <param name="IsCloud">A Revit cloud model: its local copy lives in the CollaborationCache.</param>
+public sealed record ModelLoad(string Name, int ModelMb, int? Elements, int LinkCount, int LinksKnown, int LinksMb, string NeededRam, bool OverGuidance,
+    bool IsCloud = false);
 
 /// <summary>
 /// The size of the model on disk against the memory of the computer, by Autodesk's Memory Recommendations (and the
@@ -33,7 +35,8 @@ public static class ModelSizeAdvice
         var known = links.Where(l => l.Bytes is not null).ToList();
         int linksMb = (int)(known.Sum(l => l.Bytes!.Value) / Mb);
         bool over = ramMb is { } ram && Required(modelMb) > ram;
-        return new ModelLoad(Name(s, host), modelMb, host.Elements, links.Count, known.Count, linksMb, Needed(modelMb), over);
+        bool cloud = host.Path.Contains("CollaborationCache", StringComparison.OrdinalIgnoreCase);
+        return new ModelLoad(Name(s, host), modelMb, host.Elements, links.Count, known.Count, linksMb, Needed(modelMb), over, cloud);
     }
 
     /// <summary>

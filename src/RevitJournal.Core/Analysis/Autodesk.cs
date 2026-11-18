@@ -25,6 +25,12 @@ public sealed record AutodeskArticle(string Title, string Url)
 
     public static readonly AutodeskArticle SystemRequirements = new("System requirements for Revit 2025 products",
         Base + "System-requirements-for-Revit-2025-products.html");
+    public static readonly AutodeskArticle SystemRequirements2026 = new("System requirements for Revit 2026 products",
+        "https://help.autodesk.com/view/RVT/2026/ENU/?caas=caas%2Fsfdcarticles%2Fsfdcarticles%2FSystem-requirements-for-Revit-2026-products.html");
+    public static readonly AutodeskArticle OptimizeOs = new("Optimize your Operating System for Performance",
+        "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-66A61D65-967D-4DB7-B4C0-FB77C2EDECF6");
+    public static readonly AutodeskArticle CloudModelCorrupt = new("Data in File Is Corrupt When Opening Cloud Model",
+        Base + "Cloud-collaboration-corruption-for-one-user.html");
     public static readonly AutodeskArticle MemoryRecommendations = new("Memory Recommendations",
         "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6");
     public static readonly AutodeskArticle MemoryInstability = new("Memory Usage and Instability",

@@ -19,7 +19,7 @@ public sealed record RamPoint(DateTime Time, long FreeMb);
 /// <param name="RamRunsOutIn">When free memory reaches the danger line if it keeps falling as in the last minutes; null when it is not falling or there is still plenty.</param>
 public sealed record HealthReport(DateTime Time, HealthLevel Level, long TotalRamMb, long FreeRamMb, long CommitLimitMb, long CommitFreeMb,
     double CpuPercent, IReadOnlyList<RevitHealth> Revits, IReadOnlyList<DiskHealth> Disks, IReadOnlyList<HealthIssue> Issues,
-    TimeSpan? RamRunsOutIn, IReadOnlyList<RamPoint> RamHistory);
+    TimeSpan? RamRunsOutIn, IReadOnlyList<RamPoint> RamHistory, IReadOnlyList<RequirementCheck>? Requirements = null);
 
 /// <summary>
 /// Turns resource readings into a judgement and warns before something runs out. Only exhaustion can be foreseen
@@ -42,6 +42,9 @@ public sealed class HealthMonitor(ISystemProbe probe)
     public const double CommitWatchShare = 0.20, CommitDangerShare = 0.10;
     /// <summary>A Revit above this share of the whole processor is doing something, even when its window does not respond.</summary>
     public const double BusyCpuPercent = 3;
+
+    /// <summary>Said under advice whose threshold the app sets itself: Autodesk publishes no figure for free RAM or virtual memory.</summary>
+    public const string OwnLine = "(Alert level set by Revit Doctor; Autodesk gives no figure for it.)";
 
     public static readonly TimeSpan HistoryLength = TimeSpan.FromMinutes(30);
     /// <summary>The forecast looks at the last 10 minutes and needs at least 3 of them.</summary>
@@ -116,11 +119,11 @@ public sealed class HealthMonitor(ISystemProbe probe)
             if (now.FreeRamMb < Math.Max(RamDangerMb, RamDangerShare * now.TotalRamMb))
                 issues.Add(new HealthIssue("ram-low", HealthLevel.Danger,
                     $"RAM is almost full: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
-                    "Save now. Close the Revit window you are not working in and other heavy programs; Revit can close unexpectedly when memory runs out."));
+                    "Save now. Close the Revit window you are not working in and other heavy programs; Revit can close unexpectedly when memory runs out. " + OwnLine));
             else if (now.FreeRamMb < Math.Max(RamWatchMb, RamWatchShare * now.TotalRamMb))
                 issues.Add(new HealthIssue("ram-low", HealthLevel.Watch,
                     $"RAM is getting low: {Fmt.Mb((int)now.FreeRamMb)} of {Fmt.Mb((int)now.TotalRamMb)} free",
-                    "Close views and programs you do not need. Restarting Revit frees the memory it has collected."));
+                    AutodeskArticle.MemoryInstability.Cite("Limit the number of open views (View tab > Windows > Close Inactive) and restart Revit regularly.") + " " + OwnLine));
         }
 
         // ---- memory soon
@@ -135,8 +138,11 @@ public sealed class HealthMonitor(ISystemProbe probe)
         {
             bool danger = now.CommitFreeMb < CommitDangerShare * now.CommitLimitMb;
             issues.Add(new HealthIssue("commit-low", danger ? HealthLevel.Danger : HealthLevel.Watch,
-                $"Windows is running out of virtual memory: {Fmt.Mb((int)now.CommitFreeMb)} of {Fmt.Mb((int)now.CommitLimitMb)} left",
-                "Save now and close programs. If this happens often, ask IT to let Windows manage the page file size or to add RAM."));
+                $"Windows is running out of memory (RAM + page file): {Fmt.Mb((int)now.CommitFreeMb)} of {Fmt.Mb((int)now.CommitLimitMb)} left",
+                $"{Fmt.Mb((int)now.TotalRamMb)} RAM + {Fmt.Mb((int)Math.Max(0, now.CommitLimitMb - now.TotalRamMb))} page file. " +
+                AutodeskArticle.MemoryInstability.Cite("Save your work and restart Revit; in a workshared model save the local file, restart Revit, then synchronize.") + " " +
+                AutodeskArticle.OptimizeOs.Cite($"If this happens often, ask IT for a page file of at least Windows' recommended size and at most twice the RAM (here up to {Fmt.Mb((int)(2 * now.TotalRamMb))}).") +
+                " " + OwnLine));
         }
 
         long revitMemory = now.Revits.Sum(r => r.MemoryMb);
@@ -159,14 +165,26 @@ public sealed class HealthMonitor(ISystemProbe probe)
             if (level != HealthLevel.Ok)
                 issues.Add(new HealthIssue($"disk:{d.Name}", level, $"Drive {d.Name} has only {Fmt.Mb((int)d.FreeMb)} free",
                     level == HealthLevel.Danger
-                        ? "Free up space now: Revit needs room for temporary files, saves and the cloud model cache, and opening, saving and synchronizing fail when the drive is full. Autodesk requires at least 30 GB free."
-                        : "Autodesk requires at least 30 GB of free disk space for Revit. Free up space: Windows Disk Cleanup, and the cloud model cache you no longer need."));
+                        ? "Free up space now: Revit needs room for temporary files, saves and the cloud model cache, and opening, saving and synchronizing fail when the drive is full. " +
+                          AutodeskArticle.ClosedUnexpectedly.Cite("Minimum 30 GB free space is required.")
+                        : AutodeskArticle.ClosedUnexpectedly.Cite("Minimum 30 GB free space is required.") + " " +
+                          AutodeskArticle.DiskFull.Cite("Work with your IT support to free up space, and run Windows Disk Cleanup.")));
         }
+
+        // ---- this computer against Autodesk's published figures
+        var requirements = ComputerRequirements.Check(now, models);
+        if (models?.Where(m => m.IsCloud).ToList() is { Count: > 0 } cloud &&
+            requirements.FirstOrDefault(r => r.Source == AutodeskArticle.CloudModelCorrupt) is { Level: HealthLevel.Watch } space &&
+            !issues.Any(i => i.Key.StartsWith("disk:", StringComparison.Ordinal)))
+            issues.Add(new HealthIssue("disk-cloud", HealthLevel.Watch,
+                $"{space.Item.Replace("Free disk ", "Drive ", StringComparison.Ordinal)}: {space.Value} free, Autodesk asks for {Fmt.Mb((int)Math.Min(ComputerRequirements.CloudSpaceMb(cloud), int.MaxValue))}",
+                AutodeskArticle.CloudModelCorrupt.Cite("Ensure sufficient hard disk space is available on the C: drive: 20 times the model size (to extract it to the temp folder when it opens) plus 3 times all linked RVT models (the cloud cache).") + " " +
+                AutodeskArticle.DiskFull.Cite("Work with your IT support to free up space, and run Windows Disk Cleanup.")));
 
         issues = [.. issues.OrderByDescending(i => i.Level)];
         var report = new HealthReport(now.Time, issues.Count == 0 ? HealthLevel.Ok : issues[0].Level,
             now.TotalRamMb, now.FreeRamMb, now.CommitLimitMb, now.CommitFreeMb, Math.Clamp(cpu, 0, 100),
-            revits, disks, issues, runsOut, [.. _history]);
+            revits, disks, issues, runsOut, [.. _history], requirements);
 
         NewAlerts = Alerts(report);
         Latest = report;
