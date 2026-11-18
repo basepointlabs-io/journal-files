@@ -30,6 +30,41 @@
         </StackPanel>
       </Border>
     </DataTemplate>
+    <!-- The same on the start screen, two to a row: the dial on the left, the figures on the right. -->
+    <DataTemplate x:Key="RequirementCardWide" DataType="{x:Type local:RequirementRow}">
+      <Border Background="{StaticResource Panel}" CornerRadius="4" Padding="16" Margin="0,0,16,16">
+        <StackPanel>
+          <DockPanel>
+            <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
+                     Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
+            <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="Wrap" />
+          </DockPanel>
+          <Grid Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <local:Gauge Data="{Binding Dial}" Width="176" Height="104" ToolTip="{Binding Tip}"
+                         Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+              <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left">
+                <TextBlock Text="{Binding Value}" FontSize="24" FontWeight="SemiBold"
+                           Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
+              </Viewbox>
+              <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                         Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
+                         Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
+              <!-- Autodesk's figures in words only for an item without a dial; on a dial they are its numbers (and its tooltip). -->
+              <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,4,0,0"
+                         Visibility="{Binding NoDial, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                         Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
+                         Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
   </UserControl.Resources>
   <!-- The overview at a glance: overall state, free memory with its recent curve, disk, each running Revit,
        and at most three things to do. DataContext is a HealthView. Shown in the tray flyout and on the start screen. -->
@@ -295,10 +330,10 @@
       <TextBlock Text="THIS COMPUTER AND AUTODESK'S FIGURES" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
       <!-- One card per resource: a dial whose zones and numbers are Autodesk's figures, the needle this computer.
            Hover the dial for Autodesk's figures in words. -->
-      <ItemsControl ItemsSource="{Binding Requirements}" Margin="0,8,0,0" ItemTemplate="{StaticResource RequirementCard}">
+      <ItemsControl ItemsSource="{Binding Requirements}" Margin="0,8,-16,0" ItemTemplate="{StaticResource RequirementCardWide}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <WrapPanel Orientation="Horizontal" ItemWidth="224" />
+            <UniformGrid Columns="2" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
       </ItemsControl>

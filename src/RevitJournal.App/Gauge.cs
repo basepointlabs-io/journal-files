@@ -23,7 +23,7 @@ public sealed class Gauge : FrameworkElement
 
     public GaugeData? Data { get => (GaugeData?)GetValue(DataProperty); set => SetValue(DataProperty, value); }
 
-    private const double Thickness = 12, LabelRoom = 18;
+    private const double Thickness = 12;
     private static readonly Brush Red = Frozen(Color.FromRgb(0xF0, 0x95, 0x95));
     private static readonly Brush Amber = Frozen(Color.FromRgb(0xFA, 0xC7, 0x75));
     private static readonly Brush LightGreen = Frozen(Color.FromRgb(0xC0, 0xDD, 0x97));
@@ -43,11 +43,20 @@ public sealed class Gauge : FrameworkElement
         if (Data is not { } data || ActualWidth < 60 || ActualHeight < 40)
             return;
 
-        // The dial is a half circle sitting on its centre; the numbers of Autodesk's figures go just outside it.
-        // Numbers at the ends of the dial ("50.9", "max 95.8") need more room at the sides than at the top.
-        double r = Math.Min(ActualWidth / 2 - LabelRoom - 18, ActualHeight - LabelRoom - 8);
-        var centre = new Point(ActualWidth / 2, LabelRoom + 4 + r);
+        // The numbers of Autodesk's figures go just outside the dial; the dial is as large as leaves room for the widest
+        // of them at the sides ("max 95.8") and for one line of them above.
         var marks = data.Marks.OrderBy(m => m.Mb).ToList();
+        var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var labels = marks.Select(m => new FormattedText((m.Maximum ? "max " : "") + Number(m.Mb), CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight, typeface, 11, TickInk, dip)).ToList();
+        // The same room on every dial, for the widest number any of them shows, so all dials are the same size.
+        var widest = new FormattedText("max 888.8", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11, TickInk, dip);
+        double side = widest.Width, top = widest.Height;
+        double r = Math.Min(ActualWidth / 2 - Thickness / 2 - side - 6, ActualHeight - Thickness / 2 - top - 6);
+        if (r < 20)
+            return;
+        var centre = new Point(ActualWidth / 2, ActualHeight - 6);
         double scale = Math.Max(data.HaveMb, marks.Count > 0 ? marks[^1].Mb : 0) * 1.15;
         if (scale <= 0)
             return;
@@ -93,21 +102,21 @@ public sealed class Gauge : FrameworkElement
 
         // Autodesk's figures: a cut through the band, exactly as wide as the band and in the card's colour, and the
         // number outside it.
-        var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-        double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var cut = new Pen(TryFindResource("Panel") as Brush ?? Brushes.White, 3);
-        foreach (var m in marks)
+        for (int i = 0; i < marks.Count; i++)
         {
+            var m = marks[i];
             dc.DrawLine(cut, At(m.Mb, r - Thickness / 2), At(m.Mb, r + Thickness / 2));
             // An upper bound says so ("max 16"); a minimum is just its number.
-            var text = new FormattedText((m.Maximum ? "max " : "") + Number(m.Mb), CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11,
-                TickInk, dip);
-            // Centred on its point, pushed outwards by half its width towards the ends of the dial, so a wide number
-            // next to the band ("max 16") does not run into it.
-            var p = At(m.Mb, r + Thickness / 2 + 9);
-            double outwards = Math.Cos(Angle(m.Mb)) * text.Width / 2;
-            double x = Math.Clamp(p.X - text.Width / 2 + outwards, 0, Math.Max(0, ActualWidth - text.Width));
-            dc.DrawText(text, new Point(x, p.Y - text.Height / 2));
+            var text = labels[i];
+            // The number sits just outside the band: its box is moved out along the dial's radius by half its width
+            // and half its height, so a wide number near the ends ("max 95.8") stays clear of the band.
+            double a = Angle(m.Mb);
+            var p = At(m.Mb, r + Thickness / 2 + 4);
+            double x = p.X - text.Width / 2 + Math.Cos(a) * text.Width / 2;
+            double y = p.Y - text.Height / 2 - Math.Sin(a) * text.Height / 2;
+            x = Math.Clamp(x, 0, Math.Max(0, ActualWidth - text.Width));
+            dc.DrawText(text, new Point(x, Math.Max(0, y)));
         }
 
         // This computer: the needle.
