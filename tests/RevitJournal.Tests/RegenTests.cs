@@ -49,3 +49,56 @@ public class RegenTests
         Assert.StartsWith("Open the model with all worksets closed", f.Rule.Fix.En[0], StringComparison.Ordinal);
     }
 }
+
+/// <summary>Rules keyed on a dialog's id or on Revit's own translations explain journals of a Revit in another language.</summary>
+public class LanguageTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+    private static readonly AnalysisContext Closed = new(IsBeingWritten: false, DumpFiles: []);
+
+    private static AnalysisResult Analyze(string body) =>
+        Analyzer.Analyze(JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, body, Fixtures.NormalEnd)), Closed);
+
+    [Fact]
+    public void A_dialog_is_recognised_by_its_id_whatever_the_language_of_its_text()
+    {
+        // German Revit: the text is translated, the id under it is not.
+        var german = Analyze("""
+            ' 0:< TaskDialog "Die Daten in Datei Tower.rvt sind beschädigt und müssen manuell wiederhergestellt werden."
+            'Id : TaskDialog_Revit_File_Corrupted
+            'CommonButtons : Close
+            """);
+        Assert.Equal(1, german.Findings.Single(f => f.Rule.Id == "data-in-file-corrupt").HitCount);
+
+        // English Revit: text and id are the same dialog, counted once.
+        var english = Analyze("""
+            ' 0:< TaskDialog "Data in file Tower.rvt is corrupt and needs to be manually recovered."
+            'Id : TaskDialog_Revit_File_Corrupted
+            'CommonButtons : Close
+            """);
+        Assert.Equal(1, english.Findings.Single(f => f.Rule.Id == "data-in-file-corrupt").HitCount);
+    }
+
+    [Fact]
+    public void The_serious_error_dialog_is_recognised_in_its_current_wording()
+    {
+        var r = Analyze("""
+            ' 0:< TaskDialog "Revit encountered a serious error. The current action could not be completed."
+            'Id : TaskDialog_Serious_Error_Occurred
+            """);
+        Assert.Contains(r.Findings, f => f.Rule.Id == "serious-error-has-occurred");
+    }
+
+    [Fact]
+    public void A_message_without_an_id_is_recognised_in_Revits_own_translation()
+    {
+        var r = Analyze("""
+            ' 9:< Error posted:
+            ' 9:< Verknüpfungsexemplar benötigt Koordinationsprüfung
+            ' 0:< TaskDialog "Nicht genügend Speicher."
+            'CommonButtons : Close
+            """);
+        Assert.Contains(r.Findings, f => f.Rule.Id == "link-needs-coordination-review");
+        Assert.Contains(r.Findings, f => f.Rule.Id == "forum-out-of-memory");      // "Out of memory." in German
+    }
+}

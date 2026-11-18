@@ -711,6 +711,10 @@
         "exclude": [
           "Detect if missing elements for",
           "fixPotentialMissingElements"
+        ],
+        "dialogs": [
+          "TaskDialog_Missing_Element_Info",
+          "TaskDialog_Too_Many_Missing_Elements"
         ]
       },
       "context": "Opening a model; elements are missing or the model will not open.",
@@ -816,7 +820,29 @@
         "regex": [
           "NON_EXISTENT_CONTENT_DOC.*Please\\s+reload"
         ],
-        "ignore_case": true
+        "ignore_case": true,
+        "translations": [
+          "ist beschädigt und ihre Exemplare können nicht aktualisiert werden. Laden Sie",
+          "est endommagée et ses occurrences ne peuvent pas être mises à jour. Rechargez",
+          "está dañada y sus ejemplares no se pueden actualizar. Vuelva a cargar la",
+          "è danneggiata e le relative istanze non possono essere aggiornate. Per",
+          "está corrompida e suas instâncias não podem ser atualizadas. Recarregue a",
+          "Dieser Bearbeitungsbereich wurde im zentralen Modell geändert. Laden Sie den",
+          "Ce sous-projet a été modifié dans le modèle central. Veuillez recharger les",
+          "Este subproyecto ha cambiado en el modelo central. Realice la operación Volver",
+          "Questo workset è stato modificato nel modello centrale. Ricaricare le ultime",
+          "Este workset foi modificado no modelo central. Recarregue o mais recente antes",
+          "ist beschädigt und kann nicht gespeichert werden. Laden Sie die Familie neu, um",
+          "est corrompue et ne peut pas être enregistrée. Rechargez la famille pour",
+          "está dañada y no se puede guardar. Vuelva a cargar la familia para reparar el",
+          "è danneggiata e non può essere salvata. Per correggere il progetto, ricaricare",
+          "está corrompida e não pode ser salva. Recarregue a família para reparar o",
+          "ist beschädigt und kann nicht bearbeitet werden. Laden Sie die Familie neu, um",
+          "est corrompue et ne peut pas être modifiée. Rechargez la famille pour réparer",
+          "está dañada y no se puede editar. Vuelva a cargar la familia para reparar el",
+          "è danneggiata e non può essere modificata. Per correggere il progetto,",
+          "está corrompida e não pode ser editada. Recarregue a família para reparar o"
+        ]
       },
       "context": "Local file will not synchronize with central.",
       "title": {
@@ -1049,6 +1075,13 @@
         ],
         "regex": [
           "Attempted\\s+to\\s+access\\s+.*\\s+past\\s+its\\s+end"
+        ],
+        "translations": [
+          "Es wurde versucht, auf eine Stelle hinter dem Ende von",
+          "Tentative d'accès à",
+          "Se intentó obtener acceso a",
+          "Tentativo di accedere a",
+          "Foi feita uma tentativa de acessar"
         ]
       },
       "context": "Opening or linking a model (local, network or cloud).",
@@ -1096,6 +1129,9 @@
       "match": {
         "any": [
           "is corrupt and needs to be manually recovered"
+        ],
+        "dialogs": [
+          "TaskDialog_Revit_File_Corrupted"
         ]
       },
       "context": "Opening a model; for cloud models often only one user is affected.",
@@ -1191,7 +1227,10 @@
           "video\\s+driver\\s+error",
           "cannot\\s+use\\s+hardware\\s+acceleration"
         ],
-        "ignore_case": true
+        "ignore_case": true,
+        "dialogs": [
+          "TaskDialog_Display_Error_Driver_Error"
+        ]
       },
       "context": "Display errors or crashes related to the graphics card.",
       "title": {
@@ -1386,7 +1425,23 @@
           "\\blow\\s+memory\\b",
           "insufficient\\s+memory"
         ],
-        "ignore_case": true
+        "ignore_case": true,
+        "dialogs": [
+          "TaskDialog_Export_Failed_Out_Of_Memory",
+          "TaskDialog_Insufficient_Memory_For_Load"
+        ],
+        "translations": [
+          "Nicht genügend Speicher.",
+          "Mémoire insuffisante.",
+          "No hay suficiente memoria.",
+          "Memoria insufficiente.",
+          "Sem memória.",
+          "Nicht genügend Speicher vorhanden, um den Vorgang auszuführen.",
+          "Mémoire insuffisante pour exécuter l'opération.",
+          "Memoria insuficiente para realizar la operación.",
+          "Memoria insufficiente per eseguire l'operazione.",
+          "Memória insuficiente para executar operação."
+        ]
       },
       "context": "Large models, many links, opening heavy views or saving.",
       "title": {
@@ -1439,7 +1494,10 @@
         "regex": [
           "CefSharp.*(fail|exception|could not load)"
         ],
-        "ignore_case": true
+        "ignore_case": true,
+        "dialogs": [
+          "TaskDialog_CefSharp_Init_Fails"
+        ]
       },
       "context": "Startup, when an add-in with an embedded web browser loads.",
       "title": {

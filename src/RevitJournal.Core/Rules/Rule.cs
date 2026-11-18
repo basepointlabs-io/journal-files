@@ -23,7 +23,7 @@ public sealed class Rule
     /// <summary>File the rule came from, e.g. "autodesk-help.json".</summary>
     [JsonIgnore] public string Origin { get; internal set; } = "";
 
-    public bool IsTextRule => Match.Any.Count > 0 || Match.Regex.Count > 0;
+    public bool IsTextRule => Match.Any.Count > 0 || Match.Regex.Count > 0 || Match.Dialogs.Count > 0 || Match.Translations.Count > 0;
 }
 
 public sealed class RuleMatch
@@ -32,6 +32,18 @@ public sealed class RuleMatch
     public List<string> Regex { get; init; } = [];
     [JsonPropertyName("ignore_case")] public bool IgnoreCase { get; init; }
     public List<string> Exclude { get; init; } = [];
+
+    /// <summary>
+    /// Ids of the Revit dialogs this rule explains ("TaskDialog_Revit_File_Corrupted"). The journal logs the id under the
+    /// dialog's text ("'Id : TaskDialog_..."), the same in every language, so the rule also fires in a German or French Revit.
+    /// </summary>
+    public List<string> Dialogs { get; init; } = [];
+
+    /// <summary>
+    /// The messages of <see cref="Any"/> as Revit words them in other languages, for messages Revit logs without an id.
+    /// Generated from Revit's own string tables (tools/localize_rules.py); matched like <see cref="Any"/>.
+    /// </summary>
+    public List<string> Translations { get; init; } = [];
 }
 
 public sealed class LocalizedText

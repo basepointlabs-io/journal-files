@@ -43,7 +43,7 @@ def check_rule(rule, where):
     if not uk or len(uk) != len(en):
         errors.append(f"{where}: fix.uk/fix.en step count mismatch ({len(uk)} vs {len(en)})")
     match = rule["match"]
-    if not match.get("any") and not match.get("regex") and "metric" not in rule:
+    if not match.get("any") and not match.get("regex") and not match.get("dialogs") and "metric" not in rule:
         errors.append(f"{where}: no match patterns and no metric")
     for pattern in match.get("regex", []):
         try:

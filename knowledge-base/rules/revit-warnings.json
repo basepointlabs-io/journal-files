@@ -10,6 +10,13 @@
         "any": [
           "FailureId: IDS_ATOM_VIOLATION_WHEN_ONE_PLACED_INSTANCE",
           "A group has been changed outside group edit mode"
+        ],
+        "translations": [
+          "Eine Gruppe wurde außerhalb des Gruppenbearbeitungsmodus geändert. Die Änderung",
+          "Un groupe a été modifié hors du mode d'édition de groupe. Comme il n'existe",
+          "Se ha modificado un grupo fuera del modo de edición de grupo. Se aceptará el",
+          "È stato modificato un gruppo fuori dalla modalità di modifica. L'operazione è",
+          "Um grupo foi alterado fora do modo de edição de grupo. A alteração está sendo"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -50,6 +57,13 @@
         "any": [
           "FailureId: String_RoomAreaPlan_RoomNotEnclosed",
           "is not in a properly enclosed region"
+        ],
+        "translations": [
+          "befindet sich nicht in einem korrekt geschlossenen Bereich.",
+          "ne se trouve pas dans une zone correctement fermée.",
+          "no está en una región cerrada correctamente",
+          "non è una regione adeguatamente delimitata",
+          "não está em uma região apropriadamente fechada"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -90,6 +104,13 @@
         "any": [
           "FailureId: String_Essentials_ScopeboxWrongpos",
           "can not be associated with the specified Scope Box"
+        ],
+        "translations": [
+          "Der hervorgehobene Bezug kann nicht mit dem angegebenen Bildausschnitt",
+          "Les données en surbrillance ne peuvent pas être associées à la zone de",
+          "La referencia resaltada no puede estar asociada con la caja de referencia",
+          "Il riferimento evidenziato non può essere associato al riquadro di definizione",
+          "Os dados realçados não podem ser associados com a caixa de escopo especificada"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -130,6 +151,13 @@
         "any": [
           "FailureId: String_Essentials_WallsOverlap",
           "Highlighted walls overlap"
+        ],
+        "translations": [
+          "Die hervorgehobenen Wände überlappen. Wenn Revit Raumbegrenzungen findet, wird",
+          "Les murs en surbrillance se chevauchent. L'un d'eux risque d'être ignoré lors",
+          "Los muros resaltados se solapan. Puede que uno de ellos se ignore cuando Revit",
+          "I muri evidenziati si sovrappongono. Uno di essi potrebbe essere ignorato",
+          "As paredes realçadas se sobrepõem. Uma delas pode ter sido ignorada quando o"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -209,6 +237,13 @@
         "any": [
           "FailureId: IDS_RBS_ELEMENTS_ARE_DISCONNECTED",
           "Elements need to be disconnected"
+        ],
+        "translations": [
+          "Elemente müssen getrennt werden.",
+          "Vous devez déconnecter les éléments.",
+          "Los elementos deben desconectarse.",
+          "Elementi da scollegare",
+          "Os elementos precisam ser desconectados."
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -249,6 +284,13 @@
         "any": [
           "FailureId: String_Essentials_DuplicateInstancesSamePlace",
           "There are identical instances in the same place"
+        ],
+        "translations": [
+          "Es sind identische Exemplare an derselben Stelle vorhanden. Diese werden in",
+          "Des occurrences identiques figurent au même emplacement. Les nomenclatures",
+          "Hay ejemplares idénticos en la misma ubicación. Esto producirá recuentos dobles",
+          "Esistono istanze identiche nella stessa posizione. Questa condizione",
+          "Há instâncias idênticas no mesmo local. Isto irá resultar na contagem dupla nas"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",
@@ -286,6 +328,18 @@
       "match": {
         "regex": [
           "An error occurred in family \"[^\"]+\" and was automatically resolved"
+        ],
+        "translations": [
+          "\" wurde automatisch behoben. Überprüfen Sie die an der Familie vorgenommenen",
+          "et a été automatiquement résolue. Vérifiez les modifications apportées à la",
+          "\" y se ha resuelto automáticamente. Consulte los cambios realizados en la",
+          "\" si è verificato un errore che è stato risolto automaticamente. Esaminare le",
+          "\" e foi automaticamente solucionado. Revise as alterações fitas na família.",
+          "\" und wurde automatisch behoben. Eine Prüfung durch den Ersteller der Familie",
+          "\" et a été automatiquement corrigée, mais peut nécessiter une révision par le",
+          "\" y se ha resuelto automáticamente, pero quizá deba revisarlo el creador de la",
+          "\", che si è risolto automaticamente; tuttavia, potrebbe essere necessaria una",
+          "\" e foi automaticamente solucionado, mas pode ser necessária uma revisão por"
         ]
       },
       "context": "Posted by Revit while editing; logged in the journal after 'Error posted:'.",

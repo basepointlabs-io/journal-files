@@ -16,6 +16,21 @@
         "regex": [
           "[Ff]atal(/| )[Uu]nrecoverable [Ee]rror",
           "A fatal error has occurred\\.\\s+The application will be terminated"
+        ],
+        "dialogs": [
+          "TaskDialog_Unrecoverable_Error"
+        ],
+        "translations": [
+          "Es ist ein schwerwiegender Fehler aufgetreten. Die Anwendung wird beendet. Sie",
+          "Une erreur fatale s'est produite. L'application va se fermer. Vous avez la",
+          "Se ha producido un error grave. La aplicación se cerrará ahora. Puede guardar",
+          "Si è verificato un errore irreversibile. L'applicazione verrà chiusa. È",
+          "Ocorreu um erro fatal. O aplicativo será encerrado. É possível salvar arquivos",
+          "Es ist ein schwerwiegender Fehler aufgetreten. Das Programm wird beendet. Sie",
+          "Une erreur bloquante s'est produite. L'application va être refermée. Vous aurez",
+          "Se ha producido un error fatal. La aplicación se cerrará. Puede guardar",
+          "Si è verificato un errore irreversibile. L'applicazione deve essere terminata.",
+          "Ocorreu um erro fatal. O aplicativo será fechado. Uma oportunidade será"
         ]
       },
       "context": "Revit stops working completely and closes; it may offer to save recovery files.",
@@ -69,6 +84,42 @@
         ],
         "regex": [
           "[Ss]erious [Ee]rror [Hh]as [Oo]ccurred"
+        ],
+        "dialogs": [
+          "TaskDialog_Serious_Error_Occurred",
+          "TaskDialog_Serious_Error_Occurred_Recoverable",
+          "TaskDialog_Serious_Error_Occurred_Save_Recovery_File"
+        ],
+        "translations": [
+          "Es ist ein schwerwiegender Fehler aufgetreten. Es wird dringend empfohlen, dass",
+          "Une erreur grave s'est produite. Il vous est vivement conseillé d'enregistrer",
+          "Se ha producido un error grave. Debe guardar el trabajo en un archivo nuevo",
+          "Si è verificato un errore grave. Si consiglia di salvare il lavoro in un nuovo",
+          "Ocorreu um erro grave. É altamente recomendável que você salve o seu trabalho",
+          "Es ist ein schwerwiegender Fehler aufgetreten. Der aktuelle Vorgang wurde",
+          "Une erreur grave s'est produite. L'action en cours a été annulée. Il vous est",
+          "Se ha producido un error grave. La acción actual se ha cancelado. Debe guardar",
+          "Si è verificato un errore grave. L'operazione corrente è stata annullata. Si",
+          "Ocorreu um erro grave. A ação atual foi cancelada. É recomendado salvar o",
+          "Ein schwerer Fehler ist aufgetreten. Der aktuelle Vorgang wurde abgebrochen.",
+          "Une erreur grave s'est produite. L'action en cours a été annulée.",
+          "Se ha producido un error grave. La acción actual se ha cancelado.",
+          "Si è verificato un errore grave. L'operazione corrente è stata annullata.",
+          "Ocorreu um erro sério. A ação atual foi cancelada.",
+          "Es ist ein schwerwiegender Fehler aufgetreten. Die Anwendung wird beendet. Sie",
+          "Une erreur fatale s'est produite. L'application va se fermer. Vous avez la",
+          "Se ha producido un error grave. La aplicación se cerrará ahora. Puede guardar",
+          "Si è verificato un errore irreversibile. L'applicazione verrà chiusa. È",
+          "Ocorreu um erro fatal. O aplicativo será encerrado. É possível salvar arquivos",
+          "Une erreur grave s'est produite. Il est fortement recommandé d'utiliser la",
+          "Se ha producido un error grave. Debe usar Guardar como para guardar el trabajo",
+          "Si è verificato un errore grave. Si consiglia di utilizzare Salva con nome per",
+          "Ocorreu um erro sério. É recomendado salvar como o trabalho em um novo arquivo",
+          "Es ist ein schwerwiegender Fehler aufgetreten. Das Programm wird beendet. Sie",
+          "Une erreur bloquante s'est produite. L'application va être refermée. Vous aurez",
+          "Se ha producido un error fatal. La aplicación se cerrará. Puede guardar",
+          "Si è verificato un errore irreversibile. L'applicazione deve essere terminata.",
+          "Ocorreu um erro fatal. O aplicativo será fechado. Uma oportunidade será"
         ]
       },
       "context": "Any operation; Revit cancels the current action and may suggest saving a recovery file.",
@@ -541,6 +592,13 @@
         ],
         "regex": [
           "LoadedId\\s*=\\s*\\d+.*refers to a\\s+NON_EXISTENT_CONTENT_DOC"
+        ],
+        "translations": [
+          "Dieser Bearbeitungsbereich wurde im zentralen Modell geändert. Laden Sie den",
+          "Ce sous-projet a été modifié dans le modèle central. Veuillez recharger les",
+          "Este subproyecto ha cambiado en el modelo central. Realice la operación Volver",
+          "Questo workset è stato modificato nel modello centrale. Ricaricare le ultime",
+          "Este workset foi modificado no modelo central. Recarregue o mais recente antes"
         ]
       },
       "context": "Written to the journal during Audit; linked to serious errors, failed Synchronize with Central / Save, failed upgrade, and 'Some families have become unusable'.",
@@ -935,6 +993,10 @@
         "exclude": [
           "Detect if missing elements for",
           "fixPotentialMissingElements"
+        ],
+        "dialogs": [
+          "TaskDialog_Missing_Element_Info",
+          "TaskDialog_Too_Many_Missing_Elements"
         ]
       },
       "context": "Opening a model; the model may or may not open.",
@@ -1038,6 +1100,9 @@
         ],
         "regex": [
           "[Dd]ata in (file )?.*is corrupt and needs to be manually recovered"
+        ],
+        "dialogs": [
+          "TaskDialog_Revit_File_Corrupted"
         ]
       },
       "context": "Opening a file.",
@@ -1129,6 +1194,9 @@
         "any": [
           "Model is Corrupt",
           "Model is corrupt"
+        ],
+        "dialogs": [
+          "TaskDialog_Corrupt_Model_Detected_On_Save"
         ]
       },
       "context": "Saving a non-workshared model.",
@@ -1167,6 +1235,16 @@
           "Unknown Error Occurred",
           "Unknown error occurred",
           "unknown error occurred"
+        ],
+        "dialogs": [
+          "TaskDialog_Revit_File_Unknown_Error"
+        ],
+        "translations": [
+          "Unbekannter Fehler beim Zugriff auf",
+          "Une erreur inconnue s'est produite lors de l'accès à",
+          "Error desconocido al tener acceso a",
+          "Errore sconosciuto durante l'accesso a",
+          "Ocorreu um erro desconhecido ao acessar"
         ]
       },
       "context": "Opening a model.",
@@ -1209,6 +1287,22 @@
         ],
         "regex": [
           "[Uu]nresolved [Pp]ointer [Rr]eferences?"
+        ],
+        "dialogs": [
+          "TaskDialog_Bad_Load_Reference",
+          "TaskDialog_Bad_Save_Reference"
+        ],
+        "translations": [
+          "Speichern aufgrund von nicht aufgelösten Zeigerreferenzen nicht möglich. Bitte",
+          "Impossible d'effectuer l'enregistrement en raison de problèmes de références",
+          "No se pudo guardar debido a referencias de puntero sin resolver. Póngase en",
+          "Impossibile salvare a causa di riferimenti puntatore non risolti. Contattare il",
+          "Não é possível salvar por causa de referências de ponteiros não solucionadas.",
+          "Öffnen aufgrund von nicht aufgelösten Zeigerreferenzen nicht möglich. Bitte",
+          "Ouverture impossible en raison de problèmes de références non résolues.",
+          "Imposible abrir debido a referencias de puntero sin resolver. Póngase en",
+          "Impossibile aprire a causa di riferimenti puntatore non risolti. Contattare il",
+          "Não é possível abrir devido a referências de ponteiro não solucionadas. Contate"
         ]
       },
       "context": "Saving a model, or loading it as a link into another model.",
@@ -1252,6 +1346,13 @@
         "any": [
           "Some families have become unusable",
           "have become unusable"
+        ],
+        "translations": [
+          "Einige Familien sind nicht mehr verwendbar. Laden Sie die Familien erneut, oder",
+          "Certaines familles ne sont plus utilisables. Rechargez les familles ou",
+          "Algunas familias han quedado inutilizables. Vuelva a cargar las familias o",
+          "Alcune famiglie sono diventate inutilizzabili. Ricaricarle o eliminarle dal",
+          "Algumas famílias se tornaram inutilizáveis. Recarregue as famílias ou"
         ]
       },
       "context": "Opening, saving or upgrading a model, or Reload Latest / Synchronize with Central.",
@@ -1299,6 +1400,13 @@
         ],
         "regex": [
           "Attempted to access .+ past its end"
+        ],
+        "translations": [
+          "Es wurde versucht, auf eine Stelle hinter dem Ende von",
+          "Tentative d'accès à",
+          "Se intentó obtener acceso a",
+          "Tentativo di accedere a",
+          "Foi feita uma tentativa de acessar"
         ]
       },
       "context": "Opening a Revit file or adding it as a link.",
@@ -1452,6 +1560,10 @@
         ],
         "regex": [
           "required internal settings? (is|are) missing"
+        ],
+        "dialogs": [
+          "TaskDialog_Repair_Local_Missing_Unique_Elements",
+          "TaskDialog_Repair_Missing_Unique_Elements"
         ]
       },
       "context": "Opening or upgrading a model.",
@@ -1581,6 +1693,13 @@
         "any": [
           "Your model has been restored to an earlier version",
           "has been restored to an earlier version"
+        ],
+        "dialogs": [
+          "TaskDialog_Close_Rollback_Incompatible_Model",
+          "TaskDialog_Close_Single_User_Rollback_Incompatible_Model",
+          "TaskDialog_Open_Rollback_Incompatible_Model",
+          "TaskDialog_Open_Single_User_Rollback_Incompatible_Model",
+          "TaskDialog_Operate_Rollback_Incompatible_Model"
         ]
       },
       "context": "Revit Cloud Worksharing.",
@@ -1620,6 +1739,9 @@
         "any": [
           "The central model has been restored from a previous backup",
           "has been restored from a previous backup"
+        ],
+        "dialogs": [
+          "TaskDialog_Worksets_Rolled_Back"
         ]
       },
       "context": "File-based or server-based worksharing.",
@@ -1656,6 +1778,9 @@
       "match": {
         "any": [
           "locked for maintenance"
+        ],
+        "dialogs": [
+          "TaskDialog_Central_Model_Is_Locked"
         ]
       },
       "context": "Synchronize with Central (Revit Server).",
@@ -1734,6 +1859,10 @@
       "match": {
         "any": [
           "is not compatible with the central model"
+        ],
+        "dialogs": [
+          "TaskDialog_Local_File_Incompatible_With_Central_Model",
+          "TaskDialog_Syncing_Conflict"
         ]
       },
       "context": "Opening a local file / Synchronize with Central.",
@@ -1862,6 +1991,10 @@
         "any": [
           "The local model is out of date",
           "Editing is limited to elements and worksets you own"
+        ],
+        "dialogs": [
+          "TaskDialog_Version_Archived_On_Checkout_Elements",
+          "TaskDialog_Version_Archived_On_Checkout_Worksets"
         ]
       },
       "context": "Revit Cloud Worksharing: local model with unsynchronized changes for a long time.",
@@ -1901,6 +2034,9 @@
         "any": [
           "You made changes that have not been synchronized for an extended period of time",
           "have not been synchronized for an extended period"
+        ],
+        "dialogs": [
+          "TaskDialog_Open_Central_Model_Version_Archived"
         ]
       },
       "context": "Opening a workshared cloud model.",
@@ -1940,6 +2076,18 @@
         ],
         "regex": [
           "[Cc]entral model.{0,40}(is|has been|has become) corrupt"
+        ],
+        "dialogs": [
+          "TaskDialog_Central_Or_Local_File_Error",
+          "TaskDialog_Corrupt_Model_Detected_On_Synchronize_With_Central",
+          "TaskDialog_Warn_To_Repair_Corrupt_Central_Model"
+        ],
+        "translations": [
+          "Zentrales Modell reparieren",
+          "Réparer le modèle central",
+          "Reparar modelo central",
+          "Ripara modello centrale",
+          "Reparar o modelo central"
         ]
       },
       "context": "Synchronize with Central (file-based worksharing) — Revit's background check detected corruption in the central model.",
@@ -2069,6 +2217,11 @@
         ],
         "regex": [
           "[Oo]peration [Cc]ould [Nn]ot [Bb]e [Cc]ompleted"
+        ],
+        "dialogs": [
+          "TaskDialog_Disk_Space_Running_Low_At_Revit_Server",
+          "TaskDialog_Operation_Could_Not_Be_Completed",
+          "TaskDialog_Schema_Conflict_From_Host_On_Merge"
         ]
       },
       "context": "Revit Server, Revit Cloud Worksharing, or the Macro Manager.",
@@ -2167,6 +2320,16 @@
         ],
         "regex": [
           "Linked document BIM 360://.+ not found"
+        ],
+        "dialogs": [
+          "TaskDialog_Linked_Document_Not_Found"
+        ],
+        "translations": [
+          "nicht gefunden. Die Verknüpfung wird gelöst.",
+          "introuvable. Le lien va être déchargé.",
+          "no se ha encontrado. Se descargará el vínculo.",
+          "non trovato. Il collegamento verrà scaricato.",
+          "não foi encontrado. O vínculo será descarregado."
         ]
       },
       "context": "Reload From of a cloud workshared link (BIM 360 / Autodesk Docs).",
@@ -2399,6 +2562,10 @@
         "any": [
           "You don't have access to the cloud folder",
           "Sync with central failed"
+        ],
+        "dialogs": [
+          "TaskDialog_Cannot_Access_Model",
+          "TaskDialog_Unauthorized_To_Access_Resource"
         ]
       },
       "context": "Synchronize with Central on Autodesk Docs when linked files use shared sites.",
@@ -2739,6 +2906,9 @@
       "match": {
         "any": [
           "A required component could not be initialized because it is missing or damaged"
+        ],
+        "dialogs": [
+          "TaskDialog_CefSharp_Init_Fails"
         ]
       },
       "context": "Revit start-up / UI components that use the embedded browser.",
@@ -2774,6 +2944,10 @@
         "any": [
           "Rendering features are currently disabled",
           "You must install the Rendering library"
+        ],
+        "dialogs": [
+          "TaskDialog_Rendering_Library_Not_Installed",
+          "TaskDialog_Rendering_Library_Not_Installed_InHouse"
         ]
       },
       "context": "Revit start-up (not Revit LT).",
@@ -2930,6 +3104,18 @@
         ],
         "regex": [
           "[Ee]xtents [Gg]reater [Tt]han 20 [Mm]iles"
+        ],
+        "translations": [
+          "überschreiten 20 Meilen (33 km). Dies kann die Zuverlässigkeit beeinträchtigen",
+          "dépasse les 20 miles (33 km). Cela peut réduire la fiabilité et entraîner un",
+          "tiene geometría con extensiones superiores a 33 kilómetros. Esto puede reducir",
+          "presenta estensioni superiori a 20 miglia (33 km). Ciò potrebbe ridurre",
+          "possui extensões superiores a 33 quilômetros. Isto pode reduzir a",
+          "Die Grenzen der Geometrie in der importierten Datei überschreiten 20 Meilen (33",
+          "Dans le fichier importé, les étendues de la géométrie sont supérieures à 20",
+          "La geometría del archivo importado tiene extensiones de más de 20 millas (33",
+          "La geometria presente nel file importato presenta estensioni superiori a 33 km.",
+          "A geometria no arquivo importado tem extensões superiores a 33 quilômetros (20"
         ]
       },
       "context": "Linking or importing a CAD file.",
@@ -3020,6 +3206,13 @@
       "match": {
         "any": [
           "needs Coordination Review"
+        ],
+        "translations": [
+          "Verknüpfungsexemplar benötigt Koordinationsprüfung",
+          "Une occurrence de lien requiert une révision de la coordination",
+          "El ejemplar de vínculo necesita Revisión de coordinación",
+          "L'istanza del collegamento richiede la verifica del coordinamento",
+          "A instância do vínculo precisa de revisão de coordenação"
         ]
       },
       "context": "Opening, loading or reloading a model with Copy/Monitor elements.",
@@ -3061,6 +3254,13 @@
         ],
         "regex": [
           "error has occurred while drawing the contents of this window"
+        ],
+        "translations": [
+          "Während der Inhalt dieses Fensters gezeichnet wurde, ist ein Fehler aufgetreten.",
+          "Une erreur s'est produite lors du tracé du contenu de cette fenêtre.",
+          "Se ha producido un error al dibujar el contenido de esta ventana.",
+          "Si è verificato un errore durante il disegno dei contenuti di questa finestra.",
+          "Ocorreu um erro ao desenhar os conteúdos desta janela."
         ]
       },
       "context": "Editing text, modifying walls/profiles, or opening specific views with links.",
@@ -3107,6 +3307,9 @@
       "match": {
         "any": [
           "not enough memory to create the rendered image"
+        ],
+        "dialogs": [
+          "TaskDialog_Insufficient_Memory_For_Rendering"
         ]
       },
       "context": "Rendering.",
@@ -3223,6 +3426,13 @@
         "any": [
           "The following render appearance images are missing",
           "render appearance images are missing"
+        ],
+        "translations": [
+          "Die folgenden Render-Darstellungsbilder fehlen:",
+          "Il manque les images d'apparence de rendu suivantes:",
+          "Faltan las siguientes imágenes de apariencia de renderización:",
+          "Impossibile trovare le seguenti immagini delle composizioni di rendering:",
+          "As imagens de aparência de renderização a seguir estão faltando:"
         ]
       },
       "context": "Rendering a 3D view.",
@@ -3306,6 +3516,9 @@
         ],
         "regex": [
           "Unable to [Ll]oad [Kk]eynote [Dd]ata"
+        ],
+        "dialogs": [
+          "TaskDialog_Keynote_Data_Not_Found"
         ]
       },
       "title": {
@@ -3339,6 +3552,13 @@
       "match": {
         "any": [
           "Use Edit Pasted Elements to keep them"
+        ],
+        "translations": [
+          "Elemente wurden gelöscht. Wählen Sie die Option Eingefügte Elemente bearbeiten,",
+          "Les éléments ont été supprimés. Pour les conserver, utilisez Modifier les",
+          "Se han suprimido elementos. Para conservarlos, seleccione Editar elementos",
+          "Elementi eliminati. Utilizzare Modifica elementi incollati per ripristinarli.",
+          "Os elementos foram excluídos. Use Editar elementos colocado para mantê-los."
         ]
       },
       "title": {
@@ -3406,6 +3626,9 @@
       "match": {
         "any": [
           "Some or all of the family files you selected cannot be loaded"
+        ],
+        "dialogs": [
+          "TaskDialog_Cannot_Load_Family_Files_For_Parameter"
         ]
       },
       "title": {

@@ -27,8 +27,10 @@ def load_rules():
         for rule in json.loads(path.read_text())["rules"]:
             match = rule.get("match", {})
             flags = re.IGNORECASE if match.get("ignore_case") else 0
-            subs = [s.lower() if flags else s for s in match.get("any", [])]
+            subs = [s.lower() if flags else s for s in match.get("any", []) + match.get("translations", [])]
             regexes = [re.compile(p, flags) for p in match.get("regex", [])]
+            # A dialog id is logged on its own line under the dialog's text, the same in every language.
+            regexes += [re.compile(r"^\s*'Id : " + re.escape(d) + r"\s*$") for d in match.get("dialogs", [])]
             excludes = match.get("exclude", [])
             if subs or regexes:
                 rules.append((rule, bool(flags), subs, regexes, excludes))
