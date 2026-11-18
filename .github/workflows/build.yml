@@ -1,8 +1,9 @@
 name: Build
 
-# Builds and tests on every push and pull request and produces the installer and the portable exe files.
+# Builds and tests on every push and pull request and produces the installer.
 # Pushing a tag like v0.3.0 (it must match <Version> in Directory.Build.props) also publishes a GitHub Release
-# with the installer, the portable exe files and the notes from docs/releases/v0.3.0.md.
+# with the installer, its SHA256SUMS (the app checks a downloaded update against it) and the notes from
+# docs/releases/v0.3.0.md.
 on:
   push:
     branches: [main]
@@ -47,15 +48,13 @@ jobs:
       - name: Test
         run: dotnet test tests/RevitJournal.Tests/RevitJournal.Tests.csproj -c Release --no-build
 
-      - name: Publish exe (x64 and ARM64)
+      - name: Publish exe (x64 and ARM64, packed by the installer)
         shell: pwsh
         run: |
-          $v = '${{ steps.version.outputs.value }}'
           foreach ($rid in 'win-x64', 'win-arm64') {
             dotnet publish src/RevitJournal.App/RevitJournal.App.csproj -c Release -r $rid --self-contained true `
               -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
               -o "publish/$rid"
-            Copy-Item "publish/$rid/RevitDoctor.exe" "publish/RevitDoctor-$v-portable-$($rid.Substring(4)).exe"
           }
 
       - name: Build installer (Inno Setup)
@@ -68,12 +67,22 @@ jobs:
           & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" installer/RevitDoctor.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
 
+      - name: Checksums
+        shell: pwsh
+        run: |
+          # sha256sum format: "<hash>  <file name>", one line per file, LF line ends.
+          $lines = Get-ChildItem publish -Filter 'RevitDoctor-*-setup.exe' | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          }
+          [IO.File]::WriteAllText("$PWD/publish/SHA256SUMS", (($lines -join "`n") + "`n"))
+          Get-Content publish/SHA256SUMS
+
       - uses: actions/upload-artifact@v7
         with:
           name: RevitDoctor-${{ steps.version.outputs.value }}
           path: |
             publish/RevitDoctor-*-setup.exe
-            publish/RevitDoctor-*-portable-*.exe
+            publish/SHA256SUMS
           if-no-files-found: error
 
       - name: Publish release
@@ -84,4 +93,4 @@ jobs:
           body_path: docs/releases/v${{ steps.version.outputs.value }}.md
           files: |
             publish/RevitDoctor-*-setup.exe
-            publish/RevitDoctor-*-portable-*.exe
+            publish/SHA256SUMS

@@ -19,6 +19,7 @@ public sealed class TrayAgent : IDisposable
     private readonly HealthMonitor _health = new(new WindowsSystemProbe());
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Forms.ToolStripMenuItem _autostart;
+    private readonly Forms.ToolStripMenuItem _checkUpdates;
     private readonly Dictionary<HealthLevel, Drawing.Icon> _icons = [];
     private HealthLevel? _shownLevel;
     private LiveAlert? _shownAlert;
@@ -32,6 +33,26 @@ public sealed class TrayAgent : IDisposable
 
     /// <summary>The latest reading of the Autodesk Health Dashboard; null until it has been read or while it cannot be reached.</summary>
     public AutodeskStatusReport? Autodesk { get; private set; }
+
+    // Revit Doctor's own releases on GitHub, read once a day. Nothing is sent but the request itself.
+    private readonly DispatcherTimer _updateTimer = new() { Interval = AppUpdate.Interval };
+    private bool _checkForUpdates = Settings.Load().CheckForUpdates;
+    private bool _updateBusy;
+
+    /// <summary>A newer Revit Doctor published on GitHub; null when this is the latest, the check is off or GitHub cannot be reached.</summary>
+    public AppRelease? Update { get; private set; }
+
+    /// <summary>An update is being downloaded or installed (the overview shows its progress).</summary>
+    public string? UpdateProgress { get; private set; }
+
+    /// <summary>Update or its progress changed: the overview redraws its band.</summary>
+    public event Action? UpdateChanged;
+
+    /// <summary>The running copy is the installed one; only that one can update itself (a build under test cannot).</summary>
+    public static bool IsInstalled =>
+        Environment.ProcessPath is { } exe &&
+        exe.StartsWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "BasePointLabs", "RevitDoctor"),
+            StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The full window was asked for (tray menu, or a notification without a specific answer).</summary>
     public event Action? OpenRequested;
@@ -47,8 +68,12 @@ public sealed class TrayAgent : IDisposable
     public event Action<IReadOnlyList<LiveAlert>>? AlertsRaised;
     public event Action? ExitRequested;
 
-    public TrayAgent(Analyzer analyzer)
+    /// <summary>The running agent, for the overview's Install button.</summary>
+    public static TrayAgent? Current { get; private set; }
+
+    public TrayAgent(Analyzer analyzer, bool updated = false)
     {
+        Current = this;
         _monitor = new LiveMonitor(analyzer);
 
         _autostart = new Forms.ToolStripMenuItem("Start with Windows", null, (_, _) => ToggleAutostart())
@@ -59,6 +84,11 @@ public sealed class TrayAgent : IDisposable
         menu.Items.Add("Overview", null, (_, _) => OverviewRequested?.Invoke());
         menu.Items.Add("Open full analysis", null, (_, _) => OpenRequested?.Invoke());
         menu.Items.Add(_autostart);
+        _checkUpdates = new Forms.ToolStripMenuItem("Check for updates", null, (_, _) => ToggleUpdateCheck())
+        {
+            Checked = _checkForUpdates,
+        };
+        menu.Items.Add(_checkUpdates);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitRequested?.Invoke());
 
@@ -95,6 +125,14 @@ public sealed class TrayAgent : IDisposable
         _statusTimer.Tick += async (_, _) => await CheckAutodeskAsync();
         _statusTimer.Start();
         _ = CheckAutodeskAsync();
+        _updateTimer.Tick += async (_, _) => await CheckUpdateAsync();
+        if (_checkForUpdates)
+        {
+            _updateTimer.Start();
+            _ = CheckUpdateAsync();
+        }
+        if (updated)
+            ShowInfo($"Revit Doctor was updated to {AppInfo.Version}", "It keeps watching Revit in the background, as before.");
         // The first reading right away, so the overview is not empty for five seconds.
         _ = TickAsync();
     }
@@ -191,10 +229,102 @@ public sealed class TrayAgent : IDisposable
         }
     }
 
+    /// <summary>
+    /// Asks GitHub for the latest release. A notification appears once per new version; the overview shows a band with
+    /// what is new and, for the installed copy, an Install button.
+    /// </summary>
+    private async Task CheckUpdateAsync()
+    {
+        if (_updateBusy || !_checkForUpdates)
+            return;
+        _updateBusy = true;
+        try
+        {
+            var latest = await AppUpdate.FetchLatestAsync(_http);
+            if (latest is null)
+                return; // no connection or GitHub said no: try again tomorrow
+            var current = typeof(TrayAgent).Assembly.GetName().Version ?? new Version(0, 0, 0);
+            Update = AppUpdate.IsNewer(latest, current) ? latest : null;
+            UpdateChanged?.Invoke();
+            if (Update is { } u && Settings.Load() is var settings && settings.UpdateAnnounced != u.Tag)
+            {
+                // Read and written at once: the window keeps its own settings in the same file.
+                settings.UpdateAnnounced = u.Tag;
+                settings.Save();
+                Notify($"Revit Doctor {u.Version.ToString(3)} is available",
+                    (IsInstalled ? "Open Revit Doctor and click Install update.\n" : "Download it from GitHub.\n") + AppUpdate.Summary(u, 180),
+                    IsInstalled ? "" : u.PageUrl, Forms.ToolTipIcon.Info);
+            }
+        }
+        finally
+        {
+            _updateBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Downloads the installer of <see cref="Update"/>, checks it against the release's SHA256SUMS and runs it silently.
+    /// The installer closes this copy and starts the new one; on any failure the release page opens instead.
+    /// </summary>
+    public async Task InstallUpdateAsync()
+    {
+        if (Update is not { } release || UpdateProgress is not null)
+            return;
+        if (!IsInstalled || release.SetupUrl is null || release.ChecksumsUrl is null)
+        {
+            OpenLink(release.PageUrl);
+            return;
+        }
+        try
+        {
+            SetProgress("Downloading…");
+            var progress = new Progress<double>(p => SetProgress($"Downloading… {p:P0}"));
+            using var download = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            download.DefaultRequestHeaders.UserAgent.ParseAdd($"RevitDoctor/{AppInfo.Version}");
+            string setup = await AppUpdate.DownloadSetupAsync(download, release,
+                Path.Combine(Path.GetTempPath(), "RevitDoctor-update"), progress);
+            SetProgress("Installing…");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(setup,
+                "/SILENT /SUPPRESSMSGBOXES /NORESTART /SP- /UPDATED") { UseShellExecute = true });
+            ExitRequested?.Invoke(); // leave, so the installer can replace the file
+        }
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException or IOException
+                                       or InvalidDataException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            SetProgress(null);
+            Notify("The update could not be installed", $"{ex.Message}\nClick to download it from GitHub.", release.PageUrl, Forms.ToolTipIcon.Warning);
+        }
+    }
+
+    private void SetProgress(string? text)
+    {
+        UpdateProgress = text;
+        UpdateChanged?.Invoke();
+    }
+
+    private void ToggleUpdateCheck()
+    {
+        var settings = Settings.Load();
+        settings.CheckForUpdates = _checkForUpdates = !_checkForUpdates;
+        settings.Save();
+        _checkUpdates.Checked = _checkForUpdates;
+        if (_checkForUpdates)
+        {
+            _updateTimer.Start();
+            _ = CheckUpdateAsync();
+        }
+        else
+        {
+            _updateTimer.Stop();
+            Update = null;
+            UpdateChanged?.Invoke();
+        }
+    }
+
     private void Notify(string title, string text, string link, Forms.ToolTipIcon icon)
     {
         _shownAlert = null;
-        _shownLink = link;
+        _shownLink = link.Length > 0 ? link : null;
         _icon.ShowBalloonTip(15000, title, text.Length > 255 ? text[..252] + "…" : text, icon);
     }
 
@@ -280,6 +410,7 @@ public sealed class TrayAgent : IDisposable
     {
         _timer.Stop();
         _statusTimer.Stop();
+        _updateTimer.Stop();
         _http.Dispose();
         _icon.Visible = false;
         _icon.Dispose();

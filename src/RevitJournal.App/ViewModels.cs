@@ -227,8 +227,17 @@ public sealed class FindingView(Finding f, bool expanded)
 public sealed class HealthView
 {
     /// <param name="autodesk">The latest reading of the Autodesk Health Dashboard; null while not read yet or not reachable.</param>
-    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null)
+    public HealthView(HealthReport r, IReadOnlyList<LiveStatus> sessions, AutodeskStatusReport? autodesk = null, AppRelease? update = null,
+        string? updateProgress = null, bool installed = false)
     {
+        if (update is not null)
+        {
+            UpdateTitle = $"Revit Doctor {update.Version.ToString(3)} is available";
+            UpdateNotes = AppUpdate.Summary(update, 400);
+            UpdateUrl = update.PageUrl;
+            UpdateCanInstall = installed && update.SetupUrl is not null && update.ChecksumsUrl is not null;
+            UpdateProgress = updateProgress ?? "";
+        }
         // A problem on Autodesk's side raises an all-good computer to "keep an eye on it"; a problem here comes first.
         bool autodeskProblem = autodesk is { AllOperational: false };
         var level = autodeskProblem && r.Level == HealthLevel.Ok ? HealthLevel.Watch : r.Level;
@@ -355,6 +364,17 @@ public sealed class HealthView
     /// <summary>Watched Autodesk services with a problem right now; empty when all work.</summary>
     public IReadOnlyList<AutodeskProblemRow> AutodeskProblems { get; } = [];
     public bool HasAutodeskProblems => AutodeskProblems.Count > 0;
+    /// <summary>A newer Revit Doctor on GitHub: what is new, and Install update (installed copy) or a download link.</summary>
+    public string UpdateTitle { get; } = "";
+    public string UpdateNotes { get; } = "";
+    public string UpdateUrl { get; } = AppUpdate.ReleasesPage;
+    public bool UpdateCanInstall { get; }
+    public string UpdateProgress { get; } = "";
+    public bool HasUpdate => UpdateTitle.Length > 0;
+    public bool HasUpdateProgress => UpdateProgress.Length > 0;
+    public bool ShowInstallButton => UpdateCanInstall && !HasUpdateProgress;
+    public bool ShowDownloadLink => HasUpdate && !UpdateCanInstall;
+
     /// <summary>This computer against Autodesk's published requirements; shown on the start screen only.</summary>
     public IReadOnlyList<RequirementRow> Requirements { get; }
     public bool HasRequirements => Requirements.Count > 0;

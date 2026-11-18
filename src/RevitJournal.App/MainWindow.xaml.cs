@@ -67,6 +67,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     // ---- live monitoring (tray agent) --------------------------------------------------------------------
 
     private TrayAgent? _agent;
+    private (HealthReport Report, IReadOnlyList<LiveStatus> Sessions)? _lastReport;
     private readonly HashSet<string> _livePaths = new(StringComparer.OrdinalIgnoreCase);
     private bool _exiting;
 
@@ -86,7 +87,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (_demo)
                 return; // the snapshot run is showing made-up numbers
-            var view = new HealthView(report, sessions, agent.Autodesk);
+            _lastReport = (report, sessions);
+            var view = new HealthView(report, sessions, agent.Autodesk, agent.Update, agent.UpdateProgress, TrayAgent.IsInstalled);
             FollowRunningVersions([.. report.Revits.Select(p => p.Version).Where(v => v.Length > 0)]);
             ShowHealth(view);
             HealthCard.Visibility = Visibility.Visible;
@@ -94,6 +96,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             _lastHealth = view;
         };
         agent.OverviewRequested += ShowOverview;
+        // A newer version was found, or its download moved on: redraw the overview with the band.
+        agent.UpdateChanged += () =>
+        {
+            if (_demo || _lastReport is not { } last)
+                return;
+            var view = new HealthView(last.Report, last.Sessions, agent.Autodesk, agent.Update, agent.UpdateProgress, TrayAgent.IsInstalled);
+            ShowHealth(view);
+            _flyout?.Update(view);
+            _lastHealth = view;
+        };
         // Keep the hint and the history in step with what just happened (a crash, a failed sync).
         agent.AlertsRaised += async alerts =>
         {
@@ -222,7 +234,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 null, [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 14_000 - i * 140))], demoRequirements),
             [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 9_800, 32_212, null, 1, tower, 9, 1),
              new LiveStatus("2024", "", "Clinic_MEP.rvt", at, true, "Last sync OK at 10:15:02", 9_800, 32_212, null, 2, clinic, 3, 1)],
-            new AutodeskStatusReport(at, [], [new ServiceMaintenance("Planned maintenance", ["BIM 360 Docs"], at.Date.AddDays(1).AddHours(2), at.Date.AddDays(1).AddHours(4), AutodeskStatus.PageUrl)]));
+            new AutodeskStatusReport(at, [], [new ServiceMaintenance("Planned maintenance", ["BIM 360 Docs"], at.Date.AddDays(1).AddHours(2), at.Date.AddDays(1).AddHours(4), AutodeskStatus.PageUrl)]),
+            new AppRelease(new Version(0, 9, 0), "v0.9.0",
+                "## What's new in 0.9.0\n\n### Updates\n- **Install update** from the overview: the new version is downloaded, checked and installed.\n\n## Download",
+                AppUpdate.ReleasesPage, AppUpdate.DownloadPrefix + "v0.9.0/RevitDoctor-0.9.0-setup.exe", "RevitDoctor-0.9.0-setup.exe",
+                AppUpdate.DownloadPrefix + "v0.9.0/SHA256SUMS"),
+            installed: true);
         FollowRunningVersions(["2025", "2024"]);
         _demo = true;
         ShowHealth(demo);

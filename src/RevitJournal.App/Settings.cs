@@ -16,6 +16,12 @@ public sealed class Settings
     /// <summary>The tray hint ("still watching in the background") is shown once.</summary>
     public bool TrayHintShown { get; set; }
 
+    /// <summary>Look for a newer Revit Doctor on GitHub once a day (tray menu "Check for updates").</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>The newest version a notification was shown for, so each new version is announced once.</summary>
+    public string? UpdateAnnounced { get; set; }
+
     public static Settings Load()
     {
         try

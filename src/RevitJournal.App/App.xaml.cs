@@ -43,7 +43,7 @@ public partial class App : Application
         }
 
         var window = new MainWindow();
-        _agent = new TrayAgent(window.Analyzer);
+        _agent = new TrayAgent(window.Analyzer, updated: e.Args.Contains("--updated"));
         window.AttachAgent(_agent);
         _agent.ExitRequested += () =>
         {

@@ -7,7 +7,14 @@ public partial class HealthPanel : UserControl
 {
     public HealthPanel() => InitializeComponent();
 
-    /// <summary>An incident on the Autodesk Health Dashboard opens in the browser.</summary>
+    /// <summary>Install update: download the new version, check it and run its installer.</summary>
+    private async void OnInstallUpdate(object sender, RoutedEventArgs e)
+    {
+        if (TrayAgent.Current is { } agent)
+            await agent.InstallUpdateAsync();
+    }
+
+    /// <summary>An incident on the Autodesk Health Dashboard, or a release page, opens in the browser.</summary>
     private void OnOpenLink(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
     {
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); }

@@ -68,6 +68,9 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\RevitDoctor.exe"; Description: "{cm:LaunchProgram,Revit Doctor}"; Flags: nowait postinstall skipifsilent
+; An update started from the app runs this setup with /SILENT /UPDATED: start the new version again, in the tray with a
+; "Revit Doctor was updated" notification. A silent install made by IT (without /UPDATED) does not start the app.
+Filename: "{app}\RevitDoctor.exe"; Parameters: "--background --updated"; Flags: nowait skipifnotsilent; Check: IsAppUpdate
 
 [UninstallDelete]
 ; Settings the app keeps for the user (tray hint shown etc.).
@@ -87,6 +90,17 @@ begin
   Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
     '-NoProfile -NonInteractive -Command "Get-Process | Where-Object { $_.ProcessName -match ''^(RevitDoctor|RevitJournalAnalyzer)'' -and $_.ProcessName -notmatch ''setup'' } | ForEach-Object { try { $_.Kill(); $_.WaitForExit(5000) } catch {} }"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+// The app passes /UPDATED when it installs an update it downloaded itself.
+function IsAppUpdate(): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), '/UPDATED') = 0 then
+      Result := True;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;

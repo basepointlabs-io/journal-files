@@ -58,6 +58,29 @@
       </StackPanel>
     </DockPanel>
 
+    <!-- A newer Revit Doctor on GitHub: what is new, and Install update (the installed copy) or a download link. -->
+    <Border Background="#EEF4FF" BorderBrush="#B6CCF5" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,16,0,0"
+            Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibility}}">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Top" Margin="16,0,0,0">
+          <Button Content="Install update" Click="OnInstallUpdate" Padding="16,8"
+                  Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding UpdateProgress}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap"
+                     Visibility="{Binding HasUpdateProgress, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock FontSize="12" Visibility="{Binding ShowDownloadLink, Converter={StaticResource BoolToVisibility}}">
+            <Hyperlink NavigateUri="{Binding UpdateUrl}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="Download from GitHub" /></Hyperlink>
+          </TextBlock>
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="{Binding UpdateTitle}" FontWeight="SemiBold" Foreground="#1F3F7A" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding UpdateNotes}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0" />
+          <TextBlock FontSize="12" Margin="0,8,0,0">
+            <Hyperlink NavigateUri="{Binding UpdateUrl}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="Release notes" /></Hyperlink>
+          </TextBlock>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
     <!-- Autodesk services (EU) with a problem right now, from the Autodesk Health Dashboard. -->
     <Border Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,16,0,0"
             Visibility="{Binding HasAutodeskProblems, Converter={StaticResource BoolToVisibility}}">
