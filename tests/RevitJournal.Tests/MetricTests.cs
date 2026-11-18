@@ -52,9 +52,10 @@ public class MetricTests
         Assert.Contains("approximately 20 times the size of the compacted central file, here about 40.0 GB of RAM, more than this computer has", f.Facts[1]);
         Assert.Contains("loaded 2 linked model(s); 1 of them are on this computer and take 800 MB", f.Facts[2]);
         Assert.Contains("Tower_MEP.rvt 800 MB", f.Facts[2]);
-        Assert.Contains("Autodesk gives no memory figure for linked models", f.Facts[3]);
-        Assert.DoesNotContain(f.Facts, x => x.Contains("55.6 GB"));                                // links are not multiplied by 20
+        Assert.Contains("Autodesk counts linked files too", f.Facts[3]);
+        Assert.Contains("(2.8 GB together) that is about 55.6 GB of RAM, more than this computer has", f.Facts[3]);   // 20 x (2 GB + 800 MB)
         Assert.Contains(f.Steps, x => x.EndsWith("[Autodesk: Model Performance Technical Note]"));
+        Assert.Contains(f.Steps, x => x.Contains("about 55.6 GB of RAM") && x.EndsWith("[Autodesk: Your current session is using more memory than your computer can efficiently support]"));
         Assert.Contains(f.Steps, x => x.Contains("Tower_MEP.rvt") && x.EndsWith("[Autodesk: Memory Usage and Instability]"));
         Assert.All(f.Steps.Concat(f.Rule.Fix.En), x => Assert.Matches(@"\[Autodesk: .+\]$", x));
 
@@ -76,8 +77,9 @@ public class MetricTests
 
         var load = ModelSizeAdvice.Load(session, OnDisk, ramMb: 12_000);
 
-        Assert.Equal(new ModelLoad("aaaaaaaa-0000-0000-0000-000000000001.rvt", 700, null, 1, 1, 300, "about 13.7 GB of RAM", true), load);
-        Assert.False(ModelSizeAdvice.Load(session, OnDisk, ramMb: 16_000)!.OverGuidance);   // 20 x the model alone (14,000 MB) fits; the link is not counted
+        Assert.Equal(new ModelLoad("aaaaaaaa-0000-0000-0000-000000000001.rvt", 700, null, 1, 1, 300, "about 19.5 GB of RAM", true), load);
+        Assert.True(ModelSizeAdvice.Load(session, OnDisk, ramMb: 16_000)!.OverGuidance);    // the model alone (14,000 MB) fits, with its link (20,000 MB) it does not
+        Assert.False(ModelSizeAdvice.Load(session, OnDisk, ramMb: 21_000)!.OverGuidance);
         Assert.Null(ModelSizeAdvice.Load(session, null, ramMb: 12_000));          // another computer's journal, nothing logged yet
     }
 
@@ -123,8 +125,8 @@ public class MetricTests
         var other = new ModelLoad("B.rvt", 280, null, 2, 2, 100, "16 GB of RAM", false);
 
         Assert.Null(ModelSizeAdvice.Combined([small], 16_000));                    // one model: its own row says it
-        Assert.Null(ModelSizeAdvice.Combined([small, other], 16_000));             // 20 x 530 MB (the models; links not counted) fits 16 GB
-        Assert.Equal((530, "about 10.4 GB of RAM"), ModelSizeAdvice.Combined([small, other], 8_000));   // each fits 8 GB, together they do not
+        Assert.Null(ModelSizeAdvice.Combined([small, other], 16_000));             // 20 x 630 MB (models and links) fits 16 GB
+        Assert.Equal((630, "about 12.3 GB of RAM"), ModelSizeAdvice.Combined([small, other], 8_000));   // each fits 8 GB, together they do not
     }
 
     [Fact]

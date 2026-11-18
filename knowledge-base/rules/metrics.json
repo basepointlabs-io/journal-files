@@ -374,16 +374,16 @@
       "metric": {
         "type": "model_size_vs_ram",
         "threshold": 1,
-        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Fire when 20 x size exceeds the RAM (Autodesk Help, Memory Recommendations: RAM required is approximately 20 times the size of the compacted central file). Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer. Links are listed with their size on disk but not multiplied: Autodesk gives the factor for the central file only (Memory Recommendations and the Model Performance Technical Note use the same words) and no figure for links."
+        "description": "Model size = 'File Size: <bytes>' of the line 'Detect if missing elements for <path>: File Size: <bytes>, Element Count: <n>' (the edited model; logged on open, save and sync). Total RAM = 'RAM Statistics'. Linked models: paths from '<<Load linked file: <path>'; the journal has no size for them, so sizes are read from the disk when the journal is analyzed on its own computer. Fire when 20 x (model + known links) exceeds the RAM: Autodesk Help, Memory Recommendations (approximately 20 times the size of the compacted central file) and the Autodesk support article on the memory warning, which counts 'the combined size of RVT files being opened (including linked files)'."
       },
-      "context": "Autodesk's figure is an approximation for the project file alone; Autodesk gives no figure for linked models, but says unloading links not in use limits the memory needed to open the file. What Revit actually used is measured separately (peak RAM, lowest free memory).",
+      "context": "Autodesk's figure is an approximation; links whose files are not on this computer cannot be counted. What Revit actually used is measured separately (peak RAM, lowest free memory).",
       "title": {
         "uk": "Модель більша, ніж Autodesk рекомендує для пам'яті цього комп'ютера",
         "en": "The model is larger than Autodesk's guidance for this computer's memory"
       },
       "cause": {
-        "uk": "Autodesk оцінює, скільки оперативної пам'яті потрібно для моделі певного розміру на диску. За цією оцінкою модель із цієї сесії потребує більше пам'яті, ніж має комп'ютер; лінки додають ще. Коли пам'яті бракує, Revit працює повільно і може закритися.",
-        "en": "Autodesk estimates how much memory a model of a given size on disk needs. By that estimate the model of this session needs more memory than this computer has; linked models add to it. When memory is short, Revit becomes slow and can close."
+        "uk": "Autodesk оцінює, скільки пам'яті потрібно моделі, за розміром відкритих RVT-файлів разом із лінками. За цією оцінкою модель із цієї сесії разом із лінками потребує більше пам'яті, ніж має комп'ютер. Коли пам'яті бракує, Revit працює повільно і може закритися.",
+        "en": "Autodesk estimates how much memory a model needs from the size of the RVT files opened, including linked files. By that estimate the model of this session with its links needs more memory than this computer has. When memory is short, Revit becomes slow and can close."
       },
       "fix": {
         "uk": [
@@ -417,6 +417,10 @@
         {
           "title": "Autodesk Revit Model Performance Technical Note",
           "url": "https://download.autodesk.com/us/revit/revit_performance/autodesk_revit_2014_model_performance_technical_note.pdf"
+        },
+        {
+          "title": "Autodesk Support — Your current session is using more memory than your computer can efficiently support when working in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-Your-current-session-is-using-more-memory-that-your-computer-can-efficiently-support-when-working-on-multiple-Revit-models.html"
         }
       ],
       "confidence": "official",

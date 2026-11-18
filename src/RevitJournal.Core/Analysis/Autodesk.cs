@@ -33,6 +33,8 @@ public sealed record AutodeskArticle(string Title, string Url)
         Base + "Cloud-collaboration-corruption-for-one-user.html");
     public static readonly AutodeskArticle MemoryRecommendations = new("Memory Recommendations",
         "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-C395AAC8-B5E2-40A5-8B48-1BFEEA9116D6");
+    public static readonly AutodeskArticle MemoryHighUsage = new("Your current session is using more memory than your computer can efficiently support",
+        Base + "Error-Your-current-session-is-using-more-memory-that-your-computer-can-efficiently-support-when-working-on-multiple-Revit-models.html");
     public static readonly AutodeskArticle MemoryInstability = new("Memory Usage and Instability",
         "https://help.autodesk.com/view/RVT/2020/ENU/?guid=GUID-6BE2E3D7-610F-4F17-B3D7-029FBCFA6FC9");
 
