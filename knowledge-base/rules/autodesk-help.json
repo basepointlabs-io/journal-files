@@ -5611,6 +5611,77 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "ifc-export-failed",
+      "category": "printing-export",
+      "severity": "high",
+      "match": {
+        "any": [
+          "IFC error: Exporting element",
+          "failed in IFC export for reason",
+          "Unexpected errors occurred while exporting these elements to the IFC file",
+          "There has been an unrecoverable error during export"
+        ],
+        "translations": [
+          "Beim Export ist ein nicht behebbarer Fehler aufgetreten. Versuchen Sie, Filter",
+          "Une erreur irrécupérable s'est produite lors de l'exportation. Essayez",
+          "Se ha producido un error irrecuperable durante la exportación. Pruebe a",
+          "Errore irreversibile durante l'esportazione. Provare a utilizzare dei filtri e",
+          "Ocorreu um erro irrecuperável durante a exportação. Tente usar filtros e o modo",
+          "Unerwartete Fehler beim Exportieren dieser Elemente in die IFC-Datei.",
+          "Des erreurs inattendues se sont produites lors de l'exportation de ces éléments",
+          "Se han producido errores inesperados al exportar estos elementos al archivo IFC.",
+          "Errori imprevisti durante l'esportazione degli elementi nel file IFC.",
+          "Ocorreu um erro inesperado ao exportar estes elementos para o arquivo IFC."
+        ]
+      },
+      "context": "Export to IFC (by hand or by a scheduled or batch export). The journal names the elements the exporter could not export; when Revit goes down while the export runs, the export is the most likely cause of the crash.",
+      "title": {
+        "en": "IFC export failed or crashed Revit",
+        "uk": "Експорт в IFC не вдався або обвалив Revit"
+      },
+      "cause": {
+        "en": "The IFC exporter could not export some elements, or Revit went down while the export was running. Autodesk relates such errors and crashes to elements the exporter cannot process, to an outdated Revit or IFC exporter, and to conflicts with other add-ins.",
+        "uk": "Експортер IFC не зміг експортувати деякі елементи, або Revit упав під час експорту. Autodesk пов'язує такі помилки й аварії з елементами, які експортер не може обробити, із застарілим Revit чи експортером IFC і з конфліктами з іншими додатками."
+      },
+      "fix": {
+        "en": [
+          "Look at the errors the export reported (expand the error window; the elements are also listed above), delete or fix the elements causing the issue, then export again.",
+          "Install the latest Revit update: Autodesk has fixed many IFC export errors in later versions.",
+          "Install the latest IFC Exporter for Revit.",
+          "Disable Revit add-ins and export again: these errors have also been caused by a conflict with another add-in.",
+          "Export less at once: use filters and \"Current View Only\" mode, as Revit's own message suggests.",
+          "In some cases exporting with the Extra Low level of detail helps."
+        ],
+        "uk": [
+          "Перегляньте помилки експорту (розгорніть вікно помилок; елементи також перелічено вище), видаліть або виправте елементи, що спричиняють проблему, і експортуйте знову.",
+          "Встановіть останнє оновлення Revit: Autodesk виправила багато помилок експорту IFC у новіших версіях.",
+          "Встановіть останню версію IFC Exporter для Revit.",
+          "Вимкніть додатки Revit і експортуйте знову: ці помилки бувають і через конфлікт з іншим додатком.",
+          "Експортуйте менше за раз: використайте фільтри й режим «Current View Only», як радить саме повідомлення Revit.",
+          "Інколи допомагає експорт з рівнем деталізації Extra Low."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"There has been an unrecoverable error during export\" when exporting model to IFC from Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/There-has-been-an-unrecoverable-error-during-export-Revit-when-exporting-model-to-IFC-from-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — Revit - IFC: Unrecoverable or Fatal Error",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit---IFC-Unrecoverable-or-Fatal-Error.html"
+        },
+        {
+          "title": "Autodesk Support — Crashing when exporting to IFC from Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Crashing-when-exporting-to-IFC-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — Error: \"Unexpected errors occurred while exporting these elements to the IFC file.\" in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-in-exporting-IFC-from-Revit.html"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }

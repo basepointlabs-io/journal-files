@@ -133,6 +133,7 @@ public sealed class Analyzer(RuleSet rules)
         }
         AddOrphans(session, byId);
         AddRegenFailures(session, byId);
+        AddIfcExport(session, byId, endKind);
         if (byId.TryGetValue("metric-sync-failed", out var syncFailed))
             syncFailed.Steps.AddRange(SyncAdvice.Steps(session));
 
@@ -196,6 +197,47 @@ public sealed class Analyzer(RuleSet rules)
     }
 
     public const string RegenRule = "regenerate-system-exception";
+    public const string IfcRule = "ifc-export-failed";
+
+    /// <summary>A journal that ends this close to the exporter's last line ended during the export.</summary>
+    private const int IfcExportTail = 400;
+
+    /// <summary>
+    /// IFC export trouble: the elements the exporter could not export (with Select by ID lists), and whether Revit went
+    /// down while the export was running, which makes this the most likely story of the crash.
+    /// </summary>
+    private void AddIfcExport(JournalSession session, Dictionary<string, Finding> byId, EndKind endKind)
+    {
+        bool endedInExport = endKind != EndKind.None && session.LastIfcExportLine > 0 &&
+                             session.LineCount - session.LastIfcExportLine <= IfcExportTail;
+        if (session.IfcFailures.Count == 0 && !endedInExport)
+            return;
+        if (GetOrAdd(byId, IfcRule) is not { } f)
+            return;
+        if (endedInExport)
+        {
+            f.Severity = Severity.Critical;
+            f.Facts.Insert(0, (endKind == EndKind.Crash ? "Revit crashed" : "The journal ends") + " while an IFC export was running" +
+                              (session.LastIfcExportLine > 0 ? $" (last export line {session.LastIfcExportLine})." : "."));
+        }
+        var elements = session.IfcFailures.GroupBy(x => x.ElementId).Select(g => g.First()).ToList();
+        f.HitCount = Math.Max(f.HitCount, Math.Max(1, elements.Count));
+        if (elements.Count > 0)
+        {
+            // Hundreds of elements of one kind are common (insulation that fails faceting): say what kinds, then the ids.
+            var kinds = elements.GroupBy(e => (e.ElementName, e.Reason)).OrderByDescending(g => g.Count()).ToList();
+            f.Facts.Add($"The exporter could not export {elements.Count} element(s): " +
+                        string.Join(", ", kinds.Take(4).Select(g => g.Count() == 1
+                            ? $"\"{g.Key.ElementName}\" {g.First().ElementId} ({g.Key.Reason})"
+                            : $"{g.Count()} × \"{g.Key.ElementName}\" ({g.Key.Reason})")) +
+                        (kinds.Count > 4 ? $" and {kinds.Count - 4} more kinds." : "."));
+            const int perStep = 40, maxIds = 80;
+            var ids = elements.Select(e => e.ElementId).Take(maxIds).ToList();
+            for (int i = 0; i < ids.Count; i += perStep)
+                f.Facts.Add($"To see them: Manage tab > Inquiry > Select by ID, paste: {string.Join("; ", ids.Skip(i).Take(perStep))}" +
+                            (elements.Count > maxIds && i + perStep >= ids.Count ? $"  (the first {maxIds} of {elements.Count})" : ""));
+        }
+    }
 
     /// <summary>Tags and families whose host in a linked model was deleted, grouped by link, with their element ids.</summary>
     private void AddOrphans(JournalSession session, Dictionary<string, Finding> byId)
@@ -265,6 +307,7 @@ public sealed class Analyzer(RuleSet rules)
             .OrderByDescending(f => f.Severity)
             .ThenBy(f => SessionEndRules.Contains(f.Rule.Id))
             .ThenByDescending(f => f.Rule.Id == DiskAdvice.AlmostFullRule) // a full disk explains the rest
+            .ThenByDescending(f => f.Rule.Id == IfcRule && f.Severity == Severity.Critical) // a crash during IFC export: the export is the story
             .ThenByDescending(f => f.Rule.Id is StartupAdvice.NotCompletedRule or StartupAdvice.ClosedAfterRule) // why Revit is gone comes first
             .ThenByDescending(f => f.Rule.Confidence)
             .ThenByDescending(f => f.HitCount)];

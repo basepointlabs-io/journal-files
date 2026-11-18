@@ -35,6 +35,8 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"^\s*'\s*\d+:<\s*(?:Error: )?(.+?)\s*$")] private static partial Regex LoggedMessageRegex();
     [GeneratedRegex(@"Dependent family or tag (\d+) on link (\d+)")] private static partial Regex OrphanRegex();
     [GeneratedRegex(@"<\s+element (\d+) of type (\w+)")] private static partial Regex RegenElementRegex();
+    [GeneratedRegex(@"IFC error: Exporting element ""(.*?)"",(\d+) - ([\w.]+)")] private static partial Regex IfcErrorRegex();
+    [GeneratedRegex(@"failed in IFC export for reason: ""(.*?)"" in element ""(.*?)"" with id (\d+)")] private static partial Regex IfcFacetRegex();
     [GeneratedRegex(@"^\s*'inTransaction \S+ (.+?)\s*$")] private static partial Regex RegenTransactionRegex();
     [GeneratedRegex(@"\{([0-9a-fA-F-]{36})\}([^""\\{}]+?\.(?:rvt|rfa))")] private static partial Regex CloudDocRegex();
 
@@ -344,6 +346,18 @@ public sealed partial class JournalParser
             AddView(s, n, ts, act.Groups[2].Value, act.Groups[1].Value);
         else if (line.Contains("ModelPath", StringComparison.Ordinal) && CloudDocRegex().Match(line) is { Success: true } doc)
             s.DocumentNames.TryAdd(doc.Groups[1].Value + ".rvt", doc.Groups[2].Value);
+        else if (line.Contains("IFC", StringComparison.Ordinal) &&
+                 (line.Contains("Export IFC", StringComparison.Ordinal) || line.Contains("IFC export", StringComparison.Ordinal) || line.Contains("IFC error", StringComparison.Ordinal)))
+        {
+            // The exporter at work: its transaction ("inTransaction ... Export IFC"), and the elements it could not export.
+            s.LastIfcExportLine = n;
+            if (IfcErrorRegex().Match(line) is { Success: true } err)
+                s.IfcFailures.Add(new IfcExportFailure(n, long.Parse(err.Groups[2].ValueSpan, CultureInfo.InvariantCulture), err.Groups[1].Value,
+                    err.Groups[3].Value[(err.Groups[3].Value.LastIndexOf('.') + 1)..]));
+            else if (IfcFacetRegex().Match(line) is { Success: true } facet)
+                s.IfcFailures.Add(new IfcExportFailure(n, long.Parse(facet.Groups[3].ValueSpan, CultureInfo.InvariantCulture), facet.Groups[2].Value,
+                    facet.Groups[1].Value.TrimEnd('.')));
+        }
         else if (line.Contains("System exception in ADocument::regenerate", StringComparison.Ordinal))
         {
             // Revit writes the message twice: as a journal comment and again as DBG_ERROR; one failure each.

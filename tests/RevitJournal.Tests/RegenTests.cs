@@ -1,5 +1,6 @@
 using RevitJournal.Core.Analysis;
 using RevitJournal.Core.Parsing;
+using RevitJournal.Core.Rules;
 
 namespace RevitJournal.Tests;
 
@@ -125,5 +126,49 @@ public class AutodeskJournalLineTests
             var f = r.Findings.Single(x => x.Rule.Id == id);
             Assert.All(f.Rule.Sources, s => Assert.Contains("autodesk.com", s.Url, StringComparison.Ordinal));
         }
+    }
+}
+
+/// <summary>A scheduled IFC export that crashes Revit; the lines follow real journals of a German Revit, ids made up.</summary>
+public class IfcExportTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+
+    private const string ExportThatCrashes = """
+          ' 1:< ANTECEDENT:
+          'inTransaction APITransactionIdentity_1:-1 Export IFC
+          '  C 08-Jun-2026 22:28:04.187;   1:< IFC error: Exporting element "MW",1234567 - Autodesk.Revit.Exceptions.InternalException: A managed exception was thrown by Revit
+          '  1:< Error posted:
+          '  1:< Unerwartete Fehler beim Exportieren dieser Elemente in die IFC-Datei.
+        ' 1:< Pass 0: TessellateSolidOrShell failed in IFC export for reason: "Faceting failed." in element "MW" with id 1234570
+        ' 0:< Exception occurred
+        'C 08-Jun-2026 22:29:08.373;   0:< ExceptionCode=0xe0434352 ExceptionFlags=0x00000081 ExceptionAddress=00007FF8211D770A
+        """;
+
+    [Fact]
+    public void A_crash_during_IFC_export_is_the_headline_with_the_elements_that_failed()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, ExportThatCrashes));
+        var r = Analyzer.Analyze(session, new AnalysisContext(IsBeingWritten: false, DumpFiles: ["journal.0001.0001.dmp"]));
+
+        var f = r.Findings.First();
+        Assert.Equal(Analyzer.IfcRule, f.Rule.Id);
+        Assert.Equal(Severity.Critical, f.Severity);
+        Assert.Equal("IFC export failed or crashed Revit", r.Headline);
+        Assert.StartsWith("Revit crashed while an IFC export was running", f.Facts[0], StringComparison.Ordinal);
+        Assert.Contains(f.Facts, x => x.Contains("\"MW\" 1234567 (InternalException)") && x.Contains("\"MW\" 1234570 (Faceting failed)"));
+        Assert.Contains(f.Facts, x => x.EndsWith("Select by ID, paste: 1234567; 1234570", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Elements_that_fail_in_an_export_that_finishes_are_reported_without_a_crash()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header,
+            "' 1:< Pass 0: TessellateSolidOrShell failed in IFC export for reason: \"Faceting failed.\" in element \"Duct\" with id 42",
+            Fixtures.NormalEnd));
+        var f = Analyzer.Analyze(session, new AnalysisContext(IsBeingWritten: false, DumpFiles: [])).Findings.Single(x => x.Rule.Id == Analyzer.IfcRule);
+
+        Assert.Equal(Severity.High, f.Severity);
+        Assert.DoesNotContain(f.Facts, x => x.Contains("crashed", StringComparison.Ordinal));
     }
 }
