@@ -46,7 +46,7 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
         c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
         c.Dialogs.AddRange(Dialogs); c.LongOperations.AddRange(LongOperations); c.AddIns.AddRange(AddIns); c.Models.AddRange(Models);
         c.Exceptions.AddRange(Exceptions); c.Interactions.AddRange(Interactions); c.PostedMessages.AddRange(PostedMessages);
-        c.Orphans.AddRange(Orphans); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
+        c.Orphans.AddRange(Orphans); c.RegenFailures.AddRange(RegenFailures); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
         c.ModelFiles.AddRange(ModelFiles);
         c.Syncs.AddRange(Syncs.Select(s => s.Clone()));
         c.Opens.AddRange(Opens.Select(o => o.Clone()));
@@ -106,6 +106,8 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     public List<LineRef> PostedMessages { get; } = [];
     /// <summary>Tags/families whose host element was deleted in a linked model.</summary>
     public List<OrphanedHosted> Orphans { get; } = [];
+    /// <summary>"System exception in ADocument::regenerate": the element Revit could not regenerate and the transactions it was in.</summary>
+    public List<RegenFailure> RegenFailures { get; } = [];
     /// <summary>Cloud models appear in view directives as "[&lt;guid&gt;.rvt]"; this maps the guid file to the model name.</summary>
     /// <summary>The .rvt files behind the session: the model being edited (with the size Revit logged) and every linked file it loaded.</summary>
     public List<ModelFile> ModelFiles { get; } = [];
@@ -184,6 +186,19 @@ public sealed record Interaction(int Line, DateTime? Time, InteractionKind Kind,
 }
 
 public sealed record OrphanedHosted(int Line, long ElementId, long LinkId);
+
+/// <summary>
+/// Revit failed to regenerate the model. The journal names the element ("element 26846943 of type IndependentTag") and,
+/// under ANTECEDENT, the transactions it was in ("inTransaction ... Reload Latest").
+/// </summary>
+public sealed class RegenFailure(int line, DateTime? time)
+{
+    public int Line { get; } = line;
+    public DateTime? Time { get; } = time;
+    public long? ElementId { get; set; }
+    public string? ElementType { get; set; }
+    public List<string> Transactions { get; } = [];
+}
 
 /// <summary>An operation with a start and (if it completed) an end in the journal.</summary>
 public sealed class TimedOperation

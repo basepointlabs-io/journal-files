@@ -132,6 +132,7 @@ public sealed class Analyzer(RuleSet rules)
             }
         }
         AddOrphans(session, byId);
+        AddRegenFailures(session, byId);
         if (byId.TryGetValue("metric-sync-failed", out var syncFailed))
             syncFailed.Steps.AddRange(SyncAdvice.Steps(session));
 
@@ -174,6 +175,27 @@ public sealed class Analyzer(RuleSet rules)
             EndEvidence = endEvidence,
         };
     }
+
+    /// <summary>The element Revit could not regenerate, what it was doing, and how to find the element.</summary>
+    private void AddRegenFailures(JournalSession session, Dictionary<string, Finding> byId)
+    {
+        if (session.RegenFailures.Count == 0 || GetOrAdd(byId, RegenRule) is not { } f)
+            return;
+        f.HitCount = Math.Max(f.HitCount, session.RegenFailures.Count);
+        foreach (var r in session.RegenFailures)
+        {
+            string what = r.ElementId is { } id ? $"element {id}" + (r.ElementType is { } t ? $" ({t})" : "") : "an element";
+            string during = r.Transactions.Count > 0 ? $" during {string.Join(" > ", r.Transactions)}" : "";
+            f.Facts.Add($"Revit could not regenerate {what}{during}" + (r.Time is { } at ? $" at {Fmt.Time(at)}" : "") + $" (line {r.Line}).");
+        }
+        var ids = session.RegenFailures.Select(r => r.ElementId).OfType<long>().Distinct().ToList();
+        if (ids.Count > 0)
+            f.Facts.Add($"To see which element it is: Manage tab > Inquiry > Select by ID, paste: {string.Join("; ", ids)}.");
+        if (session.RegenFailures.Any(r => r.Transactions.Any(t => t.Contains("Link", StringComparison.OrdinalIgnoreCase))))
+            f.Facts.Add("It happened while Revit was reloading linked models, so Autodesk's steps for finding a problem link apply.");
+    }
+
+    public const string RegenRule = "regenerate-system-exception";
 
     /// <summary>Tags and families whose host in a linked model was deleted, grouped by link, with their element ids.</summary>
     private void AddOrphans(JournalSession session, Dictionary<string, Finding> byId)

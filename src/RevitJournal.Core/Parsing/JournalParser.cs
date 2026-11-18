@@ -34,6 +34,8 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"^\s*'CT \[(.+?)\]:")] private static partial Regex ContextTabRegex();
     [GeneratedRegex(@"^\s*'\s*\d+:<\s*(?:Error: )?(.+?)\s*$")] private static partial Regex LoggedMessageRegex();
     [GeneratedRegex(@"Dependent family or tag (\d+) on link (\d+)")] private static partial Regex OrphanRegex();
+    [GeneratedRegex(@"<\s+element (\d+) of type (\w+)")] private static partial Regex RegenElementRegex();
+    [GeneratedRegex(@"^\s*'inTransaction \S+ (.+?)\s*$")] private static partial Regex RegenTransactionRegex();
     [GeneratedRegex(@"\{([0-9a-fA-F-]{36})\}([^""\\{}]+?\.(?:rvt|rfa))")] private static partial Regex CloudDocRegex();
 
     // Revit's own elapsed-time lines; depth 1 is a whole user-level operation. Sub-steps (2:<<<...) are skipped.
@@ -329,6 +331,23 @@ public sealed partial class JournalParser
             AddView(s, n, ts, act.Groups[2].Value, act.Groups[1].Value);
         else if (line.Contains("ModelPath", StringComparison.Ordinal) && CloudDocRegex().Match(line) is { Success: true } doc)
             s.DocumentNames.TryAdd(doc.Groups[1].Value + ".rvt", doc.Groups[2].Value);
+        else if (line.Contains("System exception in ADocument::regenerate", StringComparison.Ordinal))
+        {
+            // Revit writes the message twice: as a journal comment and again as DBG_ERROR; one failure each.
+            if (!line.Contains("DBG_ERROR", StringComparison.Ordinal))
+                s.RegenFailures.Add(new RegenFailure(n, ts));
+        }
+        else if (s.RegenFailures.Count > 0 && s.RegenFailures[^1] is { } regen && n - regen.Line <= 40 &&
+                 (line.Contains(" of type ", StringComparison.Ordinal) || line.Contains("'inTransaction ", StringComparison.Ordinal)))
+        {
+            if (regen.ElementId is null && RegenElementRegex().Match(line) is { Success: true } el)
+            {
+                regen.ElementId = long.Parse(el.Groups[1].ValueSpan, CultureInfo.InvariantCulture);
+                regen.ElementType = el.Groups[2].Value;
+            }
+            else if (RegenTransactionRegex().Match(line) is { Success: true } tr)
+                regen.Transactions.Add(tr.Groups[1].Value);
+        }
         else if (line.Contains("Dependent family or tag", StringComparison.Ordinal) && OrphanRegex().Match(line) is { Success: true } o)
             s.Orphans.Add(new OrphanedHosted(n, long.Parse(o.Groups[1].ValueSpan, CultureInfo.InvariantCulture), long.Parse(o.Groups[2].ValueSpan, CultureInfo.InvariantCulture)));
     }

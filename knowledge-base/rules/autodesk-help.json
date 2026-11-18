@@ -3517,6 +3517,105 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "cloud-sync-invalid-partition",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "has an invalid partition"
+        ],
+        "regex": [
+          "delayedPropagation\\(\\), Element -?\\d+ has an invalid partition"
+        ]
+      },
+      "context": "Synchronize with Central or Reload Latest of a Revit Cloud Workshared model; Autodesk names this journal line for syncs that stop or take very long at the Reload Latest stage.",
+      "title": {
+        "en": "Sync stops at Reload Latest: \"Element -1 has an invalid partition\"",
+        "uk": "Синхронізація зупиняється на Reload Latest: «Element -1 has an invalid partition»"
+      },
+      "cause": {
+        "en": "Autodesk documents this journal line for cloud workshared models that cannot be fully synchronized from a certain point in time: the sync stops at the Reload Latest stage, or finishes only after a long time. It can affect one team member or a small group.",
+        "uk": "Autodesk описує цей рядок журналу для хмарних моделей, які з певного моменту не вдається повністю синхронізувати: синхронізація зупиняється на етапі Reload Latest або завершується лише через довгий час. Це може стосуватися одного учасника або невеликої групи."
+      },
+      "fix": {
+        "en": [
+          "Open the model with all worksets closed (Open > Specify, select all worksets, Close), then synchronize.",
+          "If only you are affected, create a new local: for a cloud model choose to discard your changes when Revit asks; changes made since your last successful sync are lost, so first save them with Save As to a separate file.",
+          "If a new local does not help, clear the cloud model cache: in Options change the Cloud model cache location (e.g. C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit_New) and restart Revit; if it remains, also move the contents of %LOCALAPPDATA%\\Autodesk\\Revit\\PacCache (except Logs and the JSON file) to a folder on the desktop.",
+          "Disable add-ins and try again.",
+          "If every team member is affected: save the model locally, reopen it with Detach from Central and save it as a new central model.",
+          "Make sure the latest Autodesk Licensing Service is installed."
+        ],
+        "uk": [
+          "Відкрийте модель з усіма закритими робочими наборами (Open > Specify, виділіть усі, Close) і синхронізуйтесь.",
+          "Якщо проблема лише у вас, створіть нову локальну копію: для хмарної моделі виберіть discard, коли Revit запитає про зміни; зміни після останньої вдалої синхронізації буде втрачено, тож спершу збережіть їх через Save As в окремий файл.",
+          "Якщо нова локальна копія не допомогла, очистіть кеш хмарних моделей: в Options змініть Cloud model cache location (наприклад C:\\Users\\%USERNAME%\\AppData\\Local\\Autodesk\\Revit_New) і перезапустіть Revit; якщо не допомогло, перенесіть вміст %LOCALAPPDATA%\\Autodesk\\Revit\\PacCache (крім Logs і JSON) у папку на робочому столі.",
+          "Вимкніть додатки й спробуйте ще раз.",
+          "Якщо проблема в усіх учасників: збережіть модель локально, відкрийте з Detach from Central і збережіть як нову центральну.",
+          "Переконайтеся, що встановлено останню версію Autodesk Licensing Service."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Synchronization process hangs during Reload Latest stage for specific Revit Cloud Workshared model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-synchronization-process-stops-at-the-Reload-Latest-stage-for-the-specified-Revit-Cloud-Workshared-model.html"
+        },
+        {
+          "title": "Autodesk Support — How to clear damaged Revit cloud model cache",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Clear-a-corrupt-damaged-C4R-model-from-the-system.html"
+        },
+        {
+          "title": "Autodesk Help (Revit 2026 Troubleshooting) — Warning: A Serious Error Has Occurred (save your work into a new file)",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-Troubleshooting/files/GUID-348EA31C-4EAB-471A-A397-EE0B679DE480.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "regenerate-system-exception",
+      "category": "serious-error",
+      "severity": "high",
+      "match": {
+        "any": [
+          "System exception in ADocument::regenerate"
+        ]
+      },
+      "context": "Revit could not regenerate the model after a change, an open, a sync or a reload; the lines under it name the element and the transaction. When this happens while links are reloaded, Revit shows \"A serious error has occurred\" and cancels the action.",
+      "title": {
+        "en": "Revit could not regenerate an element",
+        "uk": "Revit не зміг перерахувати (regenerate) елемент"
+      },
+      "cause": {
+        "en": "While regenerating the model Revit hit an internal error on one element and cancelled the action. Autodesk relates serious errors on opening a project or reloading a link to errors in the linked files or an outdated Revit.",
+        "uk": "Під час перерахунку моделі Revit натрапив на внутрішню помилку на одному елементі й скасував дію. Autodesk пов'язує серйозні помилки під час відкриття проєкту чи перезавантаження лінку з помилками в лінкованих файлах або застарілим Revit."
+      },
+      "fix": {
+        "en": [
+          "Install the latest Revit update and hotfix.",
+          "Open the model with Audit; afterwards check the journal for \"Please Reload\" lines, which mean corrupt families.",
+          "Review and handle the warnings in the model.",
+          "For a workshared model: open it with all worksets closed (Open > Specify, select all, Close); if it opens, open the worksets again one by one, especially those that contain linked files.",
+          "If links cause it: in Manage Links unload the links, check that the model works, then reload them one at a time to find the one causing the error, and open that linked model on its own to see its errors or warnings.",
+          "If the model does not open even with all worksets closed, detach it from central and save it as a new central model."
+        ],
+        "uk": [
+          "Встановіть останнє оновлення та хотфікс Revit.",
+          "Відкрийте модель з Audit; після цього пошукайте в журналі рядки «Please Reload» — вони означають пошкоджені сім'ї.",
+          "Перегляньте й розберіть попередження в моделі.",
+          "Для моделі зі спільною роботою: відкрийте її з усіма закритими робочими наборами (Open > Specify, виділіть усі, Close); якщо відкрилась, відкривайте набори по одному, особливо ті, де лежать лінки.",
+          "Якщо причина в лінках: у Manage Links вивантажте лінки, перевірте, що модель працює, потім завантажуйте по одному, щоб знайти проблемний, і відкрийте той лінк окремо, щоб побачити його помилки чи попередження.",
+          "Якщо модель не відкривається навіть із закритими наборами, від'єднайте її від центральної (Detach from Central) і збережіть як нову центральну."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2023 Troubleshooting) — Serious Error when Opening a Revit Project, a View, or Reloading a Link",
+          "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Revit-Troubleshooting/files/GUID-D01948FC-570F-44B9-BFB2-3C5987FFE793.htm"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }
