@@ -3,6 +3,34 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RevitJournal.App"
              FontFamily="{StaticResource AppFontFamily}" FontSize="13" Foreground="{StaticResource Ink}">
+  <UserControl.Resources>
+    <!-- A resource against Autodesk's figures: a dial, the value, and what to note. Used on the start screen (all of
+         them) and in the tray overview (RAM and free disk). -->
+    <DataTemplate x:Key="RequirementCard" DataType="{x:Type local:RequirementRow}">
+      <Border Background="{StaticResource Panel}" CornerRadius="4" Padding="16" Margin="0,0,16,16">
+        <StackPanel>
+          <DockPanel>
+            <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
+                     Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
+            <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="Wrap" />
+          </DockPanel>
+          <local:Gauge Data="{Binding Dial}" Height="104" Margin="0,8,0,0" ToolTip="{Binding Tip}"
+                       Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Value}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0"
+                     Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
+          <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
+                     Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{StaticResource Muted}" Margin="0,4,0,0"
+                     Visibility="{Binding NoDial, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,4,0,0"
+                     Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
+                     Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
   <!-- The overview at a glance: overall state, free memory with its recent curve, disk, each running Revit,
        and at most three things to do. DataContext is a HealthView. Shown in the tray flyout and on the start screen. -->
   <StackPanel>
@@ -107,13 +135,16 @@
 
     <!-- Three tiles: free RAM with its last half hour as a small curve, free disk space, Revit open.
          Each figure turns orange or red when it is low, with what it is measured against under it. In the narrow tray
-         flyout a long figure ("212.4 GB") shrinks to fit its tile instead of being cut off. Tray flyout only: the start
-         screen shows the same resources as bars against Autodesk's figures further down. -->
+         flyout a long figure ("212.4 GB") shrinks to fit its tile instead of being cut off. Only a fallback now: the tray
+         overview shows the RAM and disk dials, the start screen all dials; the tiles appear only when there are none. -->
     <Grid Margin="0,16,0,0">
       <Grid.Style>
         <Style TargetType="Grid">
           <Style.Triggers>
             <DataTrigger Binding="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}}" Value="True">
+              <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HasRequirements}" Value="True">
               <Setter Property="Visibility" Value="Collapsed" />
             </DataTrigger>
           </Style.Triggers>
@@ -150,6 +181,24 @@
         </StackPanel>
       </Border>
     </Grid>
+
+    <!-- Tray overview: the RAM and free disk dials side by side. -->
+    <ItemsControl ItemsSource="{Binding CompactRequirements}" Margin="0,16,-16,-16" ItemTemplate="{StaticResource RequirementCard}">
+      <ItemsControl.Style>
+        <Style TargetType="ItemsControl">
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Wide, RelativeSource={RelativeSource AncestorType=local:HealthPanel}}" Value="True">
+              <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </ItemsControl.Style>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <UniformGrid Columns="2" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+    </ItemsControl>
 
     <!-- RAM used only with two or more Revit: with one, the "Revit open" tile already says it.
          Every running Revit in one table: the model (and the Revit and what it is doing under it), the RAM it uses and
@@ -244,44 +293,23 @@
         </Style>
       </StackPanel.Style>
       <TextBlock Text="THIS COMPUTER AND AUTODESK'S FIGURES" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
-      <ItemsControl ItemsSource="{Binding Requirements}" Grid.IsSharedSizeScope="True">
+      <!-- One card per resource: a dial whose zones and numbers are Autodesk's figures, the needle this computer.
+           Hover the dial for Autodesk's figures in words. -->
+      <ItemsControl ItemsSource="{Binding Requirements}" Margin="0,8,0,0" ItemTemplate="{StaticResource RequirementCard}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" ItemWidth="224" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+      <!-- Where the figures come from: each Autodesk article once, under all the cards. -->
+      <TextBlock FontSize="12" Foreground="{StaticResource Hint}" Text="Figures on the dials are Autodesk's, from:" />
+      <ItemsControl ItemsSource="{Binding RequirementSources}">
         <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="{x:Type local:RequirementRow}">
-            <!-- Item | bar with Autodesk's figures as ticks | value; under the bar what Autodesk says, the note and the article. -->
-            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,8">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqItem" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" SharedSizeGroup="RqValue" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto" />
-                  <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel Margin="0,0,16,0" VerticalAlignment="Top">
-                  <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
-                           Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
-                  <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="NoWrap" />
-                </DockPanel>
-                <local:ScaleBar Grid.Column="1" Data="{Binding Scale}" Fill="{Binding Fill}" Margin="0,2,0,0"
-                                Visibility="{Binding HasScale, Converter={StaticResource BoolToVisibility}}" />
-                <TextBlock Grid.Column="2" Text="{Binding Value}" Margin="16,0,0,0" TextWrapping="NoWrap" HorizontalAlignment="Right"
-                           FontWeight="SemiBold" Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
-                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
-                  <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
-                             Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
-                  <TextBlock Text="{Binding Explain}" FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap"
-                             Visibility="{Binding HasExplain, Converter={StaticResource BoolToVisibility}}" />
-                  <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
-                             Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
-                  <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Hint}">
-                    <Run Text="Autodesk: " /><Run Text="{Binding Autodesk, Mode=OneWay}" /><Run Text=" · " />
-                    <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="{Binding Source, Mode=OneWay}" /></Hyperlink>
-                  </TextBlock>
-                </StackPanel>
-              </Grid>
-            </Border>
+          <DataTemplate DataType="{x:Type local:SourceLink}">
+            <TextBlock FontSize="12">
+              <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="{Binding Title, Mode=OneWay}" /></Hyperlink>
+            </TextBlock>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

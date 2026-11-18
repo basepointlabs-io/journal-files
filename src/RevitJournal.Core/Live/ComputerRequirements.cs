@@ -13,8 +13,11 @@ namespace RevitJournal.Core.Live;
 public sealed record RequirementCheck(string Item, string Value, string Autodesk, HealthLevel Level, AutodeskArticle Source, string Note = "",
     long? HaveMb = null, IReadOnlyList<RequirementMark>? Marks = null, string Explain = "");
 
-/// <summary>One of Autodesk's figures on a bar: "64 Performance". <paramref name="Target"/> marks the one that applies now.</summary>
-public sealed record RequirementMark(long Mb, string Label, bool Target = false);
+/// <summary>
+/// One of Autodesk's figures on the dial: "64 Performance". <paramref name="Target"/> marks the one that applies now;
+/// <paramref name="Maximum"/> an upper bound (the page file at most 2 x RAM) rather than a minimum.
+/// </summary>
+public sealed record RequirementMark(long Mb, string Label, bool Target = false, bool Maximum = false);
 
 /// <summary>
 /// This computer against Autodesk's published figures, for the Revit versions that are running. Only Autodesk's own
@@ -162,7 +165,7 @@ public static class ComputerRequirements
         return new RequirementCheck("Page file", Fmt.Mb((int)pageMb),
             $"at least Windows' recommended size, at most 2 × RAM ({Fmt.Mb((int)(2 * ramMb))})",
             over || short_ ? HealthLevel.Watch : HealthLevel.Ok, AutodeskArticle.OptimizeOs, note,
-            pageMb, [new RequirementMark(2 * ramMb, "max 2 × RAM", true)],
+            pageMb, [new RequirementMark(2 * ramMb, "max 2 × RAM", true, Maximum: true)],
             "Extra memory on disk: Windows moves memory there when RAM is full. RAM + page file is all the memory programs can get; when it runs out, Revit closes with \"out of memory\".");
     }
 

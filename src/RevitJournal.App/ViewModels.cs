@@ -313,12 +313,12 @@ public sealed class HealthView
         Issues = [.. r.Issues.Take(3).Select(i => new HealthIssueRow(i.Key, Key(i.Level), i.Title, i.Advice))];
         HasIssues = Issues.Count > 0;
 
-        // The RAM line also shows the memory in use now, as the darker part of its bar, with free RAM and its trend under it.
+        // The RAM dial also shows the memory in use now, as a thin inner arc, with free RAM and its trend under it.
         Requirements = [.. (r.Requirements ?? []).Select(q =>
         {
             bool ram = q.Item == "RAM" && r.TotalRamMb > 0;
             var scale = q is { HaveMb: { } have, Marks: { Count: > 0 } marks }
-                ? new ScaleData(have, marks, ram ? Math.Max(0, r.TotalRamMb - r.FreeRamMb) : null) : null;
+                ? new GaugeData(have, marks, ram ? Math.Max(0, r.TotalRamMb - r.FreeRamMb) : null) : null;
             return new RequirementRow(q.Item, q.Value, q.Autodesk, q.Note, q.Level == HealthLevel.Ok ? "ok" : "warning",
                 q.Source.Title, q.Source.Url, scale, q.Explain, ram ? $"{RamFreeValue} free {RamNote}" : "", ram ? RamKey : "");
         })];
@@ -378,6 +378,12 @@ public sealed class HealthView
     /// <summary>This computer against Autodesk's published requirements; shown on the start screen only.</summary>
     public IReadOnlyList<RequirementRow> Requirements { get; }
     public bool HasRequirements => Requirements.Count > 0;
+    /// <summary>The tray overview's dials: RAM and the free disk space (not the cloud model space).</summary>
+    public IReadOnlyList<RequirementRow> CompactRequirements =>
+        [.. Requirements.Where(q => q.Item == "RAM" || (q.Item.StartsWith("Free disk", StringComparison.Ordinal) && !q.Item.Contains("cloud", StringComparison.Ordinal)))];
+
+    /// <summary>The Autodesk articles behind the dials, each once.</summary>
+    public IReadOnlyList<SourceLink> RequirementSources => [.. Requirements.Select(q => new SourceLink(q.Source, q.Url)).Distinct()];
     public string AutodeskChecked { get; } = "";
 
     /// <summary>"3 Revit running (2024 ×2, 2025) · 5 models, 31 links, 9.4 GB on disk · 12 views · 41.0 GB of RAM".</summary>
@@ -484,16 +490,21 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
 /// <summary>One Autodesk service with a problem: "Revit Cloud Worksharing: degraded performance since 10:12", Autodesk's latest word, and the incident page.</summary>
 public sealed record AutodeskProblemRow(string Title, string Detail, string Url);
 
-/// <summary>One line of "This computer and Autodesk's figures": what the computer has, Autodesk's figure, and the article.</summary>
+/// <summary>An Autodesk article named once under the dials.</summary>
+public sealed record SourceLink(string Title, string Url);
+
+/// <summary>One card of "This computer and Autodesk's figures": a dial with Autodesk's figures and this computer as the needle.</summary>
 public sealed record RequirementRow(string Item, string Value, string Autodesk, string Note, string LevelKey, string Source, string Url,
-    ScaleData? Scale = null, string Explain = "", string Now = "", string NowKey = "")
+    GaugeData? Dial = null, string Explain = "", string Now = "", string NowKey = "")
 {
     public bool HasNote => Note.Length > 0;
-    /// <summary>"4.2 GB free of 8.0 GB · fell 3.2 GB in 6 min": the RAM line only.</summary>
+    /// <summary>"4.2 GB free of 8.0 GB · fell 3.2 GB in 6 min": the RAM card only.</summary>
     public bool HasNow => Now.Length > 0;
-    public bool HasScale => Scale is not null;
-    public bool HasExplain => Explain.Length > 0;
-    public System.Windows.Media.Brush Fill => LevelKey == "ok" ? Palette.Green : Palette.Orange;
+    public bool HasDial => Dial is not null;
+    /// <summary>A yes/no item (Revit Personal Accelerator) has no dial: its value is shown large instead.</summary>
+    public bool NoDial => Dial is null;
+    /// <summary>On hover over the dial: Autodesk's figures in words, and what the term means.</summary>
+    public string Tip => "Autodesk: " + Autodesk + (Explain.Length > 0 ? "\n\n" + Explain : "");
 }
 
 public sealed record HealthIssueRow(string Key, string LevelKey, string Title, string Advice)
