@@ -7,12 +7,12 @@ namespace RevitJournal.App;
 
 internal static class Palette
 {
-    public static readonly Brush Red = Freeze("#CF222E");
-    public static readonly Brush Orange = Freeze("#BC4C00");
-    public static readonly Brush Amber = Freeze("#9A6700");
-    public static readonly Brush Blue = Freeze("#0969DA");
-    public static readonly Brush Green = Freeze("#1A7F37");
-    public static readonly Brush Gray = Freeze("#8C959F");
+    public static readonly Brush Red = Freeze("#B3261E");
+    public static readonly Brush Orange = Freeze("#B4530A");
+    public static readonly Brush Amber = Freeze("#8A6100");
+    public static readonly Brush Blue = Freeze("#1F55C9");
+    public static readonly Brush Green = Freeze("#1F7A45");
+    public static readonly Brush Gray = Freeze("#7F8FA8");
 
     private static Brush Freeze(string hex)
     {

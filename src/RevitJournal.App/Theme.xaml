@@ -1,32 +1,37 @@
 <!--
-  The BasePoint Labs look, taken from the FlexiData Configurator (Resources/FluentTheme.xaml there):
-  a gray ground, white cards on it, Manrope, cobalt for the one primary action, 2 px corners and
-  two distances only, 4 between controls side by side and 8 for everything else.
+  The look of a drawing sheet: pale blue paper, dark navy ink, cobalt for the one primary action and for links, one
+  monospaced face, hairlines, 2 px corners and two distances only, 4 between controls side by side and 8 for
+  everything else.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
-  <FontFamily x:Key="AppFontFamily">pack://application:,,,/Fonts/#Manrope, Segoe UI Variable, Segoe UI</FontFamily>
+  <!-- Cascadia Mono ships with Windows 11; Consolas is on every Windows. -->
+  <FontFamily x:Key="AppFontFamily">Cascadia Mono, Consolas, Courier New</FontFamily>
 
-  <!-- Palette (FluentTheme.xaml, light) -->
-  <SolidColorBrush x:Key="Ground" Color="#EAEDF2" />
-  <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Line" Color="#ECEDF0" />
-  <SolidColorBrush x:Key="GroundStroke" Color="#D5D9DF" />
-  <SolidColorBrush x:Key="Ink" Color="#2A2E35" />
-  <SolidColorBrush x:Key="Muted" Color="#5C6370" />
-  <SolidColorBrush x:Key="Hint" Color="#8C939E" />
-  <SolidColorBrush x:Key="Accent" Color="#2457D6" />
-  <SolidColorBrush x:Key="AccentHover" Color="#1F4CC0" />
-  <SolidColorBrush x:Key="AccentPressed" Color="#1B44A8" />
-  <SolidColorBrush x:Key="Selected" Color="#D4E1FA" />
-  <SolidColorBrush x:Key="HoverFill" Color="#0A000000" />
-  <SolidColorBrush x:Key="PressFill" Color="#14000000" />
-  <SolidColorBrush x:Key="Panel" Color="#F5F7FA" />
-  <SolidColorBrush x:Key="LinkInk" Color="#2F5B8C" />
-  <SolidColorBrush x:Key="BrandMarkInk" Color="#2A2E35" />
-  <SolidColorBrush x:Key="BrandMarkDisc" Color="#033CBF" />
+  <!-- Palette -->
+  <SolidColorBrush x:Key="Ground" Color="#E8EFF8" />
+  <SolidColorBrush x:Key="Sheet" Color="#F3F7FC" />
+  <SolidColorBrush x:Key="CardBrush" Color="#F3F7FC" />
+  <SolidColorBrush x:Key="Line" Color="#CDD9E9" />
+  <SolidColorBrush x:Key="GroundStroke" Color="#B4C5DB" />
+  <SolidColorBrush x:Key="Ink" Color="#16263F" />
+  <SolidColorBrush x:Key="Muted" Color="#4A5F80" />
+  <SolidColorBrush x:Key="Hint" Color="#5D7190" />
+  <SolidColorBrush x:Key="Accent" Color="#1F55C9" />
+  <SolidColorBrush x:Key="AccentWash" Color="#1A1F55C9" />
+  <SolidColorBrush x:Key="AccentWashPressed" Color="#331F55C9" />
+  <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="Selected" Color="#D8E4F5" />
+  <SolidColorBrush x:Key="HoverFill" Color="#0D16263F" />
+  <SolidColorBrush x:Key="PressFill" Color="#1A16263F" />
+  <SolidColorBrush x:Key="Panel" Color="#FBFDFF" />
+  <SolidColorBrush x:Key="LinkInk" Color="#1F55C9" />
+  <SolidColorBrush x:Key="Warn" Color="#A8590A" />
+  <SolidColorBrush x:Key="Bad" Color="#B3261E" />
+  <SolidColorBrush x:Key="BrandMarkInk" Color="#16263F" />
+  <SolidColorBrush x:Key="BrandMarkDisc" Color="#1F55C9" />
 
   <Style x:Key="SectionTitle" TargetType="TextBlock">
     <Setter Property="FontSize" Value="12" />
@@ -72,11 +77,10 @@
     <Setter Property="Margin" Value="0,0,4,0" />
   </Style>
 
-  <!-- The one primary action: cobalt with white ink, a step darker on hover and press. -->
+  <!-- The one primary action: drawn in cobalt, outline and lettering, with a cobalt wash on hover and press. -->
   <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource GroundButton}">
-    <Setter Property="Background" Value="{StaticResource Accent}" />
     <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
-    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Foreground" Value="{StaticResource Accent}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
@@ -86,12 +90,10 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentHover}" />
-              <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentHover}" />
+              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentWash}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentPressed}" />
-              <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentPressed}" />
+              <Setter TargetName="border" Property="Background" Value="{StaticResource AccentWashPressed}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -144,7 +146,7 @@
     </Style.Triggers>
   </Style>
 
-  <!-- A row in a list: title and gray subtitle; light blue when selected (the Configurator's operation list). -->
+  <!-- A row in a list: title and gray subtitle; light blue when selected. -->
   <Style x:Key="ListRow" TargetType="ListBoxItem">
     <Setter Property="Padding" Value="0" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -244,8 +246,8 @@
       <Setter.Value>
         <ControlTemplate TargetType="ProgressBar">
           <Grid>
-            <Border x:Name="PART_Track" Background="#E3E7ED" CornerRadius="3" />
-            <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="3" HorizontalAlignment="Left" />
+            <Border x:Name="PART_Track" Background="{StaticResource Line}" CornerRadius="0" />
+            <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="0" HorizontalAlignment="Left" />
           </Grid>
         </ControlTemplate>
       </Setter.Value>

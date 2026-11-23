@@ -18,7 +18,7 @@
       <local:ValueInkConverter x:Key="ValueInk" />
       <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-      <!-- Manrope everywhere, as in the FlexiData Configurator. Only the font is set globally: colors come
+      <!-- One monospaced face everywhere, like the lettering on a drawing sheet. Only the font is set globally: colors come
            from the window by inheritance, so the library's controls keep their own. -->
       <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />

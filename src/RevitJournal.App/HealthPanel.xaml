@@ -4,64 +4,55 @@
              xmlns:local="clr-namespace:RevitJournal.App"
              FontFamily="{StaticResource AppFontFamily}" FontSize="13" Foreground="{StaticResource Ink}">
   <UserControl.Resources>
-    <!-- A resource against Autodesk's figures: a dial, the value, and what to note. Used on the start screen (all of
-         them) and in the tray overview (RAM and free disk). -->
+    <!-- A resource against Autodesk's figures: its name and value on one line, the scale under it, and what to
+         note. Used on the start screen (all of them) and in the tray overview (RAM and free disk). -->
     <DataTemplate x:Key="RequirementCard" DataType="{x:Type local:RequirementRow}">
-      <Border Background="{StaticResource Panel}" CornerRadius="4" Padding="16" Margin="0,0,16,16">
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,16,16">
         <StackPanel>
+          <!-- In the narrow tray card the name has a line of its own. -->
           <DockPanel>
-            <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
+            <Ellipse DockPanel.Dock="Left" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center"
                      Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
-            <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Item}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
           </DockPanel>
-          <local:Gauge Data="{Binding Dial}" Height="104" Margin="0,8,0,0" ToolTip="{Binding Tip}"
-                       Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
-          <TextBlock Text="{Binding Value}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0"
+          <TextBlock Text="{Binding Value}" FontSize="20" TextWrapping="NoWrap" Margin="0,4,0,0"
                      Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
-          <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+          <local:Gauge Data="{Binding Dial}" Height="48" Margin="0,12,0,0" ToolTip="{Binding Tip}"
+                       Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
                      Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
                      Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
-          <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
-                     Foreground="{StaticResource Muted}" Margin="0,4,0,0"
+          <!-- Autodesk's figures in words only for an item without a scale; on a scale they are its numbers (and its tooltip). -->
+          <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,8,0,0"
                      Visibility="{Binding NoDial, Converter={StaticResource BoolToVisibility}}" />
-          <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,4,0,0"
+          <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
                      Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
                      Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
       </Border>
     </DataTemplate>
-    <!-- The same on the start screen, two to a row: the dial on the left, the figures on the right. -->
+    <!-- The same on the start screen, two to a row, with a larger figure. -->
     <DataTemplate x:Key="RequirementCardWide" DataType="{x:Type local:RequirementRow}">
-      <Border Background="{StaticResource Panel}" CornerRadius="4" Padding="16" Margin="0,0,16,16">
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,0,16,16">
         <StackPanel>
           <DockPanel>
-            <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,6,8,0" VerticalAlignment="Top"
+            <TextBlock DockPanel.Dock="Right" Text="{Binding Value}" FontSize="22" TextWrapping="NoWrap" Margin="8,0,0,0"
+                       Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
+            <Ellipse DockPanel.Dock="Left" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center"
                      Fill="{Binding LevelKey, Converter={StaticResource StatusBrush}}" />
-            <TextBlock Text="{Binding Item}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Item}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" />
           </DockPanel>
-          <Grid Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="3*" />
-              <ColumnDefinition Width="2*" />
-            </Grid.ColumnDefinitions>
-            <local:Gauge Data="{Binding Dial}" Height="132" ToolTip="{Binding Tip}"
-                         Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
-              <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding Value}" FontSize="24" FontWeight="SemiBold"
-                           Foreground="{Binding LevelKey, Converter={StaticResource ValueInk}}" />
-              </Viewbox>
-              <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
-                         Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
-                         Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
-              <!-- Autodesk's figures in words only for an item without a dial; on a dial they are its numbers (and its tooltip). -->
-              <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,4,0,0"
-                         Visibility="{Binding NoDial, Converter={StaticResource BoolToVisibility}}" />
-              <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
-                         Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
-                         Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
-            </StackPanel>
-          </Grid>
+          <local:Gauge Data="{Binding Dial}" Height="48" Margin="0,12,0,0" ToolTip="{Binding Tip}"
+                       Visibility="{Binding HasDial, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Now}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
+                     Foreground="{Binding NowKey, Converter={StaticResource ValueInk}}"
+                     Visibility="{Binding HasNow, Converter={StaticResource BoolToVisibility}}" />
+          <!-- Autodesk's figures in words only for an item without a scale; on a scale they are its numbers (and its tooltip). -->
+          <TextBlock Text="{Binding Autodesk}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,8,0,0"
+                     Visibility="{Binding NoDial, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                     Foreground="{Binding LevelKey, Converter={StaticResource StatusBrush}}"
+                     Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
       </Border>
     </DataTemplate>
@@ -76,7 +67,7 @@
         <!-- The state as a sign as well as a colour: a check, a warning triangle, an alarm light. -->
         <Viewbox Width="22" Height="22">
           <Canvas Width="24" Height="24">
-            <Path Data="M6,12.5 L10.5,17 L18,8" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+            <Path Data="M6,12.5 L10.5,17 L18,8" Stroke="{StaticResource OnAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
               <Path.Style>
                 <Style TargetType="Path">
                   <Setter Property="Visibility" Value="Collapsed" />
@@ -88,7 +79,7 @@
                 </Style>
               </Path.Style>
             </Path>
-            <Path Data="M12,4.5 L20.5,19 H3.5 Z M12,10 V14 M12,16.8 V17" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+            <Path Data="M12,4.5 L20.5,19 H3.5 Z M12,10 V14 M12,16.8 V17" Stroke="{StaticResource OnAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
               <Path.Style>
                 <Style TargetType="Path">
                   <Setter Property="Visibility" Value="Collapsed" />
@@ -100,7 +91,7 @@
                 </Style>
               </Path.Style>
             </Path>
-            <Path Data="M8,16 V12 A4,4 0 0 1 16,12 V16 M6,16 H18 V19.5 H6 Z M12,3 V4.2 M4.2,12 H3 M21,12 H19.8 M5.6,5.6 L6.5,6.5 M18.4,5.6 L17.5,6.5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+            <Path Data="M8,16 V12 A4,4 0 0 1 16,12 V16 M6,16 H18 V19.5 H6 Z M12,3 V4.2 M4.2,12 H3 M21,12 H19.8 M5.6,5.6 L6.5,6.5 M18.4,5.6 L17.5,6.5" Stroke="{StaticResource OnAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
               <Path.Style>
                 <Style TargetType="Path">
                   <Setter Property="Visibility" Value="Collapsed" />
@@ -122,11 +113,11 @@
     </DockPanel>
 
     <!-- A newer Revit Doctor on GitHub: what is new, and Install update (the installed copy) or a download link. -->
-    <Border Background="#EEF4FF" BorderBrush="#B6CCF5" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,16,0,0"
+    <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,16,0,0"
             Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibility}}">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" VerticalAlignment="Top" Margin="16,0,0,0">
-          <Button Content="Install update" Click="OnInstallUpdate" Padding="16,8"
+          <Button Content="Install update" Click="OnInstallUpdate" Style="{StaticResource PrimaryButton}" Height="36"
                   Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVisibility}}" />
           <TextBlock Text="{Binding UpdateProgress}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap"
                      Visibility="{Binding HasUpdateProgress, Converter={StaticResource BoolToVisibility}}" />
@@ -135,7 +126,7 @@
           </TextBlock>
         </StackPanel>
         <StackPanel>
-          <TextBlock Text="{Binding UpdateTitle}" FontWeight="SemiBold" Foreground="#1F3F7A" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding UpdateTitle}" FontWeight="SemiBold" Foreground="{StaticResource Ink}" TextWrapping="Wrap" />
           <TextBlock Text="{Binding UpdateNotes}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0" />
           <TextBlock FontSize="12" Margin="0,8,0,0">
             <Hyperlink NavigateUri="{Binding UpdateUrl}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="Release notes" /></Hyperlink>
@@ -145,18 +136,18 @@
     </Border>
 
     <!-- Autodesk services (EU) with a problem right now, from the Autodesk Health Dashboard. -->
-    <Border Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,16,0,0"
+    <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Warn}" BorderThickness="1" CornerRadius="2" Padding="16" Margin="0,16,0,0"
             Visibility="{Binding HasAutodeskProblems, Converter={StaticResource BoolToVisibility}}">
       <StackPanel>
         <DockPanel>
           <TextBlock DockPanel.Dock="Right" Text="{Binding AutodeskChecked}" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center" TextWrapping="NoWrap" />
-          <TextBlock Text="Autodesk services (EU)" FontWeight="SemiBold" Foreground="#7A4D00" />
+          <TextBlock Text="Autodesk services (EU)" FontWeight="SemiBold" Foreground="{StaticResource Warn}" />
         </DockPanel>
         <ItemsControl ItemsSource="{Binding AutodeskProblems}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type local:AutodeskProblemRow}">
               <StackPanel Margin="0,8,0,0">
-                <TextBlock Text="{Binding Title}" Foreground="#7A4D00" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Title}" Foreground="{StaticResource Warn}" TextWrapping="Wrap" />
                 <TextBlock FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap">
                   <Run Text="{Binding Detail, Mode=OneWay}" />
                   <Hyperlink NavigateUri="{Binding Url}" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}"><Run Text="Open on Autodesk" /></Hyperlink>
@@ -192,7 +183,7 @@
         <ColumnDefinition Width="16" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
+      <Border Grid.Column="0" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16">
         <StackPanel>
           <TextBlock Text="Free RAM" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding RamFreeValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding RamKey, Converter={StaticResource ValueInk}}" /></Viewbox>
@@ -201,14 +192,14 @@
                              Stroke="{Binding RamKey, Converter={StaticResource MeterBrush}}" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
+      <Border Grid.Column="2" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16">
         <StackPanel>
-          <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding DiskLabel}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" />
           <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding DiskValue}" FontSize="20" FontWeight="SemiBold" Margin="0" Foreground="{Binding DiskKey, Converter={StaticResource ValueInk}}" /></Viewbox>
           <TextBlock Text="{Binding DiskNote}" Foreground="{StaticResource Hint}" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="4" Background="{StaticResource Panel}" CornerRadius="4" Padding="16">
+      <Border Grid.Column="4" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Padding="16">
         <StackPanel>
           <TextBlock Text="Revit open" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
           <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Text="{Binding RevitCount}" FontSize="20" FontWeight="SemiBold" Margin="0"  /></Viewbox>
@@ -338,7 +329,7 @@
         </ItemsControl.ItemsPanel>
       </ItemsControl>
       <!-- Where the figures come from: each Autodesk article once, under all the cards. -->
-      <TextBlock FontSize="12" Foreground="{StaticResource Hint}" Text="Figures on the dials are Autodesk's, from:" />
+      <TextBlock FontSize="12" Foreground="{StaticResource Hint}" Text="Figures on the scales are Autodesk's, from:" />
       <ItemsControl ItemsSource="{Binding RequirementSources}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type local:SourceLink}">

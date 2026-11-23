@@ -5,26 +5,33 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="Revit Doctor" Width="400" SizeToContent="Height" MaxHeight="760"
         WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" UseLayoutRounding="True"
-        Background="{StaticResource Ground}" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
+        Background="{StaticResource Ground}" Foreground="{StaticResource Ink}" FontFamily="{StaticResource AppFontFamily}" FontSize="13"
         Deactivated="OnDeactivated">
   <!-- The compact overview that opens from the tray icon: what is going on right now, and a way into the full window. -->
   <Border BorderBrush="{StaticResource GroundStroke}" BorderThickness="1">
     <DockPanel Margin="8">
       <DockPanel DockPanel.Dock="Top" Height="36" Margin="0,0,0,8">
         <Image DockPanel.Dock="Left" Source="/Icons/logo.png" Width="28" Height="28" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,8,0" />
-        <!-- Close hides the overview (the app keeps watching from the tray); the other button opens the full window. -->
+        <!-- Close hides the overview (the app keeps watching from the tray); "Open full analysis" below opens the full window. -->
         <Button DockPanel.Dock="Right" Style="{StaticResource GroundButton}" Click="OnClose" Width="36" Height="36" Padding="0" ToolTip="Close">
           <ui:SymbolIcon Symbol="Dismiss20" FontSize="16" />
-        </Button>
-        <Button DockPanel.Dock="Right" Style="{StaticResource GroundButton}" Click="OnOpenFull" Width="36" Height="36" Padding="0" Margin="0,0,8,0" ToolTip="Open the full window">
-          <ui:SymbolIcon Symbol="ArrowMaximize20" FontSize="16" />
         </Button>
         <TextBlock Text="Revit Doctor" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="VersionText" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center" Margin="8,0,0,0" />
       </DockPanel>
 
+      <!-- Foot: the BasePoint Labs mark and link, as in the full window. -->
+      <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+        <Image Source="{StaticResource BasePointLabsMark}" Height="12" VerticalAlignment="Center" Margin="0,0,8,0" />
+        <TextBlock VerticalAlignment="Center" FontSize="12">
+          <Hyperlink NavigateUri="https://basepointlabs.io" RequestNavigate="OnOpenLink" Foreground="{StaticResource LinkInk}">
+            <Run Text="basepointlabs.io" />
+          </Hyperlink>
+        </TextBlock>
+      </StackPanel>
+
       <Button DockPanel.Dock="Bottom" Style="{StaticResource PrimaryButton}" Click="OnOpenFull" Margin="0,8,0,0" HorizontalAlignment="Stretch">
-        <TextBlock Text="Open full analysis" Foreground="White" />
+        <TextBlock Text="Open full analysis" />
       </Button>
 
       <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2">

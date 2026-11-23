@@ -30,11 +30,11 @@ public sealed class MemoryChart : FrameworkElement
     public Brush Stroke { get => (Brush)GetValue(StrokeProperty); set => SetValue(StrokeProperty, value); }
 
     private const double Gutter = 46, Footer = 16, Top = 6;
-    private static readonly Brush Grid = Frozen(new SolidColorBrush(Color.FromRgb(0xE3, 0xE6, 0xEC)));
-    private static readonly Brush Axis = Frozen(new SolidColorBrush(Color.FromRgb(0xC5, 0xCA, 0xD3)));
-    private static readonly Brush Label = Frozen(new SolidColorBrush(Color.FromRgb(0x8A, 0x91, 0x9E)));
-    private static readonly Brush Low = Frozen(new SolidColorBrush(Color.FromRgb(0xD9, 0x3B, 0x3B)));
-    private static readonly Brush LowFill = Frozen(new SolidColorBrush(Color.FromArgb(0x24, 0xD9, 0x3B, 0x3B)));
+    private static readonly Brush Grid = Frozen(new SolidColorBrush(Color.FromRgb(0xDC, 0xE5, 0xF1)));
+    private static readonly Brush Axis = Frozen(new SolidColorBrush(Color.FromRgb(0xB4, 0xC5, 0xDB)));
+    private static readonly Brush Label = Frozen(new SolidColorBrush(Color.FromRgb(0x5D, 0x71, 0x90)));
+    private static readonly Brush Low = Frozen(new SolidColorBrush(Color.FromRgb(0xB3, 0x26, 0x1E)));
+    private static readonly Brush LowFill = Frozen(new SolidColorBrush(Color.FromArgb(0x1F, 0xB3, 0x26, 0x1E)));
 
     protected override void OnRender(DrawingContext dc)
     {
@@ -98,7 +98,7 @@ public sealed class MemoryChart : FrameworkElement
             }
             line.Freeze();
             dc.DrawGeometry(null, new Pen(Stroke, 2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, line);
-            dc.DrawEllipse(Stroke, new Pen(Brushes.White, full ? 2 : 1.5), points[^1], full ? 4.5 : 3.5, full ? 4.5 : 3.5);
+            dc.DrawEllipse(Stroke, new Pen(TryFindResource("Panel") as Brush ?? Brushes.White, full ? 2 : 1.5), points[^1], full ? 4.5 : 3.5, full ? 4.5 : 3.5);
             if (!full)
                 return;
 

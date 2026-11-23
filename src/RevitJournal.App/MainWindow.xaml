@@ -19,7 +19,7 @@
 
     <!-- One finding card; used by the answer page and the full report. -->
     <DataTemplate DataType="{x:Type local:FindingView}">
-      <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,8" Background="White">
+      <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="2" Margin="0,0,0,8" Background="{StaticResource Sheet}">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="4" />
@@ -31,7 +31,7 @@
               <StackPanel Orientation="Horizontal">
                 <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"
                         Padding="8,0" Margin="0,0,8,0" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding SeverityText}" Foreground="White" FontSize="10" FontWeight="SemiBold" TextWrapping="NoWrap" />
+                  <TextBlock Text="{Binding SeverityText}" Foreground="{StaticResource OnAccent}" FontSize="10" FontWeight="SemiBold" TextWrapping="NoWrap" />
                 </Border>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding Confidence}" FontSize="12" Foreground="{StaticResource Hint}" VerticalAlignment="Center"
@@ -53,7 +53,7 @@
 
               <StackPanel Visibility="{Binding HasCaseSteps, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="What to do in your case" FontWeight="SemiBold" Margin="0,16,0,8" Foreground="{StaticResource Accent}" />
-                <Border Background="#EEF3FD" CornerRadius="2" Padding="8">
+                <Border Background="{StaticResource Panel}" CornerRadius="2" Padding="8">
                   <ItemsControl ItemsSource="{Binding CaseSteps}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
@@ -191,14 +191,14 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="tile" Background="White" BorderBrush="{StaticResource GroundStroke}" BorderThickness="1"
+            <Border x:Name="tile" Background="{StaticResource Panel}" BorderBrush="{StaticResource GroundStroke}" BorderThickness="1"
                     CornerRadius="2" Padding="16">
               <ContentPresenter />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="tile" Property="BorderBrush" Value="{StaticResource Accent}" />
-                <Setter TargetName="tile" Property="Background" Value="#F3F7FE" />
+                <Setter TargetName="tile" Property="Background" Value="{StaticResource Selected}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -207,7 +207,8 @@
     </Style>
   </Window.Resources>
 
-  <Grid>
+  <!-- The ground is painted here: the library's window draws its own colour behind the content. -->
+  <Grid Background="{StaticResource Ground}">
     <Grid.RowDefinitions>
       <RowDefinition Height="52" />
       <RowDefinition Height="*" />
@@ -219,7 +220,8 @@
         <ui:TitleBar.TrailingContent>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
             <TextBlock x:Name="VersionLabel" Text="Revit version" VerticalAlignment="Center" Foreground="{StaticResource Hint}" Margin="0,0,8,0" />
-            <ComboBox x:Name="VersionPicker" MinWidth="150" Height="36" VerticalContentAlignment="Center"
+            <ComboBox x:Name="VersionPicker" MinWidth="170" Height="36" VerticalContentAlignment="Center"
+                      Background="{StaticResource Panel}" BorderBrush="{StaticResource GroundStroke}" Foreground="{StaticResource Ink}"
                       SelectionChanged="OnVersionChanged" WindowChrome.IsHitTestVisibleInChrome="True" />
             <Border Width="28" />
             <Button Style="{StaticResource CaptionButton}" Click="OnMinimize" ToolTip="Minimize">
@@ -412,20 +414,20 @@
                   <local:HealthPanel x:Name="HomeHealth" Wide="True" />
                 </Border>
 
-                <Border x:Name="HintBanner" Visibility="Collapsed" Background="#FFF8E5" BorderBrush="#F2D58A" BorderThickness="1"
+                <Border x:Name="HintBanner" Visibility="Collapsed" Background="{StaticResource Panel}" BorderBrush="{StaticResource Warn}" BorderThickness="1"
                         CornerRadius="2" Padding="16,8" Margin="0,0,0,8">
                   <DockPanel>
                     <Button DockPanel.Dock="Right" Content="See why" Click="OnHintClick" Style="{StaticResource ToolbarButton}"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Background="White" />
+                            Margin="8,0,0,0" VerticalAlignment="Center" />
                     <TextBlock x:Name="HintText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
                   </DockPanel>
                 </Border>
 
                 <!-- Shown when Revit crashed several times in the last week (metric-repeated-crashes). -->
-                <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="#FFF1F0" BorderBrush="#FFCECB" BorderThickness="1"
+                <Border x:Name="HistoryBanner" Visibility="Collapsed" Background="{StaticResource Panel}" BorderBrush="{StaticResource Bad}" BorderThickness="1"
                         CornerRadius="2" Padding="16,8" Margin="0,0,0,8">
                   <StackPanel>
-                    <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="#CF222E" />
+                    <TextBlock x:Name="HistoryTitle" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource Bad}" />
                     <ItemsControl x:Name="HistoryFacts" Margin="0">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -458,13 +460,13 @@
         <!-- Row on the ground under the card: status on the left, report actions on the right (report only) -->
         <DockPanel Grid.Row="1" Margin="0,8,0,0" Height="44">
           <StackPanel x:Name="ReportActions" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
-            <Button Style="{StaticResource GroundButton}" Click="OnShowInFolder" Width="150" Margin="0,0,8,0">
+            <Button Style="{StaticResource GroundButton}" Click="OnShowInFolder" Margin="0,0,8,0">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Folder24" FontSize="16" Margin="0,0,8,0" />
                 <TextBlock Text="Show in folder" VerticalAlignment="Center" TextWrapping="NoWrap" />
               </StackPanel>
             </Button>
-            <Button Style="{StaticResource GroundButton}" Click="OnCopyReport" Width="150">
+            <Button Style="{StaticResource GroundButton}" Click="OnCopyReport">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Copy24" FontSize="16" Margin="0,0,8,0" />
                 <TextBlock Text="Copy report" VerticalAlignment="Center" TextWrapping="NoWrap" />

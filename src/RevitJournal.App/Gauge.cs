@@ -6,15 +6,15 @@ using RevitJournal.Core.Live;
 
 namespace RevitJournal.App;
 
-/// <summary>What <see cref="Gauge"/> draws: this computer's figure and Autodesk's figures on one dial.</summary>
-/// <param name="UsedMb">The part of <paramref name="HaveMb"/> in use now (RAM only), drawn as a thin inner arc.</param>
+/// <summary>What <see cref="Gauge"/> draws: this computer's figure and Autodesk's figures on one scale.</summary>
+/// <param name="UsedMb">The part of <paramref name="HaveMb"/> in use now (RAM only), drawn as a thin line under the scale.</param>
 public sealed record GaugeData(long HaveMb, IReadOnlyList<RequirementMark> Marks, long? UsedMb = null);
 
 /// <summary>
-/// A half-circle dial for one resource. The coloured zones and the numbers on the dial are Autodesk's figures, every
-/// figure drawn the same way. One figure (a minimum): red below it, green above. Several (RAM 16 / 32 / 64): red below
-/// the first, then one step per figure from amber to green, full green above the last. An upper bound (the page file):
-/// green up to it, red above. The needle is this computer.
+/// A straight scale for one resource, as on a drawing. The coloured zones and the numbers under the scale are
+/// Autodesk's figures, every figure drawn the same way. One figure (a minimum): red below it, green above. Several
+/// (RAM 16 / 32 / 64): red below the first, then one step per figure from amber to green, full green above the last.
+/// An upper bound (the page file): green up to it, red above. The pointer above the scale is this computer.
 /// </summary>
 public sealed class Gauge : FrameworkElement
 {
@@ -23,105 +23,97 @@ public sealed class Gauge : FrameworkElement
 
     public GaugeData? Data { get => (GaugeData?)GetValue(DataProperty); set => SetValue(DataProperty, value); }
 
-    private const double Thickness = 12;
-    private static readonly Brush Red = Frozen(Color.FromRgb(0xF0, 0x95, 0x95));
-    private static readonly Brush Amber = Frozen(Color.FromRgb(0xFA, 0xC7, 0x75));
-    private static readonly Brush LightGreen = Frozen(Color.FromRgb(0xC0, 0xDD, 0x97));
-    private static readonly Brush Green = Frozen(Color.FromRgb(0x97, 0xC4, 0x59));
+    private const double BarTop = 12, Thickness = 6;
+    private static readonly Brush Red = Frozen(Color.FromRgb(0xDC, 0x53, 0x47));
+    private static readonly Brush Amber = Frozen(Color.FromRgb(0xE6, 0xA5, 0x2E));
+    private static readonly Brush LightGreen = Frozen(Color.FromRgb(0xA9, 0xC6, 0x59));
+    private static readonly Brush Green = Frozen(Color.FromRgb(0x4A, 0x9F, 0x66));
     /// <summary>The steps between several figures, from the first to the last: amber, light green, and so on.</summary>
     private static readonly Brush[] Steps = [Amber, LightGreen];
-    private static readonly Brush Used = Frozen(Color.FromRgb(0x37, 0x8A, 0xDD));
-    private static readonly Brush Track = Frozen(Color.FromRgb(0xE6, 0xE9, 0xEE));
-    private static readonly Brush Needle = Frozen(Color.FromRgb(0x2A, 0x2E, 0x35));
-    private static readonly Brush TickInk = Frozen(Color.FromRgb(0x5C, 0x63, 0x70));
+    private static readonly Brush Used = Frozen(Color.FromRgb(0x1F, 0x55, 0xC9));
+    private static readonly Brush Track = Frozen(Color.FromRgb(0xCD, 0xD9, 0xE9));
+    private static readonly Brush Pointer = Frozen(Color.FromRgb(0x16, 0x26, 0x3F));
+    private static readonly Brush TickInk = Frozen(Color.FromRgb(0x5D, 0x71, 0x90));
 
-    // No wider than the card: asking for more makes WPF clip the dial, numbers at its ends included.
     protected override Size MeasureOverride(Size available) =>
-        new(double.IsInfinity(available.Width) ? 200 : available.Width, double.IsInfinity(available.Height) ? 104 : Math.Min(available.Height, 104));
+        new(double.IsInfinity(available.Width) ? 200 : available.Width, double.IsInfinity(available.Height) ? 48 : Math.Min(available.Height, 48));
 
     protected override void OnRender(DrawingContext dc)
     {
         if (Data is not { } data || ActualWidth < 60 || ActualHeight < 40)
             return;
 
-        // The numbers of Autodesk's figures go just outside the dial. The dial fills the element, leaving the same room
-        // on every dial for a number at its ends ("95.8") and one above, so dials of the same size match. An upper bound
-        // is a plain number too: the red zone after it says that it is a maximum.
         var marks = data.Marks.OrderBy(m => m.Mb).ToList();
-        var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-        double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var labels = marks.Select(m => new FormattedText(Number(m.Mb), CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight, typeface, 11, TickInk, dip)).ToList();
-        var room = new FormattedText("88.8", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11, TickInk, dip);
-        double r = Math.Min(ActualWidth / 2 - Thickness / 2 - 4 - room.Width, ActualHeight - 6 - Thickness / 2 - 4 - room.Height);
-        r = Math.Max(r, 16);
-        var centre = new Point(ActualWidth / 2, ActualHeight - 6);
         double scale = Math.Max(data.HaveMb, marks.Count > 0 ? marks[^1].Mb : 0) * 1.15;
         if (scale <= 0)
             return;
-        double Angle(double mb) => Math.PI * (1 - Math.Clamp(mb / scale, 0, 1));
-        Point At(double mb, double radius) => new(centre.X + radius * Math.Cos(Angle(mb)), centre.Y - radius * Math.Sin(Angle(mb)));
-
-        void Arc(double from, double to, Brush brush, double radius, double thickness)
+        // Half a pointer of room at each end, so the pointer and the end numbers stay inside.
+        const double inset = 5;
+        double width = ActualWidth - 2 * inset;
+        double X(double mb) => Math.Round(inset + width * Math.Clamp(mb / scale, 0, 1));
+        void Bar(double from, double to, Brush brush, double top, double height)
         {
-            if (to <= from)
-                return;
-            var geometry = new StreamGeometry();
-            using (var g = geometry.Open())
-            {
-                g.BeginFigure(At(from, radius), false, false);
-                g.ArcTo(At(to, radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, false);
-            }
-            geometry.Freeze();
-            dc.DrawGeometry(null, new Pen(brush, thickness) { StartLineCap = PenLineCap.Flat, EndLineCap = PenLineCap.Flat }, geometry);
+            if (X(to) > X(from))
+                dc.DrawRectangle(brush, null, new Rect(X(from), top, X(to) - X(from), height));
         }
 
-        // Zones from Autodesk's figures.
+        // Zones from Autodesk's figures; a gap of one pixel at each figure.
         if (marks.FirstOrDefault(m => m.Maximum) is { } maximum)
         {
-            Arc(0, maximum.Mb, Green, r, Thickness);
-            Arc(maximum.Mb, scale, Red, r, Thickness);
+            Bar(0, maximum.Mb, Green, BarTop, Thickness);
+            Bar(maximum.Mb, scale, Red, BarTop, Thickness);
         }
         else if (marks.Count > 0)
         {
-            Arc(0, marks[0].Mb, Red, r, Thickness);
+            Bar(0, marks[0].Mb, Red, BarTop, Thickness);
             for (int i = 0; i + 1 < marks.Count; i++)
-                Arc(marks[i].Mb, marks[i + 1].Mb, Steps[Math.Min(i, Steps.Length - 1)], r, Thickness);
-            Arc(marks[^1].Mb, scale, Green, r, Thickness);
+                Bar(marks[i].Mb, marks[i + 1].Mb, Steps[Math.Min(i, Steps.Length - 1)], BarTop, Thickness);
+            Bar(marks[^1].Mb, scale, Green, BarTop, Thickness);
         }
         else
-            Arc(0, scale, Track, r, Thickness);
+            Bar(0, scale, Track, BarTop, Thickness);
 
-        // What is in use now (RAM): a thin arc inside the dial.
+        // What is in use now (RAM): a thin line under the scale, on a track as long as the installed memory.
+        double below = BarTop + Thickness + 2;
         if (data.UsedMb is { } used)
         {
-            Arc(0, data.HaveMb, Track, r - Thickness - 2, 4);
-            Arc(0, Math.Min(used, data.HaveMb), Used, r - Thickness - 2, 4);
+            Bar(0, data.HaveMb, Track, below, 2);
+            Bar(0, Math.Min(used, data.HaveMb), Used, below, 2);
+            below += 3;
         }
 
-        // Autodesk's figures: a cut through the band, exactly as wide as the band and in the card's colour, and the
-        // number outside it.
-        var cut = new Pen(TryFindResource("Panel") as Brush ?? Brushes.White, 3);
-        for (int i = 0; i < marks.Count; i++)
+        // The rule: a short tick every tenth, a longer one with its number at each of Autodesk's figures.
+        var tick = new Pen(Track, 1);
+        for (int i = 0; i <= 10; i++)
+            dc.DrawRectangle(Track, null, new Rect(Math.Min(X(scale * i / 10), ActualWidth - inset - 1), below + 1, 1, 3));
+        var cut = TryFindResource("Panel") as Brush ?? Brushes.White;
+        var typeface = new Typeface(TextElement.GetFontFamily(this), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        double taken = double.NegativeInfinity;
+        foreach (var m in marks)
         {
-            var m = marks[i];
-            dc.DrawLine(cut, At(m.Mb, r - Thickness / 2), At(m.Mb, r + Thickness / 2));
-            // An upper bound says so ("max 16"); a minimum is just its number.
-            var text = labels[i];
-            // The number sits just outside the band: its box is moved out along the dial's radius by half its width
-            // and half its height, so a wide number near the ends ("max 95.8") stays clear of the band.
-            double a = Angle(m.Mb);
-            var p = At(m.Mb, r + Thickness / 2 + 4);
-            double x = p.X - text.Width / 2 + Math.Cos(a) * text.Width / 2;
-            double y = p.Y - text.Height / 2 - Math.Sin(a) * text.Height / 2;
-            x = Math.Clamp(x, 0, Math.Max(0, ActualWidth - text.Width));
-            dc.DrawText(text, new Point(x, Math.Max(0, y)));
+            double x = X(m.Mb);
+            dc.DrawRectangle(cut, null, new Rect(x - 1, BarTop, 2, Thickness));
+            dc.DrawRectangle(TickInk, null, new Rect(x, below + 1, 1, 6));
+            var text = new FormattedText(Number(m.Mb), CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 11, TickInk, dip);
+            double left = Math.Clamp(x - text.Width / 2, 0, Math.Max(0, ActualWidth - text.Width));
+            if (left < taken + 4)
+                continue; // two figures too close to print both
+            dc.DrawText(text, new Point(left, below + 8));
+            taken = left + text.Width;
         }
 
-        // This computer: the needle.
-        var tip = At(data.HaveMb, r - 2);
-        dc.DrawLine(new Pen(Needle, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, centre, tip);
-        dc.DrawEllipse(Needle, null, centre, 5, 5);
+        // This computer: the pointer above the scale.
+        double at = X(data.HaveMb);
+        var pointer = new StreamGeometry();
+        using (var g = pointer.Open())
+        {
+            g.BeginFigure(new Point(at - 5, 1), true, true);
+            g.LineTo(new Point(at + 5, 1), false, false);
+            g.LineTo(new Point(at, BarTop - 2), false, false);
+        }
+        pointer.Freeze();
+        dc.DrawGeometry(Pointer, null, pointer);
     }
 
     /// <summary>Autodesk's figure in GB, as short as it can be: "16", "95.8".</summary>

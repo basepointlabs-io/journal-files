@@ -48,6 +48,12 @@ public partial class HealthFlyout : Window
 
     private void OnClose(object sender, RoutedEventArgs e) => Hide();
 
+    private void OnOpenLink(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
+    }
+
     private void OnDeactivated(object? sender, EventArgs e) => Hide();
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
