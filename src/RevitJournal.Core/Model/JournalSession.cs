@@ -237,6 +237,17 @@ public sealed record AddIn(int Line, string Name, string VendorId, string Vendor
 {
     public bool IsAutodesk => VendorId.Equals("ADSK", StringComparison.OrdinalIgnoreCase)
                               || Vendor.Contains("Autodesk", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Revit logs an add-in when it has started (or failed), but not every line carries a time: that moment lies
+    /// between the last timestamp before the line and the first one after it.
+    /// </summary>
+    public DateTime? Time { get; init; }
+    public DateTime? LatestTime { get; set; }
+
+    /// <summary>The .NET the add-in was built for, when it is older than the one this Revit runs on (<see cref="RevitNet"/>).</summary>
+    public int? BuiltForNet { get; init; }
+    public int? RevitNet { get; init; }
 }
 
 /// <summary>An add-in was active at this point: Revit logged an event registration or an external event for it.</summary>

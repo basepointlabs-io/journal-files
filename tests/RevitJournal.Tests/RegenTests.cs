@@ -207,3 +207,65 @@ public class CloudOpenTests
         Assert.DoesNotContain(Analyzer.Analyze(session, Closed).Findings, x => x.Rule.Id == Analyzer.CloudOpenRule);
     }
 }
+
+public class AddInStartTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+    private static readonly AnalysisContext Closed = new(IsBeingWritten: false, DumpFiles: []);
+
+    [Fact]
+    public void An_add_in_built_for_an_older_NET_that_fails_to_start_says_so_with_Autodesks_article()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            ' 0:< API_ERROR { : Assembly version conflict in some references in Good.dll assembly
+            'Addin's module System.Runtime of version 8.0.0.0 conflicts with same preloaded module of version 10.0.0.0 }
+            ' 0:< API_SUCCESS { Starting External Application: Good, Class: Good.App, Vendor : GOOD(Good Ltd), Assembly: C:\Program Files\Good\Good.dll,  Assembly Version: 1.0.0.0 }
+            ' 0:< API_ERROR { : Assembly version conflict in some references in Hangers.Commands.dll assembly
+            'Addin's module System.Runtime of version 8.0.0.0 conflicts with same preloaded module of version 10.0.0.0
+            'Addin's module RevitAPI of version 25.0.0.0 conflicts with same preloaded module of version 25.5.0.0 }
+            ' 0:< API_ERROR { Starting External Application: SHPanel, Class: Hangers.Commands.SHPanel, Vendor : HNGR(Hangers Group, www.example.com), Assembly: C:\Program Files\Hangers\R2025\Hangers.Commands.dll,  Assembly Version: 2026.5.0.3 }
+            ' 0:< API_ERROR { Starting External Application: Other, Class: Other.App, Vendor : OTHR(Other Ltd), Assembly: C:\Program Files\Other\Other.dll,  Assembly Version: 1.0.0.0 }
+            """));
+        var f = Analyzer.Analyze(session, Closed).Findings.Single(x => x.Rule.Id == "metric-addin-failed-to-start");
+
+        Assert.Equal(2, f.Facts.Count);
+        Assert.EndsWith("It was built for .NET 8; this Revit runs on .NET 10.", f.Facts[0], StringComparison.Ordinal);
+        Assert.StartsWith("Add-in \"SHPanel\" (Hangers Group, www.example.com) failed to start", f.Facts[0], StringComparison.Ordinal);
+        Assert.DoesNotContain(".NET", f.Facts[1], StringComparison.Ordinal);                 // no conflict list of its own
+        Assert.Contains(f.Rule.Sources, s => s.Url.Contains("NET-10-transition", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_slow_start_names_the_add_in_the_timestamps_prove_slow()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            'E 05-Nov-2026 09:25:00.000;   0:<
+            ' 0:< API_SUCCESS { Starting External Application: Quick, Class: Quick.App, Vendor : QUIK(Quick Ltd), Assembly: C:\Quick\Quick.dll,  Assembly Version: 1.0.0.0 }
+            'C 05-Nov-2026 09:25:50.000;   0:< Notify Active View.
+            ' 0:< API_SUCCESS { Starting External Application: Loader, Class: Loader.App, Vendor : LOAD(Loader Ltd), Assembly: C:\Loader\Loader.dll,  Assembly Version: 1.0.0.0 }
+            ' 0:< API_SUCCESS { Starting External Application: Unknown, Class: Unknown.App, Vendor : UNKN(Unknown Ltd), Assembly: C:\Unknown\Unknown.dll,  Assembly Version: 1.0.0.0 }
+            'E 05-Nov-2026 09:27:30.000;   0:<
+            ' 0:< API_SUCCESS { Starting External Application: Last, Class: Last.App, Vendor : LAST(Last Ltd), Assembly: C:\Last\Last.dll,  Assembly Version: 1.0.0.0 }
+            'E 05-Nov-2026 09:27:40.000;
+            Jrn.Command "Internal" , "Display Profile Dialog , ID_REVIT_MODEL_BROWSER_OPEN"
+            """));
+        var f = Analyzer.Analyze(session, Closed).Findings.Single(x => x.Rule.Id == "metric-slow-startup");
+
+        // Loader: 50 s after Quick, proven. Unknown and Last share 100 s no timestamp divides: neither is named.
+        Assert.Equal("Add-ins that took longest to load: Loader about 50 s.", f.Facts[1]);
+        Assert.Contains(f.Rule.Sources, s => s.Url.Contains("Revit-is-slow-on-startup", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Data_that_needs_recovery_and_geometry_a_DWG_import_lost_are_explained()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            'C 18-Nov-2026 03:18:07.046;   3:< Load exception "CArchiveException", code=105: Some data in file an unnamed file needs to be recovered. In the Open dialog, select the Audit option. Then open and re-save the model.
+            ' 9:< Revit cannot import some of the geometry.
+            """));
+        var ids = Analyzer.Analyze(session, Closed).Findings.Select(x => x.Rule.Id).ToList();
+
+        Assert.Contains("model-data-needs-recovery-audit", ids);
+        Assert.Contains("dwg-cannot-import-some-geometry", ids);
+    }
+}

@@ -124,7 +124,15 @@ internal static class Metrics
                         ?? s.UserActions.FirstOrDefault(a => a.CommandId is "ID_REVIT_MODEL_BROWSER_OPEN" or "ID_STARTUP_PAGE")?.Time;
             if (ready is not { } t || s.Start is not { } start || (t - start).TotalSeconds < 120)
                 return null;
-            return [$"Revit needed {Fmt.Duration(t - start)} to start up."];
+            var facts = new List<string> { $"Revit needed {Fmt.Duration(t - start)} to start up." };
+            // Revit logs an add-in when it has finished starting, so the time since the previous one is its loading
+            // time. Only what the timestamps prove is counted: from the latest the previous one can have finished.
+            var loaded = s.AddIns.Where(a => a.Time is { } at && at <= t).ToList();
+            var slow = loaded.Skip(1).Select((a, i) => (a.Name, Took: loaded[i].LatestTime is { } before ? a.Time!.Value - before : TimeSpan.Zero))
+                .Where(x => x.Took.TotalSeconds >= 10).OrderByDescending(x => x.Took).Take(3).ToList();
+            if (slow.Count > 0)
+                facts.Add("Add-ins that took longest to load: " + string.Join(", ", slow.Select(x => $"{x.Name} about {Fmt.Duration(x.Took)}")) + ".");
+            return facts;
         },
 
         ["metric-slow-model-open"] = (s, status, _) =>
@@ -248,7 +256,8 @@ internal static class Metrics
         {
             var failed = s.AddIns.Where(a => a.Failed).ToList();
             return failed.Count > 0
-                ? [.. failed.Select(a => $"Add-in \"{a.Name}\" ({a.Vendor}) failed to start (line {a.Line}).")]
+                ? [.. failed.Select(a => $"Add-in \"{a.Name}\" ({a.Vendor}) failed to start (line {a.Line})." +
+                    (a.BuiltForNet is { } built ? $" It was built for .NET {built}; this Revit runs on .NET {a.RevitNet}." : ""))]
                 : null;
         },
 

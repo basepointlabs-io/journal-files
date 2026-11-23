@@ -686,38 +686,40 @@
         "description": "start = timestamp of 'started recording journal file'. end = block time of the first Jrn.Command with ID ID_REVIT_MODEL_BROWSER_OPEN (R2019+) or ID_STARTUP_PAGE (<=R2018), or the first ID_REVIT_FILE_OPEN / ID_FILE_MRU_FIRST if the session was started by opening a file; fallback '<-DesktopMFCApp::doStartupWarnings'. Fire if end - start > 120 s. Also report the slowest add-in group: the largest timestamp gaps between consecutive 'Starting External Application' / 'Starting External DB Application' messages and any startup BIG_GAP / elapsed-time lines (e.g. '13.081313 1:<<<wait for ...')."
       },
       "context": "Revit launch until Home/Start page",
-      "versions": "R2015-R2024",
+      "versions": "R2015-R2025",
       "title": {
         "uk": "Revit запускається дуже повільно",
         "en": "Revit takes a very long time to start"
       },
       "cause": {
-        "uk": "Від запуску Revit до появи стартової сторінки минуло понад 2 хвилини. Найчастіше запуск сповільнюють сторонні додатки, що завантажуються разом із Revit, а також мережеві шляхи (бібліотеки, шаблони на сервері) чи ліцензування.",
-        "en": "More than 2 minutes passed from launch until the Home/start page. Most often third-party add-ins loading at startup, network paths (libraries, templates on a server) or licensing slow it down."
+        "en": "More than 2 minutes passed from launch until the Home/start page. Autodesk names two causes: add-ins that take longer than expected to load, and files in the Recent Files list of Revit.ini that have moved to a different location.",
+        "uk": "Від запуску Revit до появи стартової сторінки минуло понад 2 хвилини. Autodesk називає дві причини: надбудови, що завантажуються довше, ніж очікувалось, і файли зі списку Recent Files у Revit.ini, які перемістили в інше місце."
       },
       "fix": {
-        "uk": [
-          "Тимчасово вимкніть сторонні додатки (перемістіть їхні .addin файли з папки Addins) і порівняйте час запуску.",
-          "Перевірте з ІТ, чи доступні мережеві шляхи до бібліотек і шаблонів (File > Options > File Locations).",
-          "Встановіть останнє оновлення Revit."
-        ],
         "en": [
-          "Temporarily disable third-party add-ins (move their .addin files out of the Addins folder) and compare startup time.",
-          "Check with IT that network paths for libraries and templates are reachable (File > Options > File Locations).",
-          "Install the latest Revit update."
+          "Install the latest update for Revit and the latest Autodesk Licensing Service.",
+          "Revit 2025 and later: open the Add-Ins Manager and check the Loading Time column for each add-in; disable add-ins as needed. Revit 2024 and earlier: disable the add-ins and re-enable them one at a time or in groups to find the slow one.",
+          "Close Revit, open Revit.ini in C:\\Users\\<user>\\AppData\\Roaming\\Autodesk\\Revit\\Autodesk Revit <version> with Notepad and remove all entries between [Recent File List] and [Recent Workset List].",
+          "Make sure Revit uses the high-performance graphics card."
+        ],
+        "uk": [
+          "Встановіть останнє оновлення Revit і останню версію Autodesk Licensing Service.",
+          "Revit 2025 і новіші: відкрийте Add-Ins Manager і подивіться стовпець Loading Time для кожної надбудови; вимкніть зайві. Revit 2024 і старіші: вимкніть надбудови і вмикайте їх по одній або групами, щоб знайти повільну.",
+          "Закрийте Revit, відкрийте Revit.ini у C:\\Users\\<користувач>\\AppData\\Roaming\\Autodesk\\Revit\\Autodesk Revit <версія> у Блокноті й видаліть усі записи між [Recent File List] і [Recent Workset List].",
+          "Переконайтеся, що Revit використовує високопродуктивну відеокарту."
         ]
       },
       "sources": [
         {
-          "title": "Journalysis Journal.StartupTime (source)",
-          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Models/Journal.cs"
+          "title": "Autodesk Support — Slow start up in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-is-slow-on-startup.html"
         },
         {
-          "title": "Autodesk Help: Revit Has Encountered a Fatal/Unrecoverable Error (one computer: check add-ins)",
-          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/RevitLT-Troubleshoot/files/GUID-8945E2B0-2605-4F2F-B0BC-4A059D6B298D.htm"
+          "title": "Autodesk Support — Check if add-ons are causing unexpected behavior in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Checking-if-add-ins-are-causing-unexpected-behavior-in-Revit.html"
         }
       ],
-      "confidence": "community"
+      "confidence": "official"
     },
     {
       "id": "metric-slow-model-open",
@@ -993,6 +995,9 @@
         ],
         "regex": [
           "API_ERROR \\{ Starting External (DB )?Application: ([^,]+),"
+        ],
+        "dialogs": [
+          "TaskDialog_External_Tools_External_Tool_Failure"
         ]
       },
       "metric": {
@@ -1001,38 +1006,46 @@
         "description": "Collect every 'API_ERROR { Starting External Application: <Name>, Class: <Class>, Vendor : <VendorId>(<desc>), Assembly: <path>, Assembly Version: <v> }' (and the DB variant), plus 'TaskDialog \"Revit cannot run the external application \"<Name>\"...'. Group by add-in name. Report name, vendor and assembly file name (path anonymized). Count failures across journals to see if it repeats every startup."
       },
       "context": "Revit startup, add-in loading",
-      "versions": "verified R2024; format of API_SUCCESS equivalents verified R2016-R2024",
+      "versions": "verified R2024-R2025; format of API_SUCCESS equivalents verified R2016-R2024",
       "title": {
         "uk": "Додаток (add-in) не зміг запуститися",
         "en": "An add-in failed to start"
       },
       "cause": {
-        "uk": "Під час запуску Revit не зміг завантажити один зі сторонніх додатків. Найчастіші причини: додаток не сумісний з цією версією Revit, пошкоджено його файли, бракує потрібних файлів, або файл налаштувань (.addin) вказує на неправильний шлях.",
-        "en": "Revit could not start one of the third-party add-ins during launch. Typical reasons: the add-in is not compatible with this Revit version, its files are damaged or missing, or its .addin manifest points to a wrong path."
+        "en": "Revit could not load one of the installed add-ins when it started (\"Revit cannot run the external application\"). Autodesk's steps cover a bad installation, an outdated add-in and a conflict with another add-in. Revit 2025.5 and 2026.5 are built on .NET 10, and Autodesk warns that add-ins built for an earlier .NET may fail to load until their maker updates them.",
+        "uk": "Revit не зміг завантажити одну зі встановлених надбудов під час запуску («Revit cannot run the external application»). Кроки Autodesk охоплюють пошкоджене встановлення, застарілу надбудову і конфлікт з іншою надбудовою. Revit 2025.5 і 2026.5 зібрані на .NET 10, і Autodesk попереджає, що надбудови, зібрані під старіший .NET, можуть не завантажуватись, доки виробник їх не оновить."
       },
       "fix": {
-        "uk": [
-          "Перевстановіть додаток, обравши версію саме для вашого року Revit.",
-          "Зверніться до розробника додатка (назва виробника вказана в повідомленні).",
-          "Якщо додаток не потрібен — попросіть ІТ вимкнути його (прибрати .addin файл з папки Addins)."
-        ],
         "en": [
-          "Reinstall the add-in using the build made for your Revit year.",
-          "Contact the add-in vendor (vendor name is shown in the message).",
-          "If you don't need the add-in, ask IT to disable it (remove its .addin file from the Addins folder)."
+          "Download the latest version of the add-in named in the message, uninstall the installed one (Windows Settings > Apps), check that the warning is gone when Revit starts, then install the latest version. If the add-in is not needed, do not reinstall it.",
+          "If the report says the add-in was built for an earlier .NET than this Revit runs on, ask the add-in's maker for a version that supports .NET 10 (Revit 2025.5 and 2026.5 are built on .NET 10).",
+          "If the warning returns, install the available updates for Revit.",
+          "If reinstalling and updating do not clear the warning, disable the add-ins and re-enable them one at a time or in groups to find one that conflicts.",
+          "If the warning continues when the add-in is loaded by itself, contact the maker of the add-in."
+        ],
+        "uk": [
+          "Завантажте останню версію надбудови, названої в повідомленні, видаліть встановлену (Windows Settings > Apps), перевірте, що попередження зникло під час запуску Revit, і встановіть останню версію. Якщо надбудова не потрібна, не встановлюйте її знову.",
+          "Якщо у звіті сказано, що надбудову зібрано під старіший .NET, ніж той, на якому працює цей Revit, попросіть у виробника версію з підтримкою .NET 10 (Revit 2025.5 і 2026.5 зібрані на .NET 10).",
+          "Якщо попередження повертається, встановіть доступні оновлення Revit.",
+          "Якщо перевстановлення й оновлення не допомогли, вимкніть надбудови і вмикайте їх по одній або групами, щоб знайти ту, що конфліктує.",
+          "Якщо попередження лишається, коли надбудова завантажена сама, зверніться до її виробника."
         ]
       },
       "sources": [
         {
-          "title": "Real R2024 journal excerpt: API_ERROR Starting External Application + TaskDialog (bringfire/bim-agent-lab)",
-          "url": "https://github.com/bringfire/bim-agent-lab/blob/HEAD/projects/revit-readiness/docs/verification/host-diagnostic-startup-evidence/repeated-startup-journal.txt"
+          "title": "Autodesk Support — \"Revit cannot run the external application...\" when opening Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-cannot-run-the-external-application.html"
         },
         {
-          "title": "Journalysis LoadedAssemblyAnalyzer (parsing of Starting External Application)",
-          "url": "https://github.com/andydandy74/Journalysis/blob/master/Journalysis.Core/Analysis/LoadedAssemblyAnalyzer.cs"
+          "title": "Autodesk Support — Revit: Requirements for products affected by the Microsoft .NET 10 transition",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit--Requirements-for-products-affected-by-the-Microsoft--NET-10-transition.html"
+        },
+        {
+          "title": "Autodesk Support — Check if add-ons are causing unexpected behavior in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Checking-if-add-ins-are-causing-unexpected-behavior-in-Revit.html"
         }
       ],
-      "confidence": "community"
+      "confidence": "official"
     },
     {
       "id": "metric-addin-managed-exceptions",

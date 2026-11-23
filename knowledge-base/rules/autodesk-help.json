@@ -5963,6 +5963,111 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "model-data-needs-recovery-audit",
+      "category": "file-corruption",
+      "severity": "high",
+      "match": {
+        "any": [
+          "needs to be recovered. In the Open dialog, select the Audit option"
+        ],
+        "translations": [
+          "müssen wiederhergestellt werden. Wählen Sie im Dialogfeld Öffnen die Option",
+          "doivent être récupérées. Dans la boîte de dialogue Ouvrir, sélectionnez",
+          "deben recuperarse. En el cuadro de diálogo Abrir, seleccione la opción Revisar.",
+          "devono essere ripristinati. Nella finestra di dialogo Apri, selezionare",
+          "precisam ser recuperados. Na caixa de diálogo Abrir, selecione a opção Auditar."
+        ]
+      },
+      "context": "Opening a model or a link, or reloading the central model during a synchronize; in the journal also as CArchiveException, code 105.",
+      "title": {
+        "en": "Some data in the model needs to be recovered (open with Audit)",
+        "uk": "Частину даних моделі треба відновити (відкрити з Audit)"
+      },
+      "cause": {
+        "en": "Revit found data it could not read in the model, in one of its links or in the copy of the central model it was loading. For a cloud model Autodesk names conflicting add-ins and a corrupt local cache as causes.",
+        "uk": "Revit знайшов дані, які не зміг прочитати, у моделі, в одному з її зв'язків або в копії центральної моделі, яку завантажував. Для хмарної моделі Autodesk називає причинами конфлікт надбудов і пошкоджений локальний кеш."
+      },
+      "fix": {
+        "en": [
+          "Open the model with the Audit option selected in the Open dialog, then save it again.",
+          "If the model cannot be opened with Audit, open each linked model with Audit and save it again. To find the link: open the host model with all worksets closed (Specify), then open the linked model directly with Audit and save it.",
+          "Cloud model that will not open: uninstall the Issues Add-in for this Revit version (Control Panel > Programs & Features), restart the computer and try again; also test with all add-ins disabled.",
+          "Close all Revit sessions, then clear the cloud model cache, the CefCache folder (C:\\Users\\<user>\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit <version>\\CefCache) and the Windows Temp folder.",
+          "If files get corrupted from time to time, check that Revit Personal Accelerator is working."
+        ],
+        "uk": [
+          "Відкрийте модель, позначивши Audit у вікні Open, і збережіть її знову.",
+          "Якщо модель не відкривається з Audit, відкрийте кожну зв'язану модель з Audit і збережіть її. Щоб знайти потрібний зв'язок: відкрийте головну модель із закритими робочими наборами (Specify), потім відкрийте зв'язану модель напряму з Audit і збережіть.",
+          "Хмарна модель не відкривається: видаліть Issues Add-in для цієї версії Revit (Control Panel > Programs & Features), перезавантажте комп'ютер і спробуйте знову; перевірте також з усіма вимкненими надбудовами.",
+          "Закрийте всі сеанси Revit, потім очистіть кеш хмарних моделей, папку CefCache (C:\\Users\\<користувач>\\AppData\\Local\\Autodesk\\Revit\\Autodesk Revit <версія>\\CefCache) і папку Windows Temp.",
+          "Якщо файли пошкоджуються час від часу, перевірте, чи працює Revit Personal Accelerator."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Some data in the file needs to be recovered. In the Open dialog, select the Audit option.\" when opening a cloud model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Some-data-in-the-file-needs-to-be-recovered-In-the-Open-dialog-select-the-Audit-option-Then-open-and-re-save-the-model.html"
+        },
+        {
+          "title": "Autodesk Support — \"The model could not be opened: Some data in file an unnamed file needs to be recovered\" when opening a project in Revit from Autodesk Forma",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-model-could-not-be-opened-Some-data-in-file-an-unnamed-file-needs-to-be-recovered-when-opening-a-project-in-Revit-from-Autodesk-Construction-Cloud.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "dwg-cannot-import-some-geometry",
+      "category": "link-import",
+      "severity": "low",
+      "match": {
+        "any": [
+          "Revit cannot import some of the geometry",
+          "Bad edge loop in createSolids"
+        ],
+        "translations": [
+          "Grund können verschiedene Probleme mit der Ausgangsdatei sein. Passen Sie die",
+          "Ce résultat peut être lié à divers problèmes au niveau du fichier source.",
+          "Este resultado puede deberse a varios problemas en el archivo de origen. Ajuste",
+          "Questa situazione può essere causata da diversi problemi nel file di origine.",
+          "Esse resultado pode ser causado por diversos problemas com o arquivo de origem."
+        ]
+      },
+      "context": "Linking or importing a DWG; the imported geometry is incomplete or missing.",
+      "title": {
+        "en": "DWG: Revit could not import some of the geometry",
+        "uk": "DWG: Revit не зміг імпортувати частину геометрії"
+      },
+      "cause": {
+        "en": "Revit could not convert part of the geometry in the DWG being linked or imported, so the result is incomplete. Autodesk: the cause is in the source file, for example objects made by AutoCAD-based applications, duplicate or overlapping geometry, errors in the drawing, or coordinates far from the origin.",
+        "uk": "Revit не зміг перетворити частину геометрії з DWG, який зв'язували або імпортували, тому результат неповний. Autodesk: причина у вихідному файлі, наприклад об'єкти з програм на основі AutoCAD, дубльована геометрія або геометрія з накладанням, помилки в кресленні чи координати далеко від початку."
+      },
+      "fix": {
+        "en": [
+          "Clean the DWG in AutoCAD before bringing it into Revit: EXPLODE the geometry, OVERKILL to remove duplicate and overlapping geometry, AUDIT (answer Y to fix errors), PURGE, then save.",
+          "If the DWG has objects from an AutoCAD-based application, export them to plain AutoCAD objects first; the EXPORTTOACAD command simplifies the geometry.",
+          "Move the model close to 0,0,0 in AutoCAD if its coordinates are very large.",
+          "If it still fails, export the DWG to SAT and load the SAT file, or export to IFC and link the IFC."
+        ],
+        "uk": [
+          "Очистіть DWG в AutoCAD перед завантаженням у Revit: EXPLODE для геометрії, OVERKILL для дублікатів і накладань, AUDIT (відповісти Y, щоб виправити помилки), PURGE, потім зберегти.",
+          "Якщо в DWG є об'єкти з програми на основі AutoCAD, спершу експортуйте їх у звичайні об'єкти AutoCAD; команда EXPORTTOACAD спрощує геометрію.",
+          "Перемістіть модель ближче до 0,0,0 в AutoCAD, якщо її координати дуже великі.",
+          "Якщо не допомогло, експортуйте DWG у SAT і завантажте SAT, або експортуйте в IFC і зв'яжіть IFC."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Revit cannot import some of the geometry\" appears when trying to link or import a DWG file into Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-cannot-import-some-of-the-geometry-appears-when-trying-to-link-or-import-a-DWG-file-into-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"Revit cannot import some of the geometry\" warning when importing DWG into Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-cannot-import-some-of-the-geometry-importing-DWG-into-Revit.html"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }

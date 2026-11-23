@@ -45,6 +45,12 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"^\s*'\s+(\d+\.\d+)!*\s+1:<<(?!<)(.+?)\s*$")] private static partial Regex TopLevelTimingRegex();
     [GeneratedRegex(@"(API_SUCCESS|API_ERROR) \{ Starting External (?:DB )?Application: (.+?), Class: .+?, Vendor : ([^(,]*)\(([^)]*)\)")]
     private static partial Regex AddInRegex();
+    [GeneratedRegex(@"Assembly: .*?([^\\,]+\.dll),\s+Assembly Version", RegexOptions.IgnoreCase)] private static partial Regex AddInAssemblyRegex();
+    [GeneratedRegex(@"conflict in some references in (\S+) assembly")] private static partial Regex ConflictAssemblyRegex();
+    [GeneratedRegex(@"module System\.Runtime of version (\d+)\.\S* conflicts with same preloaded module of version (\d+)\.")] private static partial Regex ConflictRuntimeRegex();
+    private string? _conflictAssembly;
+    private bool _stampFresh, _stampedAbove;
+    private (int Built, int Revit)? _conflictNet;
     [GeneratedRegex(@"API External Application added: (.+?), Class: .+?, VendorId: ([^,]*)")] private static partial Regex AddInLegacyRegex();
     [GeneratedRegex(@"Rvt\.Attr\.(\w+): (.*?)(?= Rvt\.Attr\.|\s*$)")] private static partial Regex FileInfoAttrRegex();
     [GeneratedRegex(@"Autodesk Revit (\d{4}) \(Build: ([^)]+)\)")] private static partial Regex SavedInRegex();
@@ -118,9 +124,17 @@ public sealed partial class JournalParser
             return;
         }
 
+        // A timestamp line without a message stamps the record that follows it; journal data lines may come in between.
+        _stampedAbove = _stampFresh;
+        if (!line.Contains("[Jrn.", StringComparison.Ordinal))
+            _stampFresh = false;
         if (JournalTimestamp.TryParse(line, out var t))
         {
             _ts = t;
+            _stampFresh = line.AsSpan().TrimEnd().EndsWith(":<", StringComparison.Ordinal);
+            // The add-ins logged since the previous timestamp started no later than now.
+            for (int i = s.AddIns.Count - 1; i >= 0 && s.AddIns[i].LatestTime is null; i--)
+                s.AddIns[i].LatestTime = t;
             s.Start ??= t;
             s.LastTimestamp = t;
             if (line.Contains("finished recording journal file", StringComparison.Ordinal))
@@ -228,8 +242,23 @@ public sealed partial class JournalParser
                 sync.Errors.Add(ex);
         }
 
+        // Before an add-in starts Revit lists the modules it references in other versions than Revit has loaded;
+        // System.Runtime among them tells which .NET the add-in was built for.
+        if (line.Contains("Assembly version conflict in some references in ", StringComparison.Ordinal) && ConflictAssemblyRegex().Match(line) is { Success: true } ca)
+            (_conflictAssembly, _conflictNet) = (ca.Groups[1].Value, null);
+        else if (_conflictAssembly is not null && line.Contains("Addin's module System.Runtime of version ", StringComparison.Ordinal) &&
+                 ConflictRuntimeRegex().Match(line) is { Success: true } cr)
+            _conflictNet = (int.Parse(cr.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(cr.Groups[2].Value, CultureInfo.InvariantCulture));
+
         if (line.Contains("Starting External", StringComparison.Ordinal) && AddInRegex().Match(line) is { Success: true } a)
-            s.AddIns.Add(new AddIn(n, a.Groups[2].Value.Trim(), a.Groups[3].Value.Trim(), a.Groups[4].Value.Trim(), a.Groups[1].Value == "API_ERROR"));
+        {
+            string file = AddInAssemblyRegex().Match(line) is { Success: true } af ? af.Groups[1].Value : "";
+            var net = _conflictNet is { } c && c.Built < c.Revit && file.Equals(_conflictAssembly, StringComparison.OrdinalIgnoreCase) ? _conflictNet : null;
+            s.AddIns.Add(new AddIn(n, a.Groups[2].Value.Trim(), a.Groups[3].Value.Trim(), a.Groups[4].Value.Trim(), a.Groups[1].Value == "API_ERROR")
+            {
+                Time = _ts, LatestTime = _stampedAbove ? _ts : null, BuiltForNet = net?.Built, RevitNet = net?.Revit,
+            });
+        }
         else if (line.Contains("API External Application added", StringComparison.Ordinal) && AddInLegacyRegex().Match(line) is { Success: true } la)
             s.AddIns.Add(new AddIn(n, la.Groups[1].Value.Trim(), la.Groups[2].Value.Trim(), la.Groups[2].Value.Trim(), false));
 
