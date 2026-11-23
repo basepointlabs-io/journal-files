@@ -6068,6 +6068,256 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "mep-duct-pipe-opposite-direction",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "has been modified to be in the opposite direction causing the connections to be invalid"
+        ],
+        "translations": [
+          "Der Luftkanal/das Rohr wurde geändert und zeigt jetzt in die entgegengesetzte",
+          "La gaine/canalisation a été modifiée. Comme elle se trouve à présent dans la",
+          "El conducto o la tubería se ha modificado y orientado en la dirección opuesta,",
+          "La direzione del condotto/tubazione è stata invertita. Questa operazione ha",
+          "O duto/tubo foi modificado para estar na direção oposta causando a invalidade"
+        ]
+      },
+      "context": "Opening, upgrading or synchronizing a model with ducts or pipes; MEP elements end up disconnected.",
+      "title": {
+        "en": "Duct or pipe reversed direction, connections became invalid",
+        "uk": "Повітровід або труба змінили напрямок, з'єднання стали недійсними"
+      },
+      "cause": {
+        "en": "Revit reversed a duct or pipe and its connections no longer hold, so MEP elements get disconnected and branches can shift. Autodesk: on open or synchronize this happens when elements in a linked model have moved and elements of this model are hosted to them; it also appears when a model is upgraded.",
+        "uk": "Revit розвернув повітровід або трубу, і з'єднання більше не тримаються: елементи MEP роз'єднуються, гілки можуть зміститись. Autodesk: під час відкриття чи синхронізації це стається, коли елементи у зв'язаній моделі перемістились, а елементи цієї моделі розміщені на них; також з'являється під час оновлення моделі до нової версії."
+      },
+      "fix": {
+        "en": [
+          "In the error dialog click Export and save the report; it lists the ids of the elements.",
+          "Find each element: Manage tab > Inquiry panel > Select by ID, type the id and click Show. Check the duct or pipe connection there, then disconnect and reconnect it or remove the element that causes the displacement.",
+          "If the elements are hosted on a linked model, rehost them to this model instead of the link.",
+          "If this appeared during an upgrade: open the model in the Revit version it was created in, fix the listed connections there, save, and upgrade again.",
+          "To avoid it: do not host elements on linked models; place them with Place on Work Plane on a level of the host model."
+        ],
+        "uk": [
+          "У вікні помилки натисніть Export і збережіть звіт; у ньому є id елементів.",
+          "Знайдіть кожен елемент: Manage > Inquiry > Select by ID, введіть id і натисніть Show. Перевірте там з'єднання повітроводу чи труби, роз'єднайте й з'єднайте знову або видаліть елемент, що спричиняє зміщення.",
+          "Якщо елементи розміщені на зв'язаній моделі, перенесіть їх на цю модель замість зв'язку.",
+          "Якщо це з'явилось під час оновлення: відкрийте модель у версії Revit, в якій її створено, виправте там перелічені з'єднання, збережіть і оновіть знову.",
+          "Щоб уникнути: не розміщуйте елементи на зв'язаних моделях; ставте їх через Place on Work Plane на рівень основної моделі."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The duct/pipe has been modified to be in the opposite direction causing the connections to be invalid.\" when opening or syncing a Revit model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-Error-The-duct-pipe-has-been-modified-to-be-in-the-opposite-direction-causing-the-connections-to-be-invalid-on-sync-to-central.html"
+        },
+        {
+          "title": "Autodesk Support — \"The duct/pipe has been modified to be in the opposite direction causing the connections to be invalid.\" when upgrading model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-duct-pipe-has-been-modified-to-be-in-the-opposite-direction-causing-the-connections-to-be-invalid-when-upgrading-model-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — \"The family is connected in a network and can no longer keep the connectivity\" when reopening or synchronizing project containing sloped pipe in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-family-is-connected-in-a-network-and-can-no-longer-keep-the-connectivity-when-reopening-project-containing-sloped-pipe.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "mep-family-cannot-keep-connectivity",
+      "category": "model-warnings",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "The family is connected in a network and can no longer keep the connectivity"
+        ],
+        "translations": [
+          "Die Familie ist in einem Netz verbunden und kann die Verbindung nicht aufrecht",
+          "La famille est connectée à un réseau et la connectivité ne peut pas être",
+          "La familia está conectada a una red y no puede mantener la conectividad.",
+          "La famiglia è collegata ad una rete e non è più possibile mantenere il",
+          "A família está conectada em uma rede rede e não é possível manter a"
+        ]
+      },
+      "context": "Opening or synchronizing a project with sloped pipe, or after the connection to a link is broken.",
+      "title": {
+        "en": "A family can no longer stay connected to its duct or pipe network",
+        "uk": "Сімейство більше не може лишатись з'єднаним із мережею труб чи повітроводів"
+      },
+      "cause": {
+        "en": "Revit asks whether to disconnect a family from its network because the connection can no longer be kept. Autodesk: this is by design; it happens with elements hosted on a linked model, when the link changes or its connection is broken (the file was moved or the linked location is not accessible).",
+        "uk": "Revit питає, чи від'єднати сімейство від мережі, бо з'єднання вже не втримати. Autodesk: так задумано; це стається з елементами, розміщеними на зв'язаній моделі, коли зв'язок змінюється або з'єднання з ним втрачено (файл перемістили чи місце зв'язку недоступне)."
+      },
+      "fix": {
+        "en": [
+          "Check that the linked models are loaded and their location is accessible before opening or synchronizing.",
+          "When placing elements, avoid hosting them on linked models.",
+          "Use the Place on Work Plane option to place elements in the host model; it needs an active work plane in the view, such as a level of the host model.",
+          "Make sure the elements have a consistent associated level."
+        ],
+        "uk": [
+          "Перед відкриттям чи синхронізацією перевірте, що зв'язані моделі завантажені і їхнє розташування доступне.",
+          "Розміщуючи елементи, не ставте їх на зв'язані моделі.",
+          "Ставте елементи в основну модель через Place on Work Plane; потрібна активна робоча площина у виді, наприклад рівень основної моделі.",
+          "Перевірте, що в елементів узгоджений пов'язаний рівень."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The family is connected in a network and can no longer keep the connectivity\" when reopening or synchronizing project containing sloped pipe in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-family-is-connected-in-a-network-and-can-no-longer-keep-the-connectivity-when-reopening-project-containing-sloped-pipe.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "created-elements-not-visible-in-view",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "any": [
+          "None of the created elements are visible in"
+        ],
+        "translations": [
+          "sichtbar. Überprüfen Sie die aktuelle Ansicht, die Parameter und die",
+          ". Il serait peut-être utile de vérifier la vue active, ses paramètres et les",
+          ". Compruebe la vista activa, sus parámetros y su configuración de visibilidad.",
+          ". Controllare la vista attiva, i parametri e le impostazioni di visibilità.",
+          ". Verifique a vista ativa, seus parâmetros e as configurações de visibilidade.",
+          "sichtbar. Sie sollten die aktive Ansicht überprüfen, deren Paramenter und",
+          ". Vous devez peut être vérifier les paramètres de la vue, ses paramètres de",
+          ". Compruebe la vista activa, sus parámetros y la configuración de visibilidad,",
+          ". Può essere opportuno controllare la vista o la regione di pianta attiva, i",
+          ". É possível marcar a vista ativa, seus parâmetros, e configurações de"
+        ]
+      },
+      "context": "Right after creating an element, a section or a link: the new item does not show in the active view.",
+      "title": {
+        "en": "The new elements are not visible in the active view",
+        "uk": "Нові елементи не видно в активному виді"
+      },
+      "cause": {
+        "en": "Revit created the elements, but the settings of the view keep them from being displayed. Autodesk: check the active view, its parameters and visibility settings, and any plan regions; with design options, the option settings of the view.",
+        "uk": "Revit створив елементи, але налаштування виду не дають їх показати. Autodesk: перевірте активний вид, його параметри й видимість, а також Plan Regions; якщо є варіанти конструкції, то їхні налаштування для виду."
+      },
+      "fix": {
+        "en": [
+          "View tab > Graphics panel > Visibility/Graphics: on the Model Categories and Annotation Categories tabs select the Visibility check box for the kind of element you added.",
+          "In the same dialog, on the Design Options tab, set each option set to Automatic or to the active option.",
+          "Check the view's parameters and any Plan Regions and their settings, as the warning says."
+        ],
+        "uk": [
+          "View > Graphics > Visibility/Graphics: на вкладках Model Categories і Annotation Categories увімкніть Visibility для типу доданих елементів.",
+          "У тому ж вікні на вкладці Design Options поставте для кожного набору Automatic або активний варіант.",
+          "Перевірте параметри виду та Plan Regions і їхні налаштування, як сказано в попередженні."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"None of the created elements are visible in the view\" in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-None-of-the-created-elements-are-visible-in-the-view.html"
+        },
+        {
+          "title": "Autodesk Help — None of the Created Elements Are Visible in This View",
+          "url": "https://help.autodesk.com/cloudhelp/2022/ENU/Revit-Troubleshooting/files/GUID-C8CD1120-5E5C-4C94-82D9-206ADFB3C031.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "paste-selection-not-visible-in-view",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "any": [
+          "be pasted because it is not visible in this view"
+        ],
+        "translations": [
+          "Ein Beschriftungselement liegt außerhalb des Beschriftungszuschnitts der",
+          "Un élément d'annotation tombe hors du cadrage de l'annotation de cet",
+          "Un elemento de anotación queda fuera del recorte de anotación de esta vista",
+          "Un elemento di annotazione si trova all'esterno del contorno di taglio di",
+          "Um elemento de anotação fica fora do corte de anotação desta vista (desative"
+        ]
+      },
+      "context": "Copy and paste between views, often dependent views.",
+      "title": {
+        "en": "Paste refused: the selection is not visible in this view",
+        "uk": "Вставлення відхилено: вибране не видно в цьому виді"
+      },
+      "cause": {
+        "en": "Revit does not paste what the target view cannot show. Autodesk lists the common causes: the category is hidden in the view, an annotation falls outside the view's annotation crop, or the element tagged by an annotation is not visible. Between dependent views Autodesk has an open incident with no resolution.",
+        "uk": "Revit не вставляє те, чого цільовий вид не може показати. Autodesk називає типові причини: категорія прихована у виді, анотація виходить за межі Annotation Crop або елемент, до якого прив'язана анотація, не видно. Для залежних видів у Autodesk є відкритий інцидент без рішення."
+      },
+      "fix": {
+        "en": [
+          "Make the category visible in the target view.",
+          "Temporarily turn off annotation cropping in the target view, paste, then turn it back on.",
+          "If you are pasting a tag, check the view extents and depth so the tagged element is visible.",
+          "Between dependent views: copy and paste in the primary views instead.",
+          "If it keeps failing: duplicate the other views of that level with Duplicate with Detailing, replace the originals on sheets with the copies, and delete the originals."
+        ],
+        "uk": [
+          "Зробіть категорію видимою в цільовому виді.",
+          "Тимчасово вимкніть Annotation Crop у цільовому виді, вставте, потім увімкніть знову.",
+          "Якщо вставляєте марку, перевірте межі й глибину виду, щоб елемент із маркою було видно.",
+          "Між залежними видами: копіюйте і вставляйте в основних (Primary) видах.",
+          "Якщо не допомагає: продублюйте інші види цього рівня через Duplicate with Detailing, замініть оригінали на аркушах копіями й видаліть оригінали."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The selection can’t be pasted…\" copying from dependent views in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-selection-can-t-be-pasted-copying-from-dependent-views-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "element-too-small-on-screen",
+      "category": "other",
+      "severity": "info",
+      "match": {
+        "any": [
+          "Element is too small on screen"
+        ],
+        "translations": [
+          "Element ist auf dem Bildschirm zu klein",
+          "L'élément est trop petit sur l'écran",
+          "El elemento es demasiado pequeño en pantalla",
+          "L'elemento è troppo piccolo sullo schermo",
+          "O elemento está muito pequeno na tela"
+        ]
+      },
+      "context": "Drawing or moving an element by a very small distance.",
+      "title": {
+        "en": "Element is too small on screen",
+        "uk": "Елемент замалий на екрані"
+      },
+      "cause": {
+        "en": "Autodesk: Revit stops you from accidentally drawing an element, typically a wall, reference plane or line, shorter than 1 mm (1/32\") on the screen; in some situations there is also a minimum distance for moving an element.",
+        "uk": "Autodesk: Revit не дає випадково накреслити елемент (зазвичай стіну, опорну площину чи лінію), коротший за 1 мм (1/32\") на екрані; інколи є й мінімальна відстань для переміщення елемента."
+      },
+      "fix": {
+        "en": [
+          "If you do mean to make the element that small, zoom in the view and draw it again.",
+          "To move an element a very small distance, nudge it with the arrow keys; each press moves it by a distance that depends on the current zoom."
+        ],
+        "uk": [
+          "Якщо елемент справді має бути таким малим, наблизьте вид і накресліть знову.",
+          "Щоб перемістити елемент на дуже малу відстань, посувайте його клавішами зі стрілками; крок залежить від поточного масштабу."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help — Element Is Too Small on Screen",
+          "url": "https://help.autodesk.com/cloudhelp/2022/ENU/Revit-Troubleshooting/files/GUID-064B3C67-29FA-49AA-8BB3-E118FB28C3E5.htm"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }
