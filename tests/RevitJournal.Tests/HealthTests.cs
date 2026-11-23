@@ -84,6 +84,23 @@ public class HealthTests
     }
 
     [Fact]
+    public void Less_RAM_than_Autodesks_minimum_is_a_quiet_issue_not_all_good()
+    {
+        var probe = new FakeProbe { TotalRam = 8_192, FreeRam = 3_400, CommitLimit = 11_000, CommitFree = 5_000 };
+        probe.Revits.Clear();
+        var monitor = new HealthMonitor(probe);
+
+        var r = monitor.Tick();
+
+        Assert.Equal(HealthLevel.Watch, r.Level);
+        var issue = r.Issues.Single(i => i.Key == "requirement:RAM");
+        Assert.Equal("RAM: 8.0 GB, less than Autodesk's minimum", issue.Title);
+        Assert.Contains("Autodesk asks for 16 GB", issue.Advice);
+        Assert.Contains("[Autodesk: System requirements", issue.Advice);
+        Assert.Empty(monitor.NewAlerts);                                            // shown in the panel, no notification
+    }
+
+    [Fact]
     public void Models_too_large_together_are_a_quiet_issue_with_Autodesks_advice()
     {
         var monitor = new HealthMonitor(new FakeProbe());   // 32 GB

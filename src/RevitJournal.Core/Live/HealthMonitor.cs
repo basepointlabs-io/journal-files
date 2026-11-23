@@ -181,6 +181,13 @@ public sealed class HealthMonitor(ISystemProbe probe)
                 AutodeskArticle.CloudModelCorrupt.Cite("Ensure sufficient hard disk space is available on the C: drive: 20 times the model size (to extract it to the temp folder when it opens) plus 3 times all linked RVT models (the cloud cache).") + " " +
                 AutodeskArticle.DiskFull.Cite("Work with your IT support to free up space, and run Windows Disk Cleanup.")));
 
+        // Every other figure this computer falls short of: the status must not say "enough resources" while a dial says
+        // otherwise. Free disk is judged above, by the same 30 GB and the cloud cache.
+        foreach (var short_ in requirements.Where(r => r.Level != HealthLevel.Ok && !r.Item.StartsWith("Free disk", StringComparison.Ordinal)))
+            issues.Add(new HealthIssue($"requirement:{short_.Item}", short_.Level,
+                $"{short_.Item}: {short_.Value}" + (short_.Note.Length > 0 ? $", {short_.Note}" : ""),
+                short_.Source.Cite($"Autodesk asks for {short_.Autodesk}.")));
+
         issues = [.. issues.OrderByDescending(i => i.Level)];
         var report = new HealthReport(now.Time, issues.Count == 0 ? HealthLevel.Ok : issues[0].Level,
             now.TotalRamMb, now.FreeRamMb, now.CommitLimitMb, now.CommitFreeMb, Math.Clamp(cpu, 0, 100),
