@@ -367,6 +367,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (page != AnswerPage)
             _shownSymptom = null;
         ReportActions.Visibility = page == ReportPage ? Visibility.Visible : Visibility.Collapsed;
+        UpdateFooter();
         HomeNav.IsChecked = page == HomePage;
         // Leaving the report clears the selection, so clicking the same session again opens it again.
         if (page != ReportPage)
@@ -529,14 +530,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         if (_items.Count == 0)
         {
-            StatusLine.Text = $"No Revit journals found in {JournalLocator.DefaultRoot}. Use \"Open journal…\" or drag a file here.";
+            SetStatus($"No Revit journals found in {JournalLocator.DefaultRoot}. Use \"Open journal…\" or drag a file here.");
             _analyzed.TrySetResult();
             return;
         }
 
         var pending = _items.Where(i => i.Result is null).ToList();
         int done = 0;
-        StatusLine.Text = $"Checking {pending.Count} journals…";
+        SetStatus($"Checking {pending.Count} journals…");
         try
         {
             await Parallel.ForEachAsync(pending, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cts.Token },
@@ -544,11 +545,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 {
                     await AnalyzeAsync(item);
                     int n = Interlocked.Increment(ref done);
-                    await Dispatcher.InvokeAsync(() => StatusLine.Text = $"Checked {n} of {pending.Count} journals");
+                    await Dispatcher.InvokeAsync(() => SetStatus($"Checked {n} of {pending.Count} journals"));
                 });
             int crashes = _items.Count(i => i.StatusKey == "crash");
             int problems = _items.Count(i => i.StatusKey is "warning" or "abnormal");
-            StatusLine.Text = $"{_items.Count} journals · {crashes} crashed · {problems} with problems";
+            SetStatus("");
             UpdateHints();
             _analyzed.TrySetResult();
         }
@@ -697,6 +698,17 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             await OpenExternalAsync(dialog.FileName);
     }
 
+    /// <summary>A passing message under the card; empty hides it.</summary>
+    private void SetStatus(string text)
+    {
+        StatusLine.Text = text;
+        UpdateFooter();
+    }
+
+    /// <summary>The row under the card takes room only while it shows something.</summary>
+    private void UpdateFooter() =>
+        Footer.Visibility = ReportActions.Visibility == Visibility.Visible || StatusLine.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
     private void OnShowInFolder(object sender, RoutedEventArgs e)
     {
         if (Sessions.SelectedItem is JournalItem item)
@@ -708,7 +720,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (Sessions.SelectedItem is JournalItem { Result: { } r })
         {
             Clipboard.SetText(TextReport.Render(r));
-            StatusLine.Text = "Report copied. It contains file paths and names from the journal — check before sharing.";
+            SetStatus("Report copied. It contains file paths and names from the journal — check before sharing.");
         }
     }
 
