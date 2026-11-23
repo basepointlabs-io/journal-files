@@ -172,3 +172,38 @@ public class IfcExportTests
         Assert.DoesNotContain(f.Facts, x => x.Contains("crashed", StringComparison.Ordinal));
     }
 }
+
+/// <summary>A cloud model open that never reaches the model; the lines follow a real journal, ids made up.</summary>
+public class CloudOpenTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+    private static readonly AnalysisContext Closed = new(IsBeingWritten: false, DumpFiles: []);
+
+    private const string ModelPath = """
+        ' 1:< ModelPath Created: Is server path = True, Region = "EMEA", Central server = "", Path = "CLD:\\EMEA\{11111111-1111-1111-1111-111111111111}Project\{22222222-2222-2222-2222-222222222222}Tower_ELT.rvt"
+        """;
+
+    [Fact]
+    public void A_cloud_open_that_never_reaches_the_model_is_reported_with_its_name()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, ModelPath, """
+            'C 23-Nov-2026 09:57:08.205;   0:< Open Cloud Model Method: open, Region: EMEA, Model Guid: 22222222-2222-2222-2222-222222222222, Project Guid: 11111111-1111-1111-1111-111111111111.
+            ' 0:< 23-Nov-2026 09:57:09:056; {"http_method":"GET","http_url":"https://model.skyscraper.eu.autodesk.com/ModelService2015/api/projects/x/models/y","duration":204,"http_response_code":200}
+            'C 23-Nov-2026 10:11:23.354;   0:< License Idle: Enter
+            """));
+        var f = Analyzer.Analyze(session, Closed).Findings.Single(x => x.Rule.Id == Analyzer.CloudOpenRule);
+
+        Assert.StartsWith("Revit started opening Tower_ELT.rvt (region EMEA) at 09:57:08 but never got as far as reading it", f.Facts[0], StringComparison.Ordinal);
+        Assert.Contains(f.Rule.Sources, s => s.Url.Contains("internet-connection", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_cloud_open_that_reaches_the_worksharing_log_is_fine()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, ModelPath, """
+            'C 29-Oct-2026 11:38:35.642;   0:< Open Cloud Model Method: open, Region: EMEA, Model Guid: 22222222-2222-2222-2222-222222222222, Project Guid: 11111111-1111-1111-1111-111111111111
+            ' 5:< SLOG $05033e0a 2026-10-29 11:38:37.781 >Open
+            """, Fixtures.NormalEnd));
+        Assert.DoesNotContain(Analyzer.Analyze(session, Closed).Findings, x => x.Rule.Id == Analyzer.CloudOpenRule);
+    }
+}

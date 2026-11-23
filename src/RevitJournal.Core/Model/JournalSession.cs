@@ -46,7 +46,7 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
         c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
         c.Dialogs.AddRange(Dialogs); c.LongOperations.AddRange(LongOperations); c.AddIns.AddRange(AddIns); c.Models.AddRange(Models);
         c.Exceptions.AddRange(Exceptions); c.Interactions.AddRange(Interactions); c.PostedMessages.AddRange(PostedMessages);
-        c.Orphans.AddRange(Orphans); c.RegenFailures.AddRange(RegenFailures); c.IfcFailures.AddRange(IfcFailures); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
+        c.Orphans.AddRange(Orphans); c.RegenFailures.AddRange(RegenFailures); c.CloudOpens.AddRange(CloudOpens.Select(o => o with { })); c.IfcFailures.AddRange(IfcFailures); c.FatalMarkers.AddRange(FatalMarkers); c.AddInActivity.AddRange(AddInActivity);
         c.ModelFiles.AddRange(ModelFiles);
         c.Syncs.AddRange(Syncs.Select(s => s.Clone()));
         c.Opens.AddRange(Opens.Select(o => o.Clone()));
@@ -108,6 +108,8 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
     public List<OrphanedHosted> Orphans { get; } = [];
     /// <summary>"System exception in ADocument::regenerate": the element Revit could not regenerate and the transactions it was in.</summary>
     public List<RegenFailure> RegenFailures { get; } = [];
+    /// <summary>Cloud models the user asked to open ("Open Cloud Model Method: open"), and whether Revit got as far as reading them.</summary>
+    public List<CloudOpen> CloudOpens { get; } = [];
     /// <summary>Elements the IFC exporter could not export ("IFC error: Exporting element", "failed in IFC export").</summary>
     public List<IfcExportFailure> IfcFailures { get; } = [];
     /// <summary>The last line that shows an IFC export at work (its transaction, its errors); 0 when none.</summary>
@@ -190,6 +192,15 @@ public sealed record Interaction(int Line, DateTime? Time, InteractionKind Kind,
 }
 
 public sealed record OrphanedHosted(int Line, long ElementId, long LinkId);
+
+/// <summary>
+/// A cloud model the user asked to open. A cloud open that works reaches the worksharing log within seconds
+/// ("SLOG ... &gt;Open"); <see cref="Reached"/> stays false when it never does.
+/// </summary>
+public sealed record CloudOpen(int Line, DateTime? Time, string ModelGuid, string Region)
+{
+    public bool Reached { get; set; }
+}
 
 /// <summary>An element the IFC exporter could not export: "MW" 9133737, with the exporter's reason ("Faceting failed.").</summary>
 public sealed record IfcExportFailure(int Line, long ElementId, string ElementName, string Reason);

@@ -35,6 +35,7 @@ public sealed partial class JournalParser
     [GeneratedRegex(@"^\s*'\s*\d+:<\s*(?:Error: )?(.+?)\s*$")] private static partial Regex LoggedMessageRegex();
     [GeneratedRegex(@"Dependent family or tag (\d+) on link (\d+)")] private static partial Regex OrphanRegex();
     [GeneratedRegex(@"<\s+element (\d+) of type (\w+)")] private static partial Regex RegenElementRegex();
+    [GeneratedRegex(@"Open Cloud Model Method: \w+, Region: (\w+), Model Guid: ([0-9a-fA-F-]{36})")] private static partial Regex CloudOpenRegex();
     [GeneratedRegex(@"IFC error: Exporting element ""(.*?)"",(\d+) - ([\w.]+)")] private static partial Regex IfcErrorRegex();
     [GeneratedRegex(@"failed in IFC export for reason: ""(.*?)"" in element ""(.*?)"" with id (\d+)")] private static partial Regex IfcFacetRegex();
     [GeneratedRegex(@"^\s*'inTransaction \S+ (.+?)\s*$")] private static partial Regex RegenTransactionRegex();
@@ -358,6 +359,11 @@ public sealed partial class JournalParser
                 s.IfcFailures.Add(new IfcExportFailure(n, long.Parse(facet.Groups[3].ValueSpan, CultureInfo.InvariantCulture), facet.Groups[2].Value,
                     facet.Groups[1].Value.TrimEnd('.')));
         }
+        else if (line.Contains("Open Cloud Model Method:", StringComparison.Ordinal) && CloudOpenRegex().Match(line) is { Success: true } co)
+            s.CloudOpens.Add(new CloudOpen(n, ts, co.Groups[2].Value.ToLowerInvariant(), co.Groups[1].Value));
+        else if (s.CloudOpens.Count > 0 && !s.CloudOpens[^1].Reached && line.Contains("SLOG", StringComparison.Ordinal) &&
+                 (line.Contains(">Open", StringComparison.Ordinal) || line.Contains(">Session", StringComparison.Ordinal)))
+            s.CloudOpens[^1].Reached = true; // the open got as far as the worksharing log: the model is being read
         else if (line.Contains("System exception in ADocument::regenerate", StringComparison.Ordinal))
         {
             // Revit writes the message twice: as a journal comment and again as DBG_ERROR; one failure each.

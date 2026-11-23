@@ -134,6 +134,7 @@ public sealed class Analyzer(RuleSet rules)
         AddOrphans(session, byId);
         AddRegenFailures(session, byId);
         AddIfcExport(session, byId, endKind);
+        AddCloudOpens(session, byId, context);
         if (byId.TryGetValue("metric-sync-failed", out var syncFailed))
             syncFailed.Steps.AddRange(SyncAdvice.Steps(session));
 
@@ -198,6 +199,32 @@ public sealed class Analyzer(RuleSet rules)
 
     public const string RegenRule = "regenerate-system-exception";
     public const string IfcRule = "ifc-export-failed";
+    public const string CloudOpenRule = "cloud-open-internet-connection";
+
+    /// <summary>A cloud open this recent may still be on its way in a journal that is being written.</summary>
+    private const int CloudOpenGrace = 200;
+
+    /// <summary>
+    /// Cloud models the user asked to open that never reached the worksharing log: Revit gave up before reading the
+    /// model, which is how "The model cannot be opened due to internet connection" looks in the journal (the dialog
+    /// itself is sometimes not written yet, for example in a copy taken while Revit runs).
+    /// </summary>
+    private void AddCloudOpens(JournalSession session, Dictionary<string, Finding> byId, AnalysisContext context)
+    {
+        var stuck = session.CloudOpens.Where(o => !o.Reached &&
+                                                  !(context.IsBeingWritten && session.LineCount - o.Line < CloudOpenGrace)).ToList();
+        if (stuck.Count == 0 || GetOrAdd(byId, CloudOpenRule) is not { } f)
+            return;
+        f.HitCount = Math.Max(f.HitCount, stuck.Count);
+        foreach (var o in stuck.DistinctBy(o => o.ModelGuid))
+        {
+            string name = session.DocumentName(o.ModelGuid + ".rvt");
+            string model = name.EndsWith(".rvt", StringComparison.OrdinalIgnoreCase) && !name.StartsWith(o.ModelGuid, StringComparison.OrdinalIgnoreCase)
+                ? name : $"the cloud model {o.ModelGuid}";
+            f.Facts.Add($"Revit started opening {model} (region {o.Region})" + (o.Time is { } t ? $" at {Fmt.Time(t)}" : "") +
+                        $" but never got as far as reading it (line {o.Line}).");
+        }
+    }
 
     /// <summary>A journal that ends this close to the exporter's last line ended during the export.</summary>
     private const int IfcExportTail = 400;

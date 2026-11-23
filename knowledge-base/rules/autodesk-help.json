@@ -5918,6 +5918,51 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "cloud-open-internet-connection",
+      "category": "cloud",
+      "severity": "high",
+      "match": {
+        "any": [
+          "The model cannot be opened due to internet connection",
+          "Request headers must contain only ASCII characters"
+        ]
+      },
+      "context": "Opening a cloud workshared model. The journal shows the open starting and then nothing more about it; the dialog itself may be missing from a copy of the journal taken while Revit runs.",
+      "title": {
+        "en": "Cloud model could not be opened (\"due to internet connection\")",
+        "uk": "Хмарну модель не вдалося відкрити («due to internet connection»)"
+      },
+      "cause": {
+        "en": "Revit could not get the cloud model from Autodesk's servers. Autodesk names a VPN, a firewall or internet security software blocking access to Revit Cloud Worksharing as the cause; the same message also appears when a model upgraded to a later Revit is opened from the previous version.",
+        "uk": "Revit не зміг отримати хмарну модель із серверів Autodesk. Autodesk називає причиною VPN, файрвол або програму захисту, що блокують доступ до Revit Cloud Worksharing; те саме повідомлення з'являється, коли модель, оновлену до новішого Revit, відкривають у попередній версії."
+      },
+      "fix": {
+        "en": [
+          "Check the \"Revit Cloud Worksharing / Cloud Models\" section of the Autodesk Health Dashboard for the status of the Autodesk cloud services (Revit Doctor shows a problem there in its overview).",
+          "Ask IT to check that the VPN, the firewall and any internet security software do not block access to Revit Cloud Worksharing.",
+          "If the cloud model was recently upgraded to a later version of Revit, open it with that later version.",
+          "If the journal contains \"Request headers must contain only ASCII characters\", rename the Windows computer using English (ASCII) characters only, restart the computer and open the model again."
+        ],
+        "uk": [
+          "Перевірте розділ «Revit Cloud Worksharing / Cloud Models» на Autodesk Health Dashboard — статус хмарних сервісів Autodesk (Revit Doctor показує збій там у своєму огляді).",
+          "Попросіть IT перевірити, що VPN, файрвол і програми захисту не блокують доступ до Revit Cloud Worksharing.",
+          "Якщо хмарну модель нещодавно оновили до новішої версії Revit, відкрийте її в цій новішій версії.",
+          "Якщо в журналі є «Request headers must contain only ASCII characters», перейменуйте комп'ютер у Windows лише англійськими (ASCII) символами, перезавантажте його і відкрийте модель знову."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The model cannot be opened due to internet connection\" message appears while trying to open cloud workshared model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/The-model-cannot-be-opened-due-to-internet-connection-message-appears-while-trying-to-open-cloud-workshared-model-in-Revit.html"
+        },
+        {
+          "title": "Autodesk Support — Misleading error message when opening cloud model in previous version after upgrade in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Misleading-error-message-when-opening-cloud-model-in-previous-version-after-upgrade-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }
