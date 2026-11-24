@@ -8,7 +8,7 @@
 set -euo pipefail
 
 VM_HOST="${VM_HOST:-flexi-vm}"
-VM_IP="${VM_IP:-192.168.229.148}"
+VM_IP="${VM_IP:-192.168.229.154}"
 VM_DIR='%USERPROFILE%\dev\revit-journal-analyzer'
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
