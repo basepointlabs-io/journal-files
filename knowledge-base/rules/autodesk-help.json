@@ -6318,6 +6318,277 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "addin-assembly-not-found",
+      "category": "addin",
+      "severity": "medium",
+      "match": {
+        "any": [
+          "Failed to initialize the add-in"
+        ],
+        "regex": [
+          "Failed to initialize the add-in .+ because the assembly .+ does not exist"
+        ],
+        "dialogs": [
+          "TaskDialog_External_Tools_Add_In_Assembly_Not_Found"
+        ]
+      },
+      "context": "Revit start-up; the message appears every time Revit starts until the add-in is fixed or removed.",
+      "title": {
+        "en": "An add-in's program file (DLL) is missing",
+        "uk": "Бракує програмного файлу (DLL) надбудови"
+      },
+      "cause": {
+        "en": "Revit found an add-in manifest (.addin file) that points to a DLL it cannot read: the file is missing, damaged or Revit has no permission to read it, so the add-in does not load. Autodesk also lists an out-of-date Revit as a cause; in some cases Revit closes unexpectedly after the message.",
+        "uk": "Revit знайшов файл опису надбудови (.addin), який вказує на DLL, що її Revit не може прочитати: файлу немає, він пошкоджений або Revit не має прав його читати, тож надбудова не завантажується. Autodesk також називає причиною застарілий Revit; іноді після цього повідомлення Revit несподівано закривається."
+      },
+      "fix": {
+        "en": [
+          "Install the available updates for Revit.",
+          "If the add-in named in the message is not needed, uninstall it, or disable it by moving its .addin file out of the Addins folder (usually C:\\ProgramData\\Autodesk\\Revit\\Addins\\<year>).",
+          "If it is needed, check whether the DLL named in the message exists at that path. If it does, start Revit with Run as administrator and update the add-in.",
+          "If the DLL is in a different folder, open the .addin file in Notepad, correct the path between <Assembly> and </Assembly>, and save it as .addin, not .txt.",
+          "If the DLL cannot be found, reinstall the add-in (run the installer as administrator), or install another version that is compatible with this Revit; if that does not help, contact the add-in's maker."
+        ],
+        "uk": [
+          "Встановіть доступні оновлення Revit.",
+          "Якщо надбудова з повідомлення не потрібна, видаліть її або вимкніть, перемістивши її файл .addin з папки Addins (зазвичай C:\\ProgramData\\Autodesk\\Revit\\Addins\\<рік>).",
+          "Якщо потрібна, перевірте, чи є DLL з повідомлення за вказаним шляхом. Якщо є, запустіть Revit через Run as administrator і оновіть надбудову.",
+          "Якщо DLL лежить в іншій папці, відкрийте файл .addin у Блокноті, виправте шлях між <Assembly> і </Assembly> і збережіть як .addin, а не .txt.",
+          "Якщо DLL не знайти, перевстановіть надбудову (інсталятор від імені адміністратора) або встановіть іншу версію, сумісну з цим Revit; якщо не допомогло, зверніться до виробника надбудови."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"Failed to initialize the add-in... not exist\" when launching Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Failed-to-initialize-the-add-in-because-the-assembly-does-not-exist.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "mep-segment-drawn-from-wrong-side",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "The segment is being drawn from the wrong side"
+        ],
+        "translations": [
+          "Das Segment wird von der falschen Seite aus gezeichnet. Von hier aus kann es",
+          "Le côté à partir duquel est dessiné le segment ne permet pas de le connecter à",
+          "El segmento se está dibujando desde el lado incorrecto para la conexión a la",
+          "Il disegno del segmento che si intende collegare con il punto indicato è",
+          "O segmento está sendo desenhando do lado incorreto para a conexão com a"
+        ]
+      },
+      "context": "Drawing or connecting a duct or pipe to a fitting.",
+      "title": {
+        "en": "\"The segment is being drawn from the wrong side\": a fitting's connector is set up wrong",
+        "uk": "«Сегмент креслиться не з того боку»: з'єднувач фітинга налаштовано неправильно"
+      },
+      "cause": {
+        "en": "Revit cannot connect the duct or pipe to the fitting. Autodesk: the flow direction of the connector in the fitting family does not match the flow direction of the system in the project, or the connector is attached to a reference plane instead of a face of the fitting's geometry.",
+        "uk": "Revit не може під'єднати повітровід чи трубу до фітинга. Autodesk: напрямок потоку з'єднувача в сімействі фітинга не збігається з напрямком потоку системи в проєкті, або з'єднувач прив'язаний до опорної площини, а не до грані геометрії фітинга."
+      },
+      "fix": {
+        "en": [
+          "Open the fitting family in the Family Editor and check the Flow Direction of its connectors. To rule this out, set System Classification to Global and Flow Direction to Bidirectional for a test.",
+          "If a connector sits on a reference plane, delete it and place it again on a face of the family's geometry.",
+          "Load the family back into the project and draw the segment again."
+        ],
+        "uk": [
+          "Відкрийте сімейство фітинга в редакторі сімейств і перевірте Flow Direction його з'єднувачів. Щоб виключити цю причину, для перевірки встановіть System Classification = Global і Flow Direction = Bidirectional.",
+          "Якщо з'єднувач стоїть на опорній площині, видаліть його й поставте знову на грань геометрії сімейства.",
+          "Завантажте сімейство назад у проєкт і накресліть сегмент знову."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — Error: \"The segment is being drawn from the wrong side to connect to the location you indicated\" in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Error-The-segment-is-being-drawn-from-the-wrong-side-to-connect-to-the-location-you-indicated-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "mep-tap-must-be-attached-to-duct",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "must be attached to duct."
+        ],
+        "translations": [
+          "muss an Luftkanal fixiert sein.",
+          "doit être attaché(e) à la gaine.",
+          "debe estar enlazado al conducto.",
+          "deve essere associato al condotto.",
+          "precisa ser anexado ao duto."
+        ]
+      },
+      "context": "Moving or aligning ducts, or opening and synchronizing a model with ducts hosted on a linked model.",
+      "title": {
+        "en": "\"The Tap must be attached to duct\"",
+        "uk": "«Врізка має бути прикріплена до повітроводу»"
+      },
+      "cause": {
+        "en": "A tap or another duct element would lose the duct it sits on, so Revit refuses the change or disconnects it. Autodesk documents this message on open and synchronize when elements in a linked model have moved and elements of this model are hosted on them; it often comes together with \"The duct/pipe has been modified to be in the opposite direction\".",
+        "uk": "Врізка чи інший елемент повітроводу втратив би повітровід, на якому стоїть, тож Revit відхиляє зміну або роз'єднує його. Autodesk описує це повідомлення під час відкриття й синхронізації, коли елементи у зв'язаній моделі перемістились, а елементи цієї моделі розміщені на них; часто воно йде разом із «The duct/pipe has been modified to be in the opposite direction»."
+      },
+      "fix": {
+        "en": [
+          "In the error dialog click Export and save the report; it lists the ids of the elements.",
+          "Find each element: Manage tab > Inquiry panel > Select by ID, and check that the tap is still on its duct; reconnect it or undo the change that pulled it off.",
+          "If the elements are hosted on a linked model, rehost them to this model instead of the link."
+        ],
+        "uk": [
+          "У вікні помилки натисніть Export і збережіть звіт; у ньому є id елементів.",
+          "Знайдіть кожен елемент: Manage > Inquiry > Select by ID і перевірте, що врізка досі на своєму повітроводі; під'єднайте її знову або скасуйте зміну, яка її зірвала.",
+          "Якщо елементи розміщені на зв'язаній моделі, перенесіть їх на цю модель замість зв'язку."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"The duct/pipe has been modified to be in the opposite direction causing the connections to be invalid.\" when opening or syncing a Revit model",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-Error-The-duct-pipe-has-been-modified-to-be-in-the-opposite-direction-causing-the-connections-to-be-invalid-on-sync-to-central.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "mep-not-enough-room-for-fittings",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "There was not enough room to place the required fittings"
+        ],
+        "translations": [
+          "Der verfügbare Raum reicht zum Platzieren der Formteile nicht aus. Sie sollten",
+          "L'espace disponible est insuffisant pour insérer les raccords requis. Pour",
+          "No hay espacio suficiente para colocar las uniones requeridas. Una posible",
+          "Spazio insufficiente per posizionare i raccordi necessari. Provare ad aumentare",
+          "Não há espaço suficiente para colocar as conexões necessárias. Uma possível"
+        ]
+      },
+      "context": "Connecting, moving or generating a layout of ducts or pipes.",
+      "title": {
+        "en": "\"There was not enough room to place the required fittings\"",
+        "uk": "«Не вистачає місця для потрібних фітингів»"
+      },
+      "cause": {
+        "en": "Revit needs elbows, tees or transitions to make the connection and they do not fit in the space between the segments. Autodesk's troubleshooting for duct and pipe layouts names the usual reasons: a very short segment, a slight difference in offset elevation, or elbows placed back to back with too little length between them.",
+        "uk": "Revit потрібні коліна, трійники чи переходи для з'єднання, і вони не вміщаються між сегментами. Autodesk у розділі про проблеми з розкладкою повітроводів і труб називає звичні причини: дуже короткий сегмент, невелика різниця у відмітці (offset) або коліна впритул одне до одного з замалою відстанню між ними."
+      },
+      "fix": {
+        "en": [
+          "Make the short segment longer, or move the segments farther apart, as the message suggests.",
+          "Check the offset elevation of both segments and the slope setting; a small difference in height needs fittings that may not fit.",
+          "Where two elbows meet back to back, increase the length between them or change the offset elevation of the main or branch."
+        ],
+        "uk": [
+          "Подовжте короткий сегмент або розсуньте сегменти, як радить повідомлення.",
+          "Перевірте відмітку (offset) обох сегментів і налаштування ухилу; невелика різниця у висоті потребує фітингів, які можуть не вміститись.",
+          "Де два коліна стоять впритул, збільште відстань між ними або змініть відмітку магістралі чи відгалуження."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Help (Revit 2026) — Troubleshooting: Layouts for Duct and Pipe",
+          "url": "https://help.autodesk.com/cloudhelp/2026/ENU/Revit-MEPEng/files/GUID-F0BEEB3D-34F8-4314-9EF6-E40BA0C84976.htm"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "dimension-references-no-longer-parallel",
+      "category": "model-warnings",
+      "severity": "low",
+      "match": {
+        "any": [
+          "The References of the highlighted Dimension are no longer parallel"
+        ],
+        "translations": [
+          "Die Referenzen der hervorgehobenen Bemaßungen sind nicht mehr parallel.",
+          "Les références de la cote en surbrillance ne sont plus parallèles.",
+          "Las referencias de la cota resaltada han dejado de ser paralelas.",
+          "I riferimenti delle quote evidenziate non sono più paralleli.",
+          "As referências para a cota realçada não mais estão paralelas."
+        ]
+      },
+      "context": "Editing, joining, rotating or moving elements that dimensions refer to.",
+      "title": {
+        "en": "\"The References of the highlighted Dimension are no longer parallel\"",
+        "uk": "«Опорні елементи виділеного розміру більше не паралельні»"
+      },
+      "cause": {
+        "en": "A change moved or removed the edge a dimension refers to, so Revit wants to delete the dimension. Autodesk's example: changing the length of a wall or joining it to another wall removes the edge its dimensions were attached to.",
+        "uk": "Зміна перемістила або прибрала ребро, до якого прив'язаний розмір, тож Revit хоче видалити розмір. Приклад Autodesk: зміна довжини стіни або приєднання її до іншої стіни прибирає ребро, до якого були прив'язані розміри."
+      },
+      "fix": {
+        "en": [
+          "In the warning, export the warnings to an HTML file, then cancel the edit.",
+          "Open the HTML file, find the elements with Manage tab > Inquiry panel > Select by ID and review them.",
+          "If deleting the dimensions cannot be avoided, make the edit and create the dimensions again afterwards."
+        ],
+        "uk": [
+          "У попередженні експортуйте попередження в HTML-файл, потім скасуйте зміну.",
+          "Відкрийте HTML-файл, знайдіть елементи через Manage > Inquiry > Select by ID і перегляньте їх.",
+          "Якщо видалення розмірів не уникнути, зробіть зміну й створіть розміри заново."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — When trying to change the length of a wall, joining a wall with another wall, Revit wants to delete the dimensions created for that wall",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/When-trying-to-change-the-length-of-a-wall-joining-a-wall-with-another-wall-Revit-wants-to-delete-the-dimensions-created-for-that-wall.html"
+        }
+      ],
+      "confidence": "official"
+    },
+    {
+      "id": "no-open-view-shows-highlighted-elements",
+      "category": "addin",
+      "severity": "info",
+      "match": {
+        "any": [
+          "There is no open view that shows any of the highlighted elements"
+        ],
+        "translations": [
+          "Es gibt keine geöffnete Ansicht, die alle hervorgehobenen Elemente anzeigt. Das",
+          "Aucune vue affichant tous les éléments en surbrillance n'est ouverte. La",
+          "No hay ninguna vista abierta que muestre todos los elementos resaltados.  La",
+          "Non è aperta nessuna vista che possa visualizzare tutti gli elementi",
+          "Não há vista aberta que mostra alguns dos elementos realçados. Procurar por uma"
+        ]
+      },
+      "context": "Showing elements from a warning or an add-in, often on open, synchronize or close.",
+      "title": {
+        "en": "\"There is no open view that shows any of the highlighted elements\"",
+        "uk": "«Немає відкритого виду, на якому видно виділені елементи»"
+      },
+      "cause": {
+        "en": "Revit was asked to show elements that no open view displays and offers to search the closed views, which can take a long time. Autodesk documents it appearing on synchronize or close of some models and points to add-ins.",
+        "uk": "Revit попросили показати елементи, яких не видно на жодному відкритому виді, і він пропонує шукати по закритих видах, що може тривати довго. Autodesk описує появу цього вікна під час синхронізації чи закриття деяких моделей і вказує на надбудови."
+      },
+      "fix": {
+        "en": [
+          "If it appears on synchronize or close, temporarily disable all Revit add-ins and check whether it comes back.",
+          "If the AVAIL add-in is installed, update it."
+        ],
+        "uk": [
+          "Якщо вікно з'являється під час синхронізації чи закриття, тимчасово вимкніть усі надбудови Revit і перевірте, чи воно повертається.",
+          "Якщо встановлена надбудова AVAIL, оновіть її."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"There is no open view that shows any of the highlighted elements\" when opening or syncing a model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/There-is-no-open-view-that-shows-any-of-the-highlighted-elements-when-opening-or-syncing-a-model-in-Revit.html"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }

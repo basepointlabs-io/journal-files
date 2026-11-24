@@ -206,6 +206,56 @@ public class CloudOpenTests
             """, Fixtures.NormalEnd));
         Assert.DoesNotContain(Analyzer.Analyze(session, Closed).Findings, x => x.Rule.Id == Analyzer.CloudOpenRule);
     }
+
+    [Fact]
+    public void A_cloud_open_the_user_cancelled_is_not_a_connection_problem()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, ModelPath, """
+            'C 23-Nov-2026 15:52:20.154;   0:< Open Cloud Model Method: open, Region: EMEA, Model Guid: 22222222-2222-2222-2222-222222222222, Project Guid: 11111111-1111-1111-1111-111111111111.
+            ' 1:< TaskDialog "You have made changes that have not been synchronized. What would you like to do?"
+            'Id : TaskDialog_Unsubmitted_Changes
+            'C 23-Nov-2026 15:52:28.780;   0:< OperationCanceledException "Open canceled by user."
+            """, Fixtures.NormalEnd));
+        Assert.DoesNotContain(Analyzer.Analyze(session, Closed).Findings, x => x.Rule.Id == Analyzer.CloudOpenRule);
+    }
+}
+
+/// <summary>A journal whose last lines are a MemoryException; the lines follow a real journal.</summary>
+public class MemoryEndTests
+{
+    private static readonly Analyzer Analyzer = Analyzer.CreateDefault();
+    private static readonly AnalysisContext Copied = new(IsBeingWritten: false, DumpFiles: []);
+
+    private const string OutOfMemory = """
+        'C 23-Nov-2026 12:06:07.438;   0:< DEBUG: RIA: {"Message":"Ending HttpMessageHandler cleanup cycle"}
+          ' 4:< ::14187:: Delta VM: Avail -647 -> 134075840 MB, Used +647 -> 65472 MB, Peak +631 -> 65480 MB; RAM: Avail -586 -> 10034 MB, Used +622 -> 14548 MB
+          ' 4:< A MemoryException is raised on line 238 of F:\Ship24.3.6\2024_px64\Source\Foundation\Utility\Arr.cpp
+          ' 5:< A MemoryException is raised on line 238 of F:\Ship24.3.6\2024_px64\Source\Foundation\Utility\Arr.cpp
+        """;
+
+    [Fact]
+    public void A_journal_that_ends_with_a_MemoryException_is_a_crash()
+    {
+        var r = Analyzer.Analyze(JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, OutOfMemory)), Copied);
+
+        Assert.Equal(EndKind.Crash, r.EndKind);
+        Assert.Contains(r.Summary, x => x.StartsWith("Revit crashed", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_MemoryException_Revit_survived_is_not_a_crash()
+    {
+        var r = Analyzer.Analyze(JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, OutOfMemory, """
+            'C 23-Nov-2026 12:07:00.000;   0:< License Idle: Enter
+            ' 0:< ::14188:: Delta VM: Avail 134075840 MB, Used 65472 MB; RAM: Avail 10034 MB, Used 14548 MB
+            ' 0:< GUI Resource Usage GDI: Avail 6538, Used 3462, User: Used 978
+            'C 23-Nov-2026 12:07:10.000;   0:< License Idle: Exit
+            'C 23-Nov-2026 12:07:20.000;   0:< License Idle: Enter
+            'C 23-Nov-2026 12:07:30.000;   0:< License Idle: Exit
+            """)), Copied);
+
+        Assert.NotEqual(EndKind.Crash, r.EndKind);
+    }
 }
 
 public class AddInStartTests

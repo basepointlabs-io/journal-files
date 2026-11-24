@@ -229,6 +229,9 @@ public sealed partial class JournalParser
             }
         }
 
+        if (line.Contains("A MemoryException is raised", StringComparison.Ordinal))
+            s.LastMemoryException = new LineRef(n, _ts, line.Trim());
+
         if (line.Contains("IDS_UNRECOVERABLE_ERROR", StringComparison.Ordinal) || line.Contains("program terminated", StringComparison.Ordinal))
             s.FatalMarkers.Add(new LineRef(n, _ts, line.Trim()));
 
@@ -393,6 +396,8 @@ public sealed partial class JournalParser
         else if (s.CloudOpens.Count > 0 && !s.CloudOpens[^1].Reached && line.Contains("SLOG", StringComparison.Ordinal) &&
                  (line.Contains(">Open", StringComparison.Ordinal) || line.Contains(">Session", StringComparison.Ordinal)))
             s.CloudOpens[^1].Reached = true; // the open got as far as the worksharing log: the model is being read
+        else if (s.CloudOpens.Count > 0 && !s.CloudOpens[^1].Reached && line.Contains("Open canceled by user", StringComparison.Ordinal))
+            s.CloudOpens[^1].Reached = true; // the user pressed Cancel (for example on "changes that have not been synchronized"): nothing failed
         else if (line.Contains("System exception in ADocument::regenerate", StringComparison.Ordinal))
         {
             // Revit writes the message twice: as a journal comment and again as DBG_ERROR; one failure each.

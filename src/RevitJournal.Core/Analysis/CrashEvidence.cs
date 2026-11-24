@@ -139,6 +139,9 @@ public static class CrashEvidence
     private static readonly TimeSpan Before = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan After = TimeSpan.FromMinutes(30);
 
+    /// <summary>How close to the end of the journal a MemoryException must be to count as where Revit stopped.</summary>
+    private const int LastLines = 5;
+
     /// <summary>Evidence for how an abnormally ended session ended, strongest first, with the resulting classification.</summary>
     public static (EndKind Kind, List<string> Facts) Find(JournalSession s, AnalysisContext context)
     {
@@ -156,6 +159,14 @@ public static class CrashEvidence
         if (marker is not null)
         {
             facts.Add($"The journal records the crash itself (line {marker.Line}): {Fmt.Trim(marker.Text, 140)}");
+            kind = EndKind.Crash;
+        }
+
+        // Revit ran out of memory and the journal ends right there: nothing after the MemoryException, not even the
+        // next memory line. A MemoryException earlier on was survived (Revit reports it and carries on).
+        if (kind == EndKind.Unconfirmed && s.LastMemoryException is { } last && last.Line > s.LineCount - LastLines)
+        {
+            facts.Add($"The journal ends with a MemoryException (line {last.Line}): Revit ran out of memory and stopped there.");
             kind = EndKind.Crash;
         }
 

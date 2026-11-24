@@ -27,6 +27,8 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
 
     /// <summary>Journal lines that record a crash Revit handled itself ("ExceptionCode=", unrecoverable error, "program terminated").</summary>
     public List<LineRef> FatalMarkers { get; } = [];
+    /// <summary>The last "A MemoryException is raised" line: Revit ran out of memory there.</summary>
+    public LineRef? LastMemoryException { get; set; }
 
     /// <summary>
     /// A copy that no longer changes, for handing a live session to another thread. Sync attempts and timed operations
@@ -40,7 +42,7 @@ public sealed class JournalSession(string filePath, IReadOnlyList<string> lines)
             Release = Release, Build = Build, BuildDate = BuildDate, UserName = UserName, MachineName = MachineName,
             Start = Start, LastTimestamp = LastTimestamp, EndedNormally = EndedNormally, ExitRequestedAt = ExitRequestedAt,
             IsPlayback = IsPlayback, LicenseReadyAt = LicenseReadyAt, StartupCompletedAt = StartupCompletedAt,
-            OpenViews = OpenViews, OpenProjects = OpenProjects, LastIfcExportLine = LastIfcExportLine,
+            OpenViews = OpenViews, OpenProjects = OpenProjects, LastIfcExportLine = LastIfcExportLine, LastMemoryException = LastMemoryException,
             RuleHits = RuleHits?.ToDictionary(kv => kv.Key, kv => kv.Value.ToList(), StringComparer.Ordinal),
         };
         c.Ram.AddRange(Ram); c.Gdi.AddRange(Gdi); c.SlowOperations.AddRange(SlowOperations); c.UserActions.AddRange(UserActions);
