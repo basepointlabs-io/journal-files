@@ -154,8 +154,9 @@ public sealed class HealthMonitor(ISystemProbe probe)
         if (models is not null && ModelSizeAdvice.Combined(models, now.TotalRamMb) is var (totalModelsMb, neededRam))
             issues.Add(new HealthIssue("models-large", HealthLevel.Watch,
                 $"{models.Count} open models" + (models.Any(m => m.LinksMb > 0) ? " with their links" : "") + $" are {Fmt.Mb(totalModelsMb)} on disk together",
-                AutodeskArticle.MemoryInstability.Cite(
-                    $"Autodesk: RAM about 20 times the combined size of the RVT files opened, including linked files: {neededRam}; this computer has {Fmt.Mb((int)now.TotalRamMb)}. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly.")));
+                AutodeskArticle.MemoryHighUsage.Cite(
+                    $"Revit generally uses up to 20 times the size of the RVT files opened, including linked files: up to {neededRam}; this computer has {Fmt.Mb((int)now.TotalRamMb)}.") + " " +
+                AutodeskArticle.MemoryInstability.Cite("Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly.")));
 
         var disks = new List<DiskHealth>();
         foreach (var d in now.Disks)

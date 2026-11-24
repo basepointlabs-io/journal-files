@@ -300,9 +300,10 @@ public sealed class HealthView
 
         Revits = [.. r.Revits.Select(p => new RevitHealthRow(p, Match(p, r.Revits, sessions), r.TotalRamMb))];
         HasRevits = Revits.Count > 0;
-        ShowRamUsed = Revits.Count > 1;
+        // With a model known, the RAM Revit really uses stands next to Autodesk's upper estimate; with two or more Revit, it shows which one takes the memory.
+        ShowRamUsed = Revits.Count > 1 || Revits.Any(x => x.HasModel);
         TableNote = Revits.Any(x => x.HasModel)
-            ? "* Autodesk: RAM ≈ 20 × the RVT files opened, including linked files. Links not on this computer cannot be counted."
+            ? "* Autodesk's upper estimate: Revit generally uses up to 20 × the size of the RVT files opened, including linked files. Compare it with RAM used. Links not on this computer cannot be counted."
             : "";
         NoRevit = r.Revits.Count == 0;
         int openViews = Running(r, sessions).Sum(s => s.OpenViews ?? 0);
@@ -350,9 +351,9 @@ public sealed class HealthView
     public double DiskPercent { get; }
     public IReadOnlyList<RevitHealthRow> Revits { get; }
     public bool HasRevits { get; }
-    /// <summary>The "RAM used" column: only with two or more Revit, to see which one takes the memory; with one the "Revit open" tile says it.</summary>
+    /// <summary>The "RAM used" column: next to Autodesk's estimate once a model is known, and with two or more Revit to see which one takes the memory.</summary>
     public bool ShowRamUsed { get; }
-    /// <summary>Under the table: what "RAM needed" means and how much the computer has; empty while no model size is known.</summary>
+    /// <summary>Under the table: what Autodesk's "up to" figure means; empty while no model size is known.</summary>
     public string TableNote { get; }
     public bool HasTableNote => TableNote.Length > 0;
     public bool NoRevit { get; }
@@ -444,15 +445,17 @@ public sealed class RevitHealthRow(RevitHealth p, LiveStatus? session, long tota
         : $"Within Autodesk's memory guidance for this computer ({Fmt.Mb((int)totalRamMb)})";
     public string GuidanceKey => Load?.OverGuidance == true ? "warning" : "pending";
 
-    /// <summary>Autodesk's 20 x the model and its links.</summary>
-    private static string Needs(Core.Analysis.ModelLoad m) => $"Autodesk: {m.NeededRam} for this model" + (m.LinksKnown > 0 ? " with its links" : "");
+    /// <summary>Autodesk's 20 x the model and its links: an upper estimate ("Revit will generally use up to 20 times the RVT file size").</summary>
+    private static string Needs(Core.Analysis.ModelLoad m) => $"Autodesk: up to {UpTo(m)} for this model" + (m.LinksKnown > 0 ? " with its links" : "");
+
+    private static string UpTo(Core.Analysis.ModelLoad m) => Fmt.Mb((int)Math.Min(Core.Analysis.ModelSizeAdvice.Required(m.ModelMb + m.LinksMb), int.MaxValue));
 
     // The columns of the table of running Revits.
     // The model on the first line (it may wrap), the Revit version and what it is doing under it.
     public string Name => session?.Model is { Length: > 0 } m ? m : "No model open";
     public string Under => (p.Version.Length > 0 ? $"Revit {p.Version}" : "Revit") + " · " + char.ToLowerInvariant(State[0]) + State[1..];
     public string RamUsed => Fmt.Mb((int)p.MemoryMb);
-    public string RamNeeded => Load is { } m ? "≈ " + Fmt.Mb((int)Math.Min(Core.Analysis.ModelSizeAdvice.Required(m.ModelMb + m.LinksMb), int.MaxValue)) : "–";
+    public string RamNeeded => Load is { } m ? "up to " + UpTo(m) : "–";
     /// <summary>"+ 12 linked models, 5.6 GB on disk": shown under the model in the compact table, where the links column is hidden.</summary>
     public string LinksLine => Load is not { } m || m.LinkCount == 0 ? ""
         : $"+ {m.LinkCount} linked model{(m.LinkCount == 1 ? "" : "s")}" +

@@ -111,7 +111,8 @@ public class HealthTests
         var issue = r.Issues.Single(i => i.Key == "models-large");
         Assert.Equal(HealthLevel.Watch, issue.Level);
         Assert.Contains("2 open models are 1.8 GB on disk together", issue.Title);
-        Assert.Contains(": about 35.2 GB of RAM; this computer has", issue.Advice);
+        Assert.Contains("including linked files: up to about 35.2 GB of RAM; this computer has", issue.Advice);
+        Assert.Contains("[Autodesk: Your current session is using more memory than your computer can efficiently support]", issue.Advice);
         Assert.EndsWith("[Autodesk: Memory Usage and Instability]", issue.Advice);
         Assert.Empty(monitor.NewAlerts);                                            // shown in the panel, no notification
         Assert.DoesNotContain(monitor.Tick([models[0]]).Issues, i => i.Key == "models-large");

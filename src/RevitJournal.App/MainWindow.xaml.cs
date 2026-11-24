@@ -230,7 +230,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 [new HealthIssue("disk:C:", HealthLevel.Watch, "Drive C: has only 22.0 GB free",
                     "Autodesk requires at least 30 GB of free disk space for Revit. Free up space: Windows Disk Cleanup, and the cloud model cache you no longer need."),
                  new HealthIssue("models-large", HealthLevel.Watch, "2 open models with their links are 4.8 GB on disk together",
-                    "Autodesk: RAM about 20 times the combined size of the RVT files opened, including linked files: about 96.9 GB of RAM; this computer has 31.5 GB. Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly. [Autodesk: Memory Usage and Instability]")],
+                    "Revit generally uses up to 20 times the size of the RVT files opened, including linked files: up to about 96.9 GB of RAM; this computer has 31.5 GB. [Autodesk: Your current session is using more memory than your computer can efficiently support] Reduce the number of loaded links, limit the worksets and views you open, and restart Revit regularly. [Autodesk: Memory Usage and Instability]")],
                 null, [.. Enumerable.Range(0, 30).Select(i => new RamPoint(at.AddMinutes(i - 30), 14_000 - i * 140))], demoRequirements),
             [new LiveStatus("2025", "", "Tower_ARC.rvt", at, true, "Last sync OK at 10:42:10", 9_800, 32_212, null, 1, tower, 9, 1),
              new LiveStatus("2024", "", "Clinic_MEP.rvt", at, true, "Last sync OK at 10:15:02", 9_800, 32_212, null, 2, clinic, 3, 1)],
