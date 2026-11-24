@@ -156,7 +156,9 @@ public sealed class TrayAgent : IDisposable
             var (alerts, report) = await Task.Run(() =>
             {
                 var journalAlerts = _monitor.Tick();
-                var health = _health.Tick([.. _monitor.Status.Select(s => s.Load).OfType<ModelLoad>()]);
+                // Only journals a running Revit writes: a journal can stay locked after its Revit is gone (a crash
+                // reporter, a backup tool), and its model must not count as open; the table lists the same Revits.
+                var health = _health.Tick([.. _monitor.Status.Where(s => s.ProcessId is not null).Select(s => s.Load).OfType<ModelLoad>()]);
                 journalAlerts.AddRange(_health.NewAlerts);
                 DiskHistory.Default.Record(health.Time, health.Disks.Select(d => new DiskSample(d.Name, d.FreeMb, d.TotalMb)));
                 return (journalAlerts, health);

@@ -305,7 +305,7 @@ public sealed class HealthView
             ? "* Autodesk: RAM ≈ 20 × the RVT files opened, including linked files. Links not on this computer cannot be counted."
             : "";
         NoRevit = r.Revits.Count == 0;
-        int openViews = sessions.Sum(s => s.OpenViews ?? 0);
+        int openViews = Running(r, sessions).Sum(s => s.OpenViews ?? 0);
         RevitShort = NoRevit ? "Revit is not running"
             : $"{r.Revits.Count} Revit" + (openViews > 0 ? $" · {openViews} views" : "") + $" · {Fmt.Mb((int)r.Revits.Sum(p => p.MemoryMb))} RAM";
         RevitSummary = Summary(r, sessions);
@@ -395,6 +395,7 @@ public sealed class HealthView
             .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
         var parts = new List<string> { $"{r.Revits.Count} Revit running ({string.Join(", ", versions)})" };
 
+        sessions = Running(r, sessions);
         var loads = sessions.Select(s => s.Load).OfType<ModelLoad>().ToList();
         int models = sessions.Sum(s => s.OpenProjects ?? (s.Load is null ? 0 : 1));
         if (models > 0)
@@ -412,6 +413,10 @@ public sealed class HealthView
     internal static string Key(HealthLevel level) => level switch { HealthLevel.Danger => "crash", HealthLevel.Watch => "warning", _ => "ok" };
 
     /// <summary>The journal session of a process: by process id when the monitor could tell, else the only one of that version.</summary>
+    /// <summary>The journals of the Revits in the table: a journal can stay locked after its Revit is gone.</summary>
+    private static List<LiveStatus> Running(HealthReport r, IReadOnlyList<LiveStatus> sessions) =>
+        [.. r.Revits.Select(p => Match(p, r.Revits, sessions)).OfType<LiveStatus>().Distinct()];
+
     private static LiveStatus? Match(RevitHealth p, IReadOnlyList<RevitHealth> all, IReadOnlyList<LiveStatus> sessions) =>
         sessions.FirstOrDefault(s => s.ProcessId == p.ProcessId)
         ?? (all.Count(x => x.Version == p.Version) == 1 ? sessions.FirstOrDefault(s => s.Version == p.Version) : null);
