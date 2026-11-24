@@ -89,11 +89,16 @@ public sealed class Analyzer(RuleSet rules)
 
         var byId = new Dictionary<string, Finding>(StringComparer.Ordinal);
 
-        foreach (var (id, lines) in session.RuleHits ?? _matcher.Match(session))
+        var hits = session.RuleHits ?? _matcher.Match(session);
+        int explained = DropStatusOfPhaseFailure(hits, out hits);
+        foreach (var (id, lines) in hits)
         {
             var finding = GetOrAdd(byId, id);
             finding?.AddEvidence(lines);
         }
+        if (explained > 0 && byId.TryGetValue(MissingPhasesRule, out var phases))
+            phases.Facts.Add("Revit also logged \"Cannot connect to central model\" for this open: that is only the status of the open that " +
+                             "failed on the missing phase, not a network or cache problem.");
 
         foreach (var (id, check) in Metrics.All)
         {
@@ -195,6 +200,37 @@ public sealed class Analyzer(RuleSet rules)
             f.Facts.Add($"To see which element it is: Manage tab > Inquiry > Select by ID, paste: {string.Join("; ", ids)}.");
         if (session.RegenFailures.Any(r => r.Transactions.Any(t => t.Contains("Link", StringComparison.OrdinalIgnoreCase))))
             f.Facts.Add("It happened while Revit was reloading linked models, so Autodesk's steps for finding a problem link apply.");
+    }
+
+    public const string MissingPhasesRule = "link-missing-project-phases";
+    public const string CannotConnectRule = "forum-cannot-connect-central-cloud";
+
+    /// <summary>How close a "Cannot connect to central model" status must be to a missing-phase error to be its echo.</summary>
+    private static readonly TimeSpan PhaseFailureWindow = TimeSpan.FromMinutes(5);
+    private const int PhaseFailureLines = 2000;
+
+    /// <summary>
+    /// When an open fails on a link without phases, Revit's analytics records the failed open as "status: ERROR : Cannot
+    /// connect to central model", and the dialogs that follow it the same way. Those lines are not a connection problem:
+    /// drop the ones near a missing-phase error so the cache-clearing advice does not outrank the real cause.
+    /// Returns how many lines were dropped; <paramref name="result"/> is a copy when any were, else the input.
+    /// </summary>
+    private static int DropStatusOfPhaseFailure(Dictionary<string, List<LineRef>> hits, out Dictionary<string, List<LineRef>> result)
+    {
+        result = hits;
+        if (!hits.TryGetValue(MissingPhasesRule, out var phases) || !hits.TryGetValue(CannotConnectRule, out var status))
+            return 0;
+        bool Near(LineRef s) => phases.Any(p => p.Source == s.Source &&
+            (p.Time is { } a && s.Time is { } b ? (a - b).Duration() <= PhaseFailureWindow : Math.Abs(p.Line - s.Line) <= PhaseFailureLines));
+        var kept = status.Where(s => !Near(s)).ToList();
+        if (kept.Count == status.Count)
+            return 0;
+        result = new Dictionary<string, List<LineRef>>(hits, StringComparer.Ordinal);
+        if (kept.Count == 0)
+            result.Remove(CannotConnectRule);
+        else
+            result[CannotConnectRule] = kept;
+        return status.Count - kept.Count;
     }
 
     public const string RegenRule = "regenerate-system-exception";

@@ -6589,6 +6589,49 @@
         }
       ],
       "confidence": "official"
+    },
+    {
+      "id": "link-missing-project-phases",
+      "category": "link-import",
+      "severity": "critical",
+      "match": {
+        "any": [
+          "The id does not represent a valid phase",
+          "Could not get AllProjectPhases"
+        ]
+      },
+      "context": "Opening a (cloud) workshared model or loading/reloading its links; the open is cancelled or Revit crashes.",
+      "title": {
+        "en": "A linked model has no phases: Revit cannot open the model with this link",
+        "uk": "У лінкованій моделі немає фаз: Revit не може відкрити модель із цим лінком"
+      },
+      "cause": {
+        "en": "Phases are missing from one of the linked models. While loading the links Revit looks up a phase that does not exist (\"The id does not represent a valid phase\"), so it cancels the open or crashes. It often starts after the linked model was updated by its author.",
+        "uk": "В одній із лінкованих моделей немає фаз. Під час завантаження лінків Revit шукає фазу, якої не існує («The id does not represent a valid phase»), тому скасовує відкриття або вилітає. Часто починається після того, як автор оновив лінковану модель."
+      },
+      "fix": {
+        "en": [
+          "Find the affected link: open each linked model and look at Manage > Phases. The affected one has no phases listed in Project Phases.",
+          "In the same Revit session, open a blank architectural model.",
+          "Go back to the linked model and click Manage > Transfer Project Standards. Click Check None, then check Project Phases > OK.",
+          "Check that Existing and New Construction are now listed in Manage > Phases of the linked model, then Synchronize with Central.",
+          "Anyone who has the host model open should reload this link; everyone else gets the fixed link the next time they open the host model."
+        ],
+        "uk": [
+          "Знайдіть пошкоджений лінк: відкрийте кожну лінковану модель і подивіться Manage > Phases. У пошкодженій список Project Phases порожній.",
+          "У тій самій сесії Revit відкрийте порожній архітектурний проєкт.",
+          "Поверніться в лінковану модель і натисніть Manage > Transfer Project Standards. Натисніть Check None, відмітьте Project Phases > OK.",
+          "Перевірте, що в Manage > Phases лінкованої моделі з'явились Existing і New Construction, і зробіть Synchronize with Central.",
+          "Хто тримає основну модель відкритою, має перезавантажити цей лінк; решта отримає виправлений лінк, коли наступного разу відкриє основну модель."
+        ]
+      },
+      "sources": [
+        {
+          "title": "Autodesk Support — \"This operation cannot be completed\" when opening a cloud workshared model in Revit",
+          "url": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-model-crashes-with-multiple-errors.html"
+        }
+      ],
+      "confidence": "official"
     }
   ]
 }

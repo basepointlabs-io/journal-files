@@ -318,4 +318,40 @@ public class AddInStartTests
         Assert.Contains("model-data-needs-recovery-audit", ids);
         Assert.Contains("dwg-cannot-import-some-geometry", ids);
     }
+
+    [Fact]
+    public void A_link_without_phases_is_the_cause_and_its_cannot_connect_status_is_not_a_network_problem()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            'C 05-Nov-2026 10:00:00.000;  File: Open
+            'inTransaction RvtLinkTracking.cpp:388 Reload Linked Instances
+            'C 05-Nov-2026 10:05:10.000;   0:< SkyscraperClientHost.LogAnalyticsRequest: AnalyticsProperties:
+            'context_call: Links and UI
+            'status: ERROR : Cannot connect to central model
+            'C 05-Nov-2026 10:05:10.010;   0:< openDocumentFileForUI: The id does not represent a valid phase.
+            'C 05-Nov-2026 10:06:00.000;   2:< SkyscraperClientHost.LogAnalyticsRequest: AnalyticsProperties:
+            'context_call: GUI:Dialog_Revit_Partitions
+            'status: ERROR : Cannot connect to central model
+            """, Fixtures.NormalEnd));
+        var findings = Analyzer.Analyze(session, Closed).Findings;
+        var f = findings.Single(x => x.Rule.Id == "link-missing-project-phases");
+
+        Assert.DoesNotContain(findings, x => x.Rule.Id == "forum-cannot-connect-central-cloud");
+        Assert.Contains(f.Facts, x => x.Contains("Cannot connect to central model", StringComparison.Ordinal));
+        Assert.Contains(f.Rule.Sources, s => s.Url.Contains("Revit-model-crashes-with-multiple-errors", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Cannot_connect_far_from_a_phase_error_still_counts()
+    {
+        var session = JournalParser.Parse("journal.0001.txt", Fixtures.Lines(Fixtures.Header, """
+            'C 05-Nov-2026 10:00:00.000;   0:< SkyscraperClientHost.LogAnalyticsRequest: AnalyticsProperties:
+            'status: ERROR : Cannot connect to central model
+            'C 05-Nov-2026 15:00:00.000;  DBG_WARN: The id does not represent a valid phase.
+            """, Fixtures.NormalEnd));
+        var ids = Analyzer.Analyze(session, Closed).Findings.Select(x => x.Rule.Id).ToList();
+
+        Assert.Contains("forum-cannot-connect-central-cloud", ids);
+        Assert.Contains("link-missing-project-phases", ids);
+    }
 }
